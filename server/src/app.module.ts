@@ -1,0 +1,19 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UsersModule } from './modules/users/users.module';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CompaniesModule } from './modules/companies/companies.module';
+import { WorkersModule } from './modules/workers/workers.module';
+import { JobsModule } from './modules/jobs/jobs.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
+import { CompanyMembersModule } from './modules/company-members/company_members.module';
+import { CompanyMembersModule } from './modules/company-members/company-members.module';
+
+@Module({
+  imports: [UsersModule, AuthModule, CompaniesModule, WorkersModule, JobsModule, ApplicationsModule, CompanyMembersModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
