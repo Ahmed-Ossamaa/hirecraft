@@ -1,19 +1,44 @@
 import { z } from 'zod';
 
-export const envSchema = z.object({
-  CLIENT_URL: z.string(),
-  BASE_URL: z.string().default('http://localhost:5000'),
-  API_PREFIX: z.string().default('api'),
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
-  PORT: z.coerce.number().default(5000),
+export const envSchema = z
+  .object({
+    CLIENT_URL: z.string(),
+    BASE_URL: z.string().default('http://localhost:5000'),
+    API_PREFIX: z.string().default('api/v1'),
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
+    PORT: z.coerce.number().default(5000),
+    // Database
+    DATABASE_URL: z.string().optional(),
+    DATABASE_HOST: z.string().optional(),
+    DATABASE_PORT: z.coerce.number().default(5432),
+    DATABASE_USER: z.string().optional(),
+    DATABASE_PASSWORD: z.string().optional(),
+    DATABASE_NAME: z.string().optional(),
+    DATABASE_AUTO_LOAD_ENTITIES: z.enum(['true', 'false']).default('false'),
 
-  DATABASE_URL: z.string().optional(),
-  DATABASE_HOST: z.string().optional(),
-  DATABASE_PORT: z.coerce.number().default(5432),
-  DATABASE_USER: z.string().optional(),
-  DATABASE_PASSWORD: z.string().optional(),
-  DATABASE_NAME: z.string().optional(),
-  DATABASE_AUTO_LOAD_ENTITIES: z.enum(['true', 'false']).default('false'),
-});
+    // JWT
+    JWT_ACCESS_SECRET: z.string().min(10),
+    JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
+    JWT_REFRESH_SECRET: z.string().min(10),
+    JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+  })
+  .refine(
+    (env) => {
+      const hasUrl = Boolean(env.DATABASE_URL);
+      const hasComponents = Boolean(
+        env.DATABASE_HOST &&
+        env.DATABASE_USER &&
+        env.DATABASE_PASSWORD &&
+        env.DATABASE_NAME,
+      );
+      return hasUrl || hasComponents;
+    },
+    {
+      message:
+        'You must provide either DATABASE_URL or all individual database variables (HOST, USER, PASSWORD, NAME).',
+    },
+  );
+
+export type Env = z.infer<typeof envSchema>;
