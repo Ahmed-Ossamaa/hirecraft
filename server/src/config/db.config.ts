@@ -3,15 +3,27 @@ import { getEnv } from './validate-env';
 
 export default registerAs('db', () => {
   const env = getEnv();
-  return {
-    url: env.DATABASE_URL,
-    host: env.DATABASE_HOST,
-    port: Number(env.DATABASE_PORT),
-    user: env.DATABASE_USER,
-    pass: env.DATABASE_PASSWORD,
-    name: env.DATABASE_NAME,
+
+  const commonConfig = {
+    type: 'postgres' as const,
     autoLoadEntities: env.DATABASE_AUTO_LOAD_ENTITIES === 'true',
-    synchronize: false,
+    synchronize: true,
     timezone: 'Z',
+  };
+
+  if (env.DATABASE_URL) {
+    return {
+      ...commonConfig,
+      url: env.DATABASE_URL,
+    };
+  }
+
+  return {
+    ...commonConfig,
+    host: env.DATABASE_HOST,
+    port: env.DATABASE_PORT,
+    username: env.DATABASE_USER,
+    password: env.DATABASE_PASSWORD,
+    database: env.DATABASE_NAME,
   };
 });
