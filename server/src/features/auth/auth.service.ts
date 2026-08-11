@@ -19,6 +19,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../users/domain/user.entity';
 import { type ConfigType } from '@nestjs/config';
+import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
 
 @Injectable()
 export class AuthService {
@@ -32,7 +33,7 @@ export class AuthService {
     private readonly config: ConfigType<typeof jwtConfig>,
   ) {}
 
-  async signup(dto: SignupDto) {
+  async signup(dto: SignupDto, companyData?: CreateCompanyParams) {
     await this.ensureEmailIsUnique(dto.email);
 
     const passwordHash = await this.hashPassword(dto.password);
@@ -52,8 +53,8 @@ export class AuthService {
 
       let company: Company | null = null;
 
-      if (dto.userType === UserType.EMPLOYER && dto.companyName) {
-        company = await this.setupEmployer(user.id, dto.companyName, tx);
+      if (dto.userType === UserType.EMPLOYER && companyData) {
+        company = await this.setupEmployer(user.id, companyData, tx);
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -173,17 +174,14 @@ export class AuthService {
    */
   private async setupEmployer(
     userId: string,
-    companyName: string,
+    companyData: CreateCompanyParams,
     tx: EntityManager,
   ): Promise<Company> {
     //Create Company
-    const company = await this.companiesService.createCompany(
-      { name: companyName },
-      tx,
-    );
+    const company = await this.companiesService.createCompany(companyData, tx);
 
     //Link the User to the Company as ADMIN
-    await this.companyMembersService.createMember(
+    await this.companyMembersService.addMember(
       {
         userId: userId,
         companyId: company.id,

@@ -13,10 +13,20 @@ export class CompanyMembersService {
     private readonly companyMemberRepository: ICompanyMemberRepository,
   ) {}
 
-  async createMember(
+  async addMember(
     params: CreateCompanyMemberParams,
     tx?: any,
   ): Promise<CompanyMember> {
     return this.companyMemberRepository.create(params, tx);
+  }
+
+  async checkMembership(
+    userId: string,
+    companyId: string,
+  ): Promise<CompanyMember | null> {
+    return this.companyMemberRepository.findByUserIdAndCompanyId(
+      userId,
+      companyId,
+    );
   }
 }

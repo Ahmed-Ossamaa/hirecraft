@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { UserType } from '../domain/user-type.enum';
+import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 
 @Entity('users')
 export class UserOrmEntity {
@@ -38,6 +40,12 @@ export class UserOrmEntity {
 
   @Column({ nullable: true })
   avatarURL?: string;
+
+  @OneToMany(() => CompanyMemberOrmEntity, (member) => member.user)
+  companyMembers!: CompanyMemberOrmEntity[];
+
+  @Column({ type: 'boolean', default: false })
+  isBanned!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;

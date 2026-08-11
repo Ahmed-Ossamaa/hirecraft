@@ -2,13 +2,16 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
-  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { UserType } from '../../users/domain/user-type.enum';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { CreateCompanyDto } from '@/features/companies/dto/create-company.dto';
 
 export class SignupDto {
   @ApiProperty({ example: 'Ahmed@gmail.com' })
@@ -48,12 +51,8 @@ export class SignupDto {
   @IsEnum(UserType)
   userType!: UserType;
 
-  @ApiPropertyOptional({
-    example: 'ISFP Corp',
-    description: 'Required if userType is EMPLOYER',
-  })
-  @ValidateIf((f: SignupDto) => f.userType === UserType.EMPLOYER)
-  @IsString()
-  @IsNotEmpty()
-  companyName?: string;
+  @ValidateNested()
+  @Type(() => CreateCompanyDto)
+  @IsOptional()
+  companyData?: CreateCompanyDto;
 }

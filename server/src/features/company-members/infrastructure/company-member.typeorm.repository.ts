@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import {
   ICompanyMemberRepository,
   CreateCompanyMemberParams,
@@ -15,15 +15,29 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     private readonly repository: Repository<CompanyMemberOrmEntity>,
   ) {}
 
-  async create(params: CreateCompanyMemberParams): Promise<CompanyMember> {
-    const ormEntity = this.repository.create(params);
-    const savedEntity = await this.repository.save(ormEntity);
-    return this.mapToDomain(savedEntity);
+  async create(
+    params: CreateCompanyMemberParams,
+    tx?: EntityManager,
+  ): Promise<CompanyMember> {
+    const manager = tx || this.repository.manager;
+    const member = manager.create(CompanyMemberOrmEntity, params);
+    const savedMember = await manager.save(member);
+    return this.mapToDomain(savedMember);
   }
 
-  private mapToDomain(orm: CompanyMemberOrmEntity): CompanyMember {
+  async findByUserIdAndCompanyId(
+    userId: string,
+    companyId: string,
+  ): Promise<CompanyMember | null> {
+    const member = await this.repository.findOne({
+      where: { userId, companyId },
+    });
+    return member ? this.mapToDomain(member) : null;
+  }
+
+  private mapToDomain(ormEntity: CompanyMemberOrmEntity): CompanyMember {
     const member = new CompanyMember();
-    Object.assign(member, orm);
+    Object.assign(member, ormEntity);
     return member;
   }
 }

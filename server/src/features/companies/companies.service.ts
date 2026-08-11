@@ -5,6 +5,7 @@ import {
   CreateCompanyParams,
 } from './domain/company.repo.interface';
 import { Company } from './domain/company.entity';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class CompaniesService {
@@ -13,7 +14,10 @@ export class CompaniesService {
     private readonly companyRepository: ICompanyRepository,
   ) {}
 
-  async createCompany(params: CreateCompanyParams, tx?: any): Promise<Company> {
+  async createCompany(
+    params: CreateCompanyParams,
+    tx?: EntityManager,
+  ): Promise<Company> {
     return this.companyRepository.create(params, tx);
   }
 }

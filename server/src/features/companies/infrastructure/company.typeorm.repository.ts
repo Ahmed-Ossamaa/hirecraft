@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import {
   ICompanyRepository,
   CreateCompanyParams,
@@ -15,10 +15,19 @@ export class CompanyTypeormRepository implements ICompanyRepository {
     private readonly repository: Repository<CompanyOrmEntity>,
   ) {}
 
-  async create(params: CreateCompanyParams): Promise<Company> {
-    const ormEntity = this.repository.create(params);
-    const savedEntity = await this.repository.save(ormEntity);
-    return this.mapToDomain(savedEntity);
+  async create(
+    params: CreateCompanyParams,
+    tx?: EntityManager,
+  ): Promise<Company> {
+    const manager = tx || this.repository.manager;
+    const company = manager.create(CompanyOrmEntity, params);
+    const savedCompany = await manager.save(company);
+    return this.mapToDomain(savedCompany);
+  }
+
+  async findById(id: string): Promise<Company | null> {
+    const company = await this.repository.findOne({ where: { id } });
+    return company ? this.mapToDomain(company) : null;
   }
 
   private mapToDomain(orm: CompanyOrmEntity): Company {

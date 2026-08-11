@@ -1,3 +1,5 @@
+import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
+
 export class Company {
   id!: string;
   name!: string;
@@ -7,6 +9,7 @@ export class Company {
   location?: string;
   size?: string;
   industry?: string;
+  members?: CompanyMember[];
   createdAt!: Date;
   updatedAt!: Date;
 }

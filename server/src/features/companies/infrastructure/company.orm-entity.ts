@@ -1,9 +1,11 @@
+import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('companies')
@@ -11,7 +13,7 @@ export class CompanyOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   name!: string;
 
   @Column({ nullable: true })
@@ -20,7 +22,7 @@ export class CompanyOrmEntity {
   @Column({ nullable: true })
   coverUrl?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column({ nullable: true })
@@ -31,6 +33,11 @@ export class CompanyOrmEntity {
 
   @Column({ nullable: true })
   industry?: string;
+
+  @OneToMany(() => CompanyMemberOrmEntity, (member) => member.company, {
+    cascade: true,
+  })
+  members!: CompanyMemberOrmEntity[];
 
   @CreateDateColumn()
   createdAt!: Date;

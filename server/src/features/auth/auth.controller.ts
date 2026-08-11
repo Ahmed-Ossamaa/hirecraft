@@ -30,8 +30,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Register a new user (Candidate or Employer)' })
   @ApiResponse({ status: 201, description: 'User successfully created.' })
   @ApiResponse({ status: 409, description: 'Email already exists.' })
-  async signup(@Body() signupDto: SignupDto) {
-    return this.authService.signup(signupDto);
+  async signup(@Body() dto: SignupDto) {
+    const result = await this.authService.signup(dto, dto.companyData);
+    return result;
   }
 
   @Post('login')

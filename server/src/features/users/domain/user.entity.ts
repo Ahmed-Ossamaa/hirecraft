@@ -12,6 +12,7 @@ export class User {
   gender?: string;
   dob?: Date;
   avatarURL?: string;
+  isBanned!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }

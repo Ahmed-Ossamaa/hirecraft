@@ -14,4 +14,5 @@ export type CreateCompanyParams = {
 
 export interface ICompanyRepository {
   create(params: CreateCompanyParams, tx?: any): Promise<Company>;
+  findById(id: string): Promise<Company | null>;
 }
