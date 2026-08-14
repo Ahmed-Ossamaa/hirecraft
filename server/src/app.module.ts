@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { UsersModule } from './features/users/users.module';
 import { AuthModule } from './features/auth/auth.module';
 import { CompaniesModule } from './features/companies/companies.module';
-import { WorkersModule } from './features/workers/workers.module';
 import { JobsModule } from './features/jobs/jobs.module';
 import { ApplicationsModule } from './features/applications/applications.module';
 import { CompanyMembersModule } from './features/company-members/company-members.module';
@@ -14,6 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { validateEnv } from './config/validate-env';
 import { MachineCategoriesModule } from './features/machine-categories/machine-categories.module';
 import { MachinesModule } from './features/machines/machines.module';
+import { WorkerProfilesModule } from './features/worker-profiles/worker-profiles.module';
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
 
@@ -35,12 +35,12 @@ import jwtConfig from './config/jwt.config';
     UsersModule,
     AuthModule,
     CompaniesModule,
-    WorkersModule,
     JobsModule,
     ApplicationsModule,
     CompanyMembersModule,
     MachineCategoriesModule,
     MachinesModule,
+    WorkerProfilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
