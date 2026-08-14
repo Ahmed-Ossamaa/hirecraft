@@ -5,6 +5,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +20,8 @@ async function bootstrap() {
   };
 
   app.setGlobalPrefix(apiPrefix!);
+  app.enableCors(corsOptions);
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -29,8 +32,7 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(new ApiResponseInterceptor());
 
-  app.enableCors(corsOptions);
-  app.use(cookieParser());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Technically HiringF Platform API')
@@ -41,10 +43,8 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
+
   await app.listen(port);
-  Logger.log(
-    `Application is running on: ${baseUrl}/${apiPrefix}/${port}`,
-    'Bootstrap',
-  );
+  Logger.log(`Application is running on: ${baseUrl}/${apiPrefix}`, 'Bootstrap');
 }
 bootstrap();
