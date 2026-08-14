@@ -79,6 +79,6 @@ export class AuthController {
       sameSite: 'lax',
     });
 
-    return { message: 'Logged out successfully' };
+    return null;
   }
 }

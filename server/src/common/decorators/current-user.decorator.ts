@@ -1,4 +1,4 @@
-import { JwtUser } from '../types/jwt-user.type';
+import { JwtUser } from '../types/jwt.types';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 

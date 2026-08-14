@@ -20,6 +20,7 @@ import { LoginDto } from './dto/login.dto';
 import { User } from '../users/domain/user.entity';
 import { type ConfigType } from '@nestjs/config';
 import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
+import { JwtUser } from '@/common/types/jwt.types';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +67,27 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.validateUserCredentials(dto.email, dto.password);
-    const tokens = await this.getTokens(user.id, user.email, user.userType);
+    let companyId: string | undefined;
+    let role: string | undefined;
+
+    if (user.userType === UserType.EMPLOYER) {
+      // (Ensure getMembershipByUserId is implemented in CompanyMembersService)
+      const membership = await this.companyMembersService.getMembershipByUserId(
+        user.id,
+      );
+
+      if (membership && membership.isActive) {
+        companyId = membership.companyId;
+        role = membership.role;
+      }
+    }
+    const tokens = await this.getTokens({
+      id: user.id,
+      email: user.email,
+      userType: user.userType,
+      companyId,
+      role,
+    });
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -95,8 +116,28 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
+    let companyId: string | undefined;
+    let role: string | undefined;
+
+    if (user.userType === UserType.EMPLOYER) {
+      const membership = await this.companyMembersService.getMembershipByUserId(
+        user.id,
+      );
+
+      if (membership && membership.isActive) {
+        companyId = membership.companyId;
+        role = membership.role;
+      }
+    }
+
     // Generate new tokens
-    const tokens = await this.getTokens(user.id, user.email, user.userType);
+    const tokens = await this.getTokens({
+      id: user.id,
+      email: user.email,
+      userType: user.userType,
+      companyId,
+      role,
+    });
 
     // Rotate the refresh token in the database
     await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -127,9 +168,14 @@ export class AuthService {
 
     return user;
   }
-  private async getTokens(userId: string, email: string, userType: string) {
-    const jwtPayload = { sub: userId, email, userType };
-
+  private async getTokens(user: JwtUser) {
+    const jwtPayload = {
+      sub: user.id,
+      email: user.email,
+      userType: user.userType,
+      companyId: user.companyId,
+      role: user.role,
+    };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.accessSecret,
