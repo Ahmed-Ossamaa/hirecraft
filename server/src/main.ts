@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
@@ -9,6 +9,7 @@ import { ApiResponseInterceptor } from './common/interceptors/api-response.inter
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const baseUrl = configService.get<string>('app.baseUrl');
   const port = configService.get<number>('app.port')!;
   const apiPrefix = configService.get<string>('app.apiPrefix');
 
@@ -41,5 +42,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
   await app.listen(port);
+  Logger.log(
+    `Application is running on: ${baseUrl}/${apiPrefix}/${port}`,
+    'Bootstrap',
+  );
 }
 bootstrap();

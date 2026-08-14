@@ -6,6 +6,7 @@ export default registerAs('app', () => {
   return {
     clientURL: env.CLIENT_URL,
     baseUrl: env.BASE_URL,
+    apiPrefix: env.API_PREFIX,
     port: env.PORT,
     nodeEnv: env.NODE_ENV,
   };
