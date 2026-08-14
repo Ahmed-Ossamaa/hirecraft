@@ -35,6 +35,13 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     return member ? this.mapToDomain(member) : null;
   }
 
+  async findByUserId(userId: string): Promise<CompanyMember | null> {
+    const member = await this.repository.findOne({
+      where: { userId },
+    });
+    return member ? this.mapToDomain(member) : null;
+  }
+
   private mapToDomain(ormEntity: CompanyMemberOrmEntity): CompanyMember {
     const member = new CompanyMember();
     Object.assign(member, ormEntity);

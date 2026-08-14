@@ -20,6 +20,9 @@ export class CompanyMembersService {
     return this.companyMemberRepository.create(params, tx);
   }
 
+  async getMembershipByUserId(userId: string): Promise<CompanyMember | null> {
+    return this.companyMemberRepository.findByUserId(userId);
+  }
   async checkMembership(
     userId: string,
     companyId: string,

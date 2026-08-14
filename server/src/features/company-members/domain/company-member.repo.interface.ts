@@ -11,6 +11,8 @@ export type CreateCompanyMemberParams = {
 
 export interface ICompanyMemberRepository {
   create(params: CreateCompanyMemberParams, tx?: any): Promise<CompanyMember>;
+
+  findByUserId(userId: string): Promise<CompanyMember | null>;
   findByUserIdAndCompanyId(
     userId: string,
     companyId: string,
