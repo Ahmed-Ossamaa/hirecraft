@@ -5,16 +5,21 @@ import {
   WorkerProfileRepositoryInterface,
   CreateWorkerProfileParams,
   UpdateWorkerProfileParams,
+  AddMachineSkillParams,
+  UpdateMachineSkillParams,
 } from '../domain/worker-profile.repo.interface';
 import { WorkerProfile } from '../domain/worker-profile.entity';
 import { WorkerProfileOrmEntity } from './worker-profile.orm-entity';
 import { WorkerMachineSkill } from '../domain/worker-machine-skill.entity';
+import { WorkerMachineSkillOrmEntity } from './worker-machine-skill.orm-entity';
 
 @Injectable()
 export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryInterface {
   constructor(
     @InjectRepository(WorkerProfileOrmEntity)
     private readonly repository: Repository<WorkerProfileOrmEntity>,
+    @InjectRepository(WorkerMachineSkillOrmEntity)
+    private readonly skillRepository: Repository<WorkerMachineSkillOrmEntity>,
   ) {}
 
   async create(params: CreateWorkerProfileParams): Promise<WorkerProfile> {
@@ -23,13 +28,31 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     return this.mapToDomain(savedProfile);
   }
 
+  async addSkill(
+    workerProfileId: string,
+    params: AddMachineSkillParams,
+  ): Promise<WorkerMachineSkill> {
+    const skillOrm = this.skillRepository.create({
+      workerProfileId,
+      machineId: params.machineId,
+      experienceLevel: params.experienceLevel,
+      yearsOfExperience: params.yearsOfExperience,
+    });
+
+    const savedSkill = await this.skillRepository.save(skillOrm);
+
+    const domainSkill = new WorkerMachineSkill();
+    Object.assign(domainSkill, savedSkill);
+
+    return domainSkill;
+  }
   async update(
-    id: string,
+    userId: string,
     params: UpdateWorkerProfileParams,
   ): Promise<WorkerProfile | null> {
-    await this.repository.update(id, params);
-
-    return this.findById(id);
+    const updateResult = await this.repository.update({ userId }, params);
+    if (updateResult.affected === 0) return null;
+    return this.findByUserId(userId);
   }
 
   async findByUserId(userId: string): Promise<WorkerProfile | null> {
@@ -49,13 +72,27 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
       where: { id },
       relations: {
         skills: {
-          machine: true,
+          machine: {
+            category: true,
+          },
         },
       },
     });
     return profile ? this.mapToDomain(profile) : null;
   }
 
+  async updateSkill(
+    skillId: string,
+    params: UpdateMachineSkillParams,
+  ): Promise<void> {
+    await this.skillRepository.update(skillId, params);
+  }
+
+  async deleteSkill(skillId: string): Promise<void> {
+    await this.skillRepository.delete(skillId);
+  }
+
+  //-------------------------
   private mapToDomain(orm: WorkerProfileOrmEntity): WorkerProfile {
     const profile = new WorkerProfile();
 
@@ -68,6 +105,9 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
 
         skill.machineNameEn = ormSkill.machine?.nameEn;
         skill.machineNameAr = ormSkill.machine?.nameAr;
+
+        skill.categoryNameEn = ormSkill.machine?.category?.nameEn;
+        skill.categoryNameAr = ormSkill.machine?.category?.nameAr;
 
         return skill;
       });

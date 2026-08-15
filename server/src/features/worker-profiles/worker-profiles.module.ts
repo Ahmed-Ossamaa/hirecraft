@@ -4,6 +4,8 @@ import { WorkerProfilesController } from './worker-profiles.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkerProfileOrmEntity } from './infrastructure/worker-profile.orm-entity';
 import { WorkerMachineSkillOrmEntity } from './infrastructure/worker-machine-skill.orm-entity';
+import { WORKER_PROFILE_REPOSITORY } from './domain/worker-profile.repo.interface';
+import { WorkerProfileTypeormRepository } from './infrastructure/worker-profile.typeorm.repo';
 
 @Module({
   imports: [
@@ -13,6 +15,13 @@ import { WorkerMachineSkillOrmEntity } from './infrastructure/worker-machine-ski
     ]),
   ],
   controllers: [WorkerProfilesController],
-  providers: [WorkerProfilesService],
+  providers: [
+    WorkerProfilesService,
+    {
+      provide: WORKER_PROFILE_REPOSITORY,
+      useClass: WorkerProfileTypeormRepository,
+    },
+  ],
+  exports: [WORKER_PROFILE_REPOSITORY],
 })
 export class WorkerProfilesModule {}

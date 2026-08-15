@@ -7,4 +7,7 @@ export class WorkerMachineSkill {
   yearsOfExperience!: number;
   machineNameEn?: string;
   machineNameAr?: string;
+
+  categoryNameEn?: string;
+  categoryNameAr?: string;
 }
