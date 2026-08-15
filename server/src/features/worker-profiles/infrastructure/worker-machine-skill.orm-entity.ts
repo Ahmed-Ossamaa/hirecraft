@@ -8,7 +8,7 @@ import {
   Unique,
 } from 'typeorm';
 import { WorkerProfileOrmEntity } from './worker-profile.orm-entity';
-import { MachineOrmEntity } from '../../machines/infrastructure/machine.orm-entity';
+import { MachineOrmEntity } from '@/features/machines/infrastructure/machine.orm-entity';
 import { ExperienceLevel } from '@/features/jobs/domain/exp-level.enum';
 
 @Entity('worker_machine_skills')

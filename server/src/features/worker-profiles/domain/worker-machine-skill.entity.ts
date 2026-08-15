@@ -5,5 +5,6 @@ export class WorkerMachineSkill {
   machineId!: string;
   experienceLevel!: ExperienceLevel;
   yearsOfExperience!: number;
-  machineName?: string;
+  machineNameEn?: string;
+  machineNameAr?: string;
 }
