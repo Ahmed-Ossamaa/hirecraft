@@ -1,10 +1,7 @@
-// src/features/jobs/jobs.controller.ts
 import {
   Controller,
   Post,
   Body,
-  HttpCode,
-  HttpStatus,
   ForbiddenException,
   UseGuards,
   Get,
@@ -20,6 +17,8 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
+import { RolesGuard } from '@/common/guards/role.guard';
+import { Job } from './domain/job.entity';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -27,11 +26,14 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
-  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new job posting for a company' })
-  @ApiResponse({ status: 201, description: 'Job created successfully.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Job created successfully.',
+    type: Job,
+  })
   @ApiResponse({
     status: 403,
     description: 'Forbidden. User lacks permissions.',
@@ -64,7 +66,6 @@ export class JobsController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get all published jobs for all companies with filter',
   })
@@ -77,12 +78,14 @@ export class JobsController {
   }
 
   @Get('company')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get all jobs for a specific company -My company- (paginated)',
   })
-  @ApiResponse({ status: 200, description: 'Jobs retrieved successfully.' })
-  @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a paginated list of company jobs.',
+  })
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   async getCompanyJobs(
     @Query() query: PageOptionsDto,
