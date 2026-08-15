@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { UserType } from '../domain/user-type.enum';
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
+import { WorkerProfileOrmEntity } from '@/features/worker-profiles/infrastructure/worker-profile.orm-entity';
 
 @Entity('users')
 export class UserOrmEntity {
@@ -43,6 +45,9 @@ export class UserOrmEntity {
 
   @OneToMany(() => CompanyMemberOrmEntity, (member) => member.user)
   companyMembers!: CompanyMemberOrmEntity[];
+
+  @OneToOne(() => WorkerProfileOrmEntity, (profile) => profile.user)
+  workerProfile!: WorkerProfileOrmEntity;
 
   @Column({ type: 'boolean', default: false })
   isBanned!: boolean;
