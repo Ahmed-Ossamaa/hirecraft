@@ -155,4 +155,11 @@ export class WorkerProfilesService {
 
     return profile;
   }
+
+  async getProfileId(userId: string): Promise<string> {
+    const profileId = await this.profileRepository.getProfileId(userId);
+
+    if (!profileId) throw new NotFoundException('Worker profile not found.');
+    return profileId;
+  }
 }

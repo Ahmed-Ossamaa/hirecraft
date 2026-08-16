@@ -44,4 +44,6 @@ export interface WorkerProfileRepositoryInterface {
 
   updateSkill(skillId: string, params: UpdateMachineSkillParams): Promise<void>;
   deleteSkill(skillId: string): Promise<void>;
+
+  getProfileId(userId: string): Promise<string | null>;
 }

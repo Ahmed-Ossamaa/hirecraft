@@ -81,6 +81,15 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     return profile ? this.mapToDomain(profile) : null;
   }
 
+  async getProfileId(userId: string): Promise<string | null> {
+    const profile = await this.repository.findOne({
+      where: { userId },
+      select: { id: true },
+    });
+
+    return profile ? profile.id : null;
+  }
+
   async updateSkill(
     skillId: string,
     params: UpdateMachineSkillParams,

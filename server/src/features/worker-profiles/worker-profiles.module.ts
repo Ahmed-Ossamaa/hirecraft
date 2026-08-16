@@ -22,6 +22,6 @@ import { WorkerProfileTypeormRepository } from './infrastructure/worker-profile.
       useClass: WorkerProfileTypeormRepository,
     },
   ],
-  exports: [WORKER_PROFILE_REPOSITORY],
+  exports: [WORKER_PROFILE_REPOSITORY, WorkerProfilesService],
 })
 export class WorkerProfilesModule {}
