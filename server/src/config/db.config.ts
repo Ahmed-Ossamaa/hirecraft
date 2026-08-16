@@ -7,7 +7,7 @@ export default registerAs('db', () => {
   const commonConfig = {
     type: 'postgres' as const,
     autoLoadEntities: env.DATABASE_AUTO_LOAD_ENTITIES === 'true',
-    synchronize: true,
+    synchronize: env.NODE_ENV !== 'production',
     timezone: 'Z',
   };
 
