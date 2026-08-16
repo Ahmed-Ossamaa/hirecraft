@@ -28,27 +28,31 @@ export class JobTypeormRepository implements IJobRepository {
     options: PageOptionsDto,
     filters?: FindJobsFilters,
   ): Promise<PaginatedResult<Job>> {
-    const [jobs, total] = await this.repository.findAndCount({
-      where: {
-        status: filters?.status,
-        companyId: filters?.companyId,
-        experienceLevel: filters?.experienceLevel,
-        jobType: filters?.jobType,
-        country: filters?.country,
-        city: filters?.city,
-      },
-      skip: options.skip,
-      take: options.limit,
-      order: {
-        createdAt: options.order,
-      },
-    });
+    const qb = this.repository.createQueryBuilder('job');
+
+    if (filters?.status) qb.andWhere('job.status = :status', { status: filters.status });
+    if (filters?.companyId) qb.andWhere('job.companyId = :companyId', { companyId: filters.companyId });
+    if (filters?.experienceLevel) qb.andWhere('job.experienceLevel = :experienceLevel', { experienceLevel: filters.experienceLevel });
+    if (filters?.jobType) qb.andWhere('job.jobType = :jobType', { jobType: filters.jobType });
+    if (filters?.country) qb.andWhere('job.country = :country', { country: filters.country });
+    if (filters?.city) qb.andWhere('job.city = :city', { city: filters.city });
+
+    qb.leftJoin('job.company', 'company')
+      .addSelect(['company.name', 'company.logoUrl'])
+      .leftJoin('job.machine', 'machine')
+      .addSelect(['machine.nameEn', 'machine.nameAr'])
+      .skip(options.skip)
+      .take(options.limit)
+      .orderBy('job.createdAt', options.order);
+
+    const [jobs, total] = await qb.getManyAndCount();
 
     return {
       data: jobs.map((job) => this.mapToDomain(job)),
       total,
       page: options.page!,
       limit: options.limit!,
+      totalPages: Math.ceil(total / options.limit!),
     };
   }
 
@@ -68,6 +72,17 @@ export class JobTypeormRepository implements IJobRepository {
   private mapToDomain(ormEntity: JobOrmEntity): Job {
     const job = new Job();
     Object.assign(job, ormEntity);
+    
+    if (ormEntity.company) {
+      job.companyName = ormEntity.company.name;
+      job.companyLogo = ormEntity.company.logoUrl;
+    }
+    
+    if (ormEntity.machine) {
+      job.machineNameEn = ormEntity.machine.nameEn;
+      job.machineNameAr = ormEntity.machine.nameAr;
+    }
+
     return job;
   }
 }
