@@ -6,7 +6,12 @@ import {
   HttpStatus,
   Res,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
+import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import {
@@ -23,7 +28,10 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
@@ -80,5 +88,34 @@ export class AuthController {
     });
 
     return null;
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request a password reset link' })
+  @ApiResponse({ status: 200, description: 'If email exists, a reset link is sent.' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.usersService.resetPassword(dto.email);
+    return { success: true, message: 'Reset email sent.' };
+  }
+
+  @Patch('reset-password/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm a password reset using a token' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
+  async confirmResetPassword(@Body() dto: ConfirmResetPasswordDto) {
+    await this.usersService.confirmResetPassword(dto);
+    return { success: true, message: 'Password reset successfully.' };
+  }
+
+  @Patch('accept-invite')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Accept a company invite and set your password' })
+  @ApiResponse({ status: 200, description: 'Invite accepted and password set.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired invite token.' })
+  async acceptInvite(@Body() dto: AcceptInviteDto) {
+    await this.usersService.acceptInvite(dto);
+    return { success: true, message: 'Account setup complete.' };
   }
 }
