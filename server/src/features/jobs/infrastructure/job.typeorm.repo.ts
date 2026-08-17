@@ -57,13 +57,17 @@ export class JobTypeormRepository implements IJobRepository {
   }
 
   async findById(id: string): Promise<Job | null> {
-    const job = await this.repository.findOne({ where: { id } });
+    const job = await this.repository.findOne({ 
+      where: { id },
+      relations: { company: true, machine: true }
+    });
     return job ? this.mapToDomain(job) : null;
   }
 
   async findByCompanyId(companyId: string): Promise<Job[]> {
     const jobs = await this.repository.find({
       where: { companyId },
+      relations: { company: true, machine: true },
       order: { createdAt: 'DESC' },
     });
     return jobs.map((job) => this.mapToDomain(job));

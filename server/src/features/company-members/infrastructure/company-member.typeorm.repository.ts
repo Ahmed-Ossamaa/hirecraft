@@ -33,6 +33,7 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   ): Promise<CompanyMember | null> {
     const member = await this.repository.findOne({
       where: { userId, companyId },
+      relations: { user: true },
     });
     return member ? this.mapToDomain(member) : null;
   }
@@ -40,6 +41,7 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   async findByUserId(userId: string): Promise<CompanyMember | null> {
     const member = await this.repository.findOne({
       where: { userId },
+      relations: { user: true },
     });
     return member ? this.mapToDomain(member) : null;
   }
