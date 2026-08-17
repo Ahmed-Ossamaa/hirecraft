@@ -57,15 +57,29 @@ export class JobTypeormRepository implements IJobRepository {
   }
 
   async findById(id: string): Promise<Job | null> {
-    const job = await this.repository.findOne({ where: { id } });
+    const job = await this.repository
+      .createQueryBuilder('job')
+      .where('job.id = :id', { id })
+      .leftJoin('job.company', 'company')
+      .addSelect(['company.name', 'company.logoUrl'])
+      .leftJoin('job.machine', 'machine')
+      .addSelect(['machine.nameEn', 'machine.nameAr'])
+      .getOne();
+
     return job ? this.mapToDomain(job) : null;
   }
 
   async findByCompanyId(companyId: string): Promise<Job[]> {
-    const jobs = await this.repository.find({
-      where: { companyId },
-      order: { createdAt: 'DESC' },
-    });
+    const jobs = await this.repository
+      .createQueryBuilder('job')
+      .where('job.companyId = :companyId', { companyId })
+      .leftJoin('job.company', 'company')
+      .addSelect(['company.name', 'company.logoUrl'])
+      .leftJoin('job.machine', 'machine')
+      .addSelect(['machine.nameEn', 'machine.nameAr'])
+      .orderBy('job.createdAt', 'DESC')
+      .getMany();
+
     return jobs.map((job) => this.mapToDomain(job));
   }
 

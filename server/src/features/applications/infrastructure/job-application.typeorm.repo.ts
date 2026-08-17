@@ -28,13 +28,16 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
   }
 
   async findById(id: string): Promise<JobApplication | null> {
-    const application = await this.repository.findOne({
-      where: { id },
-      relations: {
-        job: true,
-        workerProfile: true,
-      },
-    });
+    const application = await this.repository
+      .createQueryBuilder('app')
+      .where('app.id = :id', { id })
+      .leftJoin('app.job', 'job')
+      .addSelect(['job.title'])
+      .leftJoin('app.workerProfile', 'wp')
+      .addSelect(['wp.id', 'wp.title', 'wp.city', 'wp.country'])
+      .leftJoin('wp.user', 'user')
+      .addSelect(['user.id', 'user.firstName', 'user.lastName', 'user.email'])
+      .getOne();
     return application ? this.mapToDomain(application) : null;
   }
 
@@ -67,13 +70,15 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
     workerProfileId: string,
     options: PageOptionsDto,
   ): Promise<PaginatedResult<JobApplication>> {
-    const [applications, total] = await this.repository.findAndCount({
-      where: { workerProfileId },
-      relations: { job: true },
-      order: { createdAt: 'DESC' },
-      skip: options.skip,
-      take: options.limit,
-    });
+    const qb = this.repository.createQueryBuilder('app')
+      .where('app.workerProfileId = :workerProfileId', { workerProfileId })
+      .leftJoin('app.job', 'job')
+      .addSelect(['job.title'])
+      .orderBy('app.createdAt', options.order || 'DESC')
+      .skip(options.skip)
+      .take(options.limit);
+
+    const [applications, total] = await qb.getManyAndCount();
     return {
       data: applications.map((app) => this.mapToDomain(app)),
       total,

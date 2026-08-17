@@ -31,16 +31,25 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     userId: string,
     companyId: string,
   ): Promise<CompanyMember | null> {
-    const member = await this.repository.findOne({
-      where: { userId, companyId },
-    });
+    const member = await this.repository
+      .createQueryBuilder('member')
+      .where('member.userId = :userId', { userId })
+      .andWhere('member.companyId = :companyId', { companyId })
+      .leftJoin('member.user', 'user')
+      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
+      .getOne();
+
     return member ? this.mapToDomain(member) : null;
   }
 
   async findByUserId(userId: string): Promise<CompanyMember | null> {
-    const member = await this.repository.findOne({
-      where: { userId },
-    });
+    const member = await this.repository
+      .createQueryBuilder('member')
+      .where('member.userId = :userId', { userId })
+      .leftJoin('member.user', 'user')
+      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
+      .getOne();
+
     return member ? this.mapToDomain(member) : null;
   }
 
