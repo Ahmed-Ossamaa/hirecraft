@@ -3,9 +3,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
-import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -41,35 +38,6 @@ export class UsersController {
   ) {
     await this.usersService.changePassword(userId, dto);
     return { success: true };
-  }
-
-  @Post('reset-password')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request a password reset link (Placeholder)' })
-  @ApiResponse({ status: 200, description: 'If email exists, a reset link is sent.' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.usersService.resetPassword(dto.email);
-    return { success: true, message: 'Reset email sent (placeholder).' };
-  }
-
-  @Patch('reset-password/confirm')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Confirm a password reset using a token' })
-  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
-  async confirmResetPassword(@Body() dto: ConfirmResetPasswordDto) {
-    await this.usersService.confirmResetPassword(dto);
-    return { success: true, message: 'Password reset successfully.' };
-  }
-
-  @Patch('accept-invite')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Accept a company invite and set your password' })
-  @ApiResponse({ status: 200, description: 'Invite accepted and password set.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired invite token.' })
-  async acceptInvite(@Body() dto: AcceptInviteDto) {
-    await this.usersService.acceptInvite(dto);
-    return { success: true, message: 'Account setup complete.' };
   }
 
   @Patch('verify-email')
