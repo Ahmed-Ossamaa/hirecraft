@@ -6,9 +6,10 @@ import { UserOrmEntity } from './infrastructure/user.orm-entity';
 import { USER_REPOSITORY } from './domain/user.repo.interface';
 import { UserTypeormRepository } from './infrastructure/user.typeorm.repo';
 import { JwtStrategy } from '../auth/strategies/jwt.strategy';
+import { MailModule } from '@/integrations/mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserOrmEntity])],
+  imports: [TypeOrmModule.forFeature([UserOrmEntity]), MailModule],
   controllers: [UsersController],
   providers: [
     UsersService,

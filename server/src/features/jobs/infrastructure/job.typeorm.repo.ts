@@ -69,6 +69,16 @@ export class JobTypeormRepository implements IJobRepository {
     return jobs.map((job) => this.mapToDomain(job));
   }
 
+  async update(id: string, params: Partial<CreateJobParams>): Promise<Job | null> {
+    await this.repository.update(id, params);
+    return this.findById(id);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
+  }
+
   private mapToDomain(ormEntity: JobOrmEntity): Job {
     const job = new Job();
     Object.assign(job, ormEntity);

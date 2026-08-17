@@ -13,7 +13,7 @@ import { UserOrmEntity } from '../../users/infrastructure/user.orm-entity';
 import { JobStatus } from '../domain/job-status.enum';
 import { JobType } from '../domain/job-type.enum';
 import { ExperienceLevel } from '../domain/exp-level.enum';
-import { MachineCategoryOrmEntity } from '@/features/machine-categories/infratsructure/machine-category.orm-entity';
+import { MachineCategoryOrmEntity } from '@/features/machine-categories/infrastructure/machine-category.orm-entity';
 import { MachineOrmEntity } from '@/features/machines/infrastructure/machine.orm-entity';
 
 @Entity('jobs')

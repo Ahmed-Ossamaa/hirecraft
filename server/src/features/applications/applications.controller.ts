@@ -9,6 +9,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -84,5 +85,25 @@ export class ApplicationsController {
     @Body() dto: UpdateApplicationStatusDto,
   ) {
     return this.applicationsService.updateStatus(id, companyId, dto.status);
+  }
+
+  @Get('job/:jobId')
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({
+    summary: 'Get all applications for a specific job (Employer only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a paginated list of applications for the job.',
+  })
+  async getApplicationsForJob(
+    @Param('jobId') jobId: string,
+    @CurrentUser('companyId') companyId: string,
+    @Query() pageOptionsDto: PageOptionsDto,
+  ) {
+    if (!companyId) {
+      throw new ForbiddenException('You must belong to a company to view applications.');
+    }
+    return this.applicationsService.getApplicationsForJob(jobId, companyId, pageOptionsDto);
   }
 }

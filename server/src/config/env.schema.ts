@@ -23,6 +23,12 @@ export const envSchema = z
     JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
     JWT_REFRESH_SECRET: z.string().min(10),
     JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+
+    // Mail
+    BREVO_API_KEY: z.string().optional(),
+    BREVO_API_URL: z.string().default('https://api.brevo.com/v3/smtp/email'),
+    MAIL_SENDER_EMAIL: z.email().default('noreply@technically.com'),
+    MAIL_SENDER_NAME: z.string().default('Technically Team'),
   })
   .refine(
     (env) => {

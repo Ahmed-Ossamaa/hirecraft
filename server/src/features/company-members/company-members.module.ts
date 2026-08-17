@@ -5,9 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompanyMemberOrmEntity } from './infrastructure/company-member.orm-entity';
 import { COMPANY_MEMBER_REPOSITORY } from './domain/company-member.repo.interface';
 import { CompanyMemberTypeormRepository } from './infrastructure/company-member.typeorm.repository';
+import { MailModule } from '@/integrations/mail/mail.module';
+import { UsersModule } from '../users/users.module';
+import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CompanyMemberOrmEntity])],
+  imports: [TypeOrmModule.forFeature([CompanyMemberOrmEntity]), MailModule, UsersModule, CompaniesModule],
   controllers: [CompanyMembersController],
   providers: [
     {

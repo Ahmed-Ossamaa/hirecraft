@@ -11,6 +11,7 @@ import {
 import { WorkerProfilesService } from '../worker-profiles/worker-profiles.service';
 import { CreateJobApplicationDto } from './dto/apply-to-job.dto';
 import { JobApplication } from './domain/job-application.entity';
+import { JobsService } from '../jobs/jobs.service';
 import { ApplicationStatus } from './domain/application-status.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
@@ -21,6 +22,7 @@ export class ApplicationsService {
     @Inject(JOB_APPLICATION_REPOSITORY)
     private readonly applicationRepo: JobApplicationRepositoryInterface,
     private readonly workerProfilesService: WorkerProfilesService,
+    private readonly jobsService: JobsService,
   ) {}
 
   async applyToJob(
@@ -77,5 +79,18 @@ export class ApplicationsService {
       throw new Error('Application not found');
     }
     return updatedApp;
+  }
+
+  async getApplicationsForJob(
+    jobId: string,
+    companyId: string,
+    options: PageOptionsDto,
+  ): Promise<PaginatedResult<JobApplication>> {
+    const job = await this.jobsService.getJobById(jobId);
+    if (job.companyId !== companyId) {
+      throw new ForbiddenException('You do not have permission to view applications for this job.');
+    }
+    
+    return this.applicationRepo.findByJobId(jobId, options);
   }
 }

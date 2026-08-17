@@ -30,6 +30,14 @@ export class CompanyTypeormRepository implements ICompanyRepository {
     return company ? this.mapToDomain(company) : null;
   }
 
+  async update(
+    id: string,
+    params: Partial<CreateCompanyParams>,
+  ): Promise<Company | null> {
+    await this.repository.update(id, params);
+    return this.findById(id);
+  }
+
   private mapToDomain(orm: CompanyOrmEntity): Company {
     const company = new Company();
     Object.assign(company, orm);

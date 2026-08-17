@@ -13,6 +13,13 @@ export class User {
   dob?: Date;
   avatarURL?: string;
   isBanned!: boolean;
+  isEmailVerified!: boolean;
+  verifyEmailToken?: string | null;
+  verifyEmailTokenExpiresAt?: Date | null;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiresAt?: Date | null;
+  inviteToken?: string | null;
+  inviteTokenExpiresAt?: Date | null;
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -71,7 +71,6 @@ export class AuthService {
     let role: string | undefined;
 
     if (user.userType === UserType.EMPLOYER) {
-      // (Ensure getMembershipByUserId is implemented in CompanyMembersService)
       const membership = await this.companyMembersService.getMembershipByUserId(
         user.id,
       );

@@ -52,6 +52,27 @@ export class UserOrmEntity {
   @Column({ type: 'boolean', default: false })
   isBanned!: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  isEmailVerified!: boolean;
+
+  @Column({ type: 'varchar', select: false, nullable: true })
+  verifyEmailToken?: string | null;
+
+  @Column({ type: 'timestamp', select: false, nullable: true })
+  verifyEmailTokenExpiresAt?: Date | null;
+
+  @Column({ type: 'varchar', select: false, nullable: true })
+  resetPasswordToken?: string | null;
+
+  @Column({ type: 'timestamp', select: false, nullable: true })
+  resetPasswordExpiresAt?: Date | null;
+
+  @Column({ type: 'varchar', select: false, nullable: true })
+  inviteToken?: string | null;
+
+  @Column({ type: 'timestamp', select: false, nullable: true })
+  inviteTokenExpiresAt?: Date | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 
