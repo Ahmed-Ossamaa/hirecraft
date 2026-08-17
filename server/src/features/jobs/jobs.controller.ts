@@ -6,6 +6,9 @@ import {
   UseGuards,
   Get,
   Query,
+  Param,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
@@ -19,6 +22,7 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Job } from './domain/job.entity';
+import { UpdateJobDto } from './dto/update-job.dto';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -99,5 +103,48 @@ export class JobsController {
 
     // Returns ALL jobs (Drafts, Published, etc.) for this specific company
     return this.jobsService.getJobsByCompany(companyId, query);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get details of a specific job' })
+  @ApiResponse({ status: 200, description: 'Returns job details', type: Job })
+  async getJobById(@Param('id') id: string) {
+    return this.jobsService.getJobById(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Update a job posting (Employer only)' })
+  @ApiResponse({ status: 200, description: 'Job updated successfully.', type: Job })
+  async updateJob(
+    @Param('id') id: string,
+    @Body() dto: UpdateJobDto,
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    if (!companyId) throw new ForbiddenException('No company association.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('You do not have permission to update job postings.');
+    }
+    return this.jobsService.updateJob(id, companyId, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Delete a job posting (Employer only)' })
+  @ApiResponse({ status: 200, description: 'Job deleted successfully.' })
+  async deleteJob(
+    @Param('id') id: string,
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    if (!companyId) throw new ForbiddenException('No company association.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('You do not have permission to delete job postings.');
+    }
+    await this.jobsService.deleteJob(id, companyId);
+    return { success: true };
   }
 }

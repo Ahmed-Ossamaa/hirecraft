@@ -57,6 +57,104 @@ export class UserTypeormRepository implements IUserRepository {
     await this.repository.update(userId, { hashedRefreshToken: hashedToken });
   }
 
+  async updateProfile(userId: string, data: Partial<User>): Promise<User | null> {
+    await this.repository.update(userId, data);
+    return this.findById(userId);
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.repository.update(userId, { passwordHash });
+  }
+
+  async updateBanStatus(userId: string, isBanned: boolean): Promise<void> {
+    await this.repository.update(userId, { isBanned });
+  }
+
+  async verifyEmail(userId: string): Promise<void> {
+    await this.repository.update(userId, { isEmailVerified: true });
+  }
+
+  async saveVerifyEmailToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await this.repository.update(userId, {
+      verifyEmailToken: token,
+      verifyEmailTokenExpiresAt: expiresAt,
+    });
+  }
+
+  async clearVerifyEmailToken(userId: string): Promise<void> {
+    await this.repository.update(userId, {
+      verifyEmailToken: null,
+      verifyEmailTokenExpiresAt: null,
+    });
+  }
+
+  async findByVerifyEmailToken(token: string): Promise<User | null> {
+    const ormEntity = await this.repository
+      .createQueryBuilder('user')
+      .where('user.verifyEmailToken = :token', { token })
+      .addSelect(['user.verifyEmailToken', 'user.verifyEmailTokenExpiresAt'])
+      .getOne();
+
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
+  }
+
+  async saveResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await this.repository.update(userId, {
+      resetPasswordToken: token,
+      resetPasswordExpiresAt: expiresAt,
+    });
+  }
+
+  async clearResetToken(userId: string): Promise<void> {
+    await this.repository.update(userId, {
+      resetPasswordToken: null,
+      resetPasswordExpiresAt: null,
+    });
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    const ormEntity = await this.repository
+      .createQueryBuilder('user')
+      .where('user.resetPasswordToken = :token', { token })
+      .addSelect(['user.resetPasswordToken', 'user.resetPasswordExpiresAt'])
+      .getOne();
+
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
+  }
+
+  async saveInviteToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+    await this.repository.update(userId, {
+      inviteToken: token,
+      inviteTokenExpiresAt: expiresAt,
+    });
+  }
+
+  async clearInviteToken(userId: string): Promise<void> {
+    await this.repository.update(userId, {
+      inviteToken: null,
+      inviteTokenExpiresAt: null,
+    });
+  }
+
+  async findByInviteToken(token: string): Promise<User | null> {
+    const ormEntity = await this.repository
+      .createQueryBuilder('user')
+      .where('user.inviteToken = :token', { token })
+      .addSelect(['user.inviteToken', 'user.inviteTokenExpiresAt'])
+      .getOne();
+
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
+  }
+
+  async findById(id: string): Promise<User | null> {
+    const ormEntity = await this.repository.findOne({ where: { id } });
+    if (!ormEntity) return null;
+    return this.mapToDomain(ormEntity);
+  }
+
   // convert ORM entity -> Domain entity
   private mapToDomain(orm: UserOrmEntity): User {
     const user = new User();

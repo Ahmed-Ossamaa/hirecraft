@@ -24,7 +24,20 @@ export interface IUserRepository {
 
   updateRefreshToken(userId: string, hashedToken: string | null): Promise<void>;
 
-  //updatePassword()
+  updateProfile(userId: string, data: Partial<User>): Promise<User | null>;
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
+  updateBanStatus(userId: string, isBanned: boolean): Promise<void>;
+  verifyEmail(userId: string): Promise<void>;
 
-  //updateProfile()
+  saveVerifyEmailToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  findByVerifyEmailToken(token: string): Promise<User | null>;
+  clearVerifyEmailToken(userId: string): Promise<void>;
+
+  saveResetToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  findByResetToken(token: string): Promise<User | null>;
+  clearResetToken(userId: string): Promise<void>;
+
+  saveInviteToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  findByInviteToken(token: string): Promise<User | null>;
+  clearInviteToken(userId: string): Promise<void>;
 }

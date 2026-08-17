@@ -16,16 +16,19 @@ import { MachinesModule } from './features/machines/machines.module';
 import { WorkerProfilesModule } from './features/worker-profiles/worker-profiles.module';
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
+import mailConfig from './config/mail.config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
         process.env.NODE_ENV === 'production'
           ? '.env.production'
           : '.env.development',
-      load: [appConfig, dbConfig, jwtConfig],
+      load: [appConfig, dbConfig, jwtConfig, mailConfig],
       validate: validateEnv,
     }),
     TypeOrmModule.forRootAsync({

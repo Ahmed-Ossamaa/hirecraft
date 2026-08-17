@@ -42,13 +42,18 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
     jobId: string,
     options: PageOptionsDto,
   ): Promise<PaginatedResult<JobApplication>> {
-    const [applications, total] = await this.repository.findAndCount({
-      where: { jobId },
-      relations: { workerProfile: true },
-      order: { createdAt: options.order },
-      skip: options.skip,
-      take: options.limit,
-    });
+    const qb = this.repository.createQueryBuilder('app')
+      .where('app.jobId = :jobId', { jobId })
+      .leftJoin('app.workerProfile', 'wp')
+      .addSelect(['wp.id', 'wp.title', 'wp.city', 'wp.country'])
+      .leftJoin('wp.user', 'user')
+      .addSelect(['user.id', 'user.firstName', 'user.lastName', 'user.email'])
+      .orderBy('app.createdAt', options.order)
+      .skip(options.skip)
+      .take(options.limit);
+
+    const [applications, total] = await qb.getManyAndCount();
+    
     return {
       data: applications.map((app) => this.mapToDomain(app)),
       total,
@@ -115,6 +120,11 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
 
     application.jobTitle = orm.job?.title;
     application.workerTitle = orm.workerProfile?.title;
+    
+    if (orm.workerProfile?.user) {
+      (application as any).applicantName = `${orm.workerProfile.user.firstName} ${orm.workerProfile.user.lastName}`.trim();
+      (application as any).applicantEmail = orm.workerProfile.user.email;
+    }
 
     return application;
   }

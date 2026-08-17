@@ -13,4 +13,7 @@ export class JobApplication {
 
   createdAt!: Date;
   updatedAt!: Date;
+
+  applicantName?: string;
+  applicantEmail?: string;
 }

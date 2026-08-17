@@ -42,4 +42,6 @@ export interface IJobRepository {
     options: PageOptionsDto,
     filters?: FindJobsFilters,
   ): Promise<PaginatedResult<Job>>;
+  update(id: string, params: Partial<CreateJobParams>): Promise<Job | null>;
+  delete(id: string): Promise<boolean>;
 }

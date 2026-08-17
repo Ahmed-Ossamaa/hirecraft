@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import {
   type ICompanyRepository,
   COMPANY_REPOSITORY,
@@ -19,5 +19,24 @@ export class CompaniesService {
     tx?: EntityManager,
   ): Promise<Company> {
     return this.companyRepository.create(params, tx);
+  }
+
+  async getMyCompany(companyId: string): Promise<Company> {
+    const company = await this.companyRepository.findById(companyId);
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+    return company;
+  }
+
+  async updateCompany(
+    companyId: string,
+    params: Partial<CreateCompanyParams>,
+  ): Promise<Company> {
+    const updated = await this.companyRepository.update(companyId, params);
+    if (!updated) {
+      throw new NotFoundException('Company not found');
+    }
+    return updated;
   }
 }
