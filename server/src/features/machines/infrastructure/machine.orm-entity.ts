@@ -1,4 +1,4 @@
-import { MachineCategoryOrmEntity } from '@/features/machine-categories/infratsructure/machine-category.orm-entity';
+import { MachineCategoryOrmEntity } from '@/features/machine-categories/infrastructure/machine-category.orm-entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
