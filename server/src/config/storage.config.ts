@@ -1,8 +1,8 @@
 import { registerAs } from '@nestjs/config';
-import { Env } from './env.schema';
+import { getEnv } from './validate-env';
 
 export default registerAs('storage', () => {
-  const env = process.env as unknown as Env;
+  const env = getEnv();
 
   return {
     cloudName: env.CLOUDINARY_CLOUD_NAME,
