@@ -1,8 +1,0 @@
-- `[x]` Update `db.config.ts` (synchronize logic)
-- `[x]` Update `applications.controller.ts` (companyId mapping)
-- `[x]` Update `applications.service.ts` (companyId parameter renaming)
-- `[x]` Update `job-application.orm-entity.ts` (unique composite index)
-- `[x]` Update `jwt.strategy.ts` (remove DB lookup)
-- `[x]` Update `job.entity.ts` (add Company/Machine optional fields)
-- `[x]` Update `job.typeorm.repo.ts` (refactor findAll to use QueryBuilder with targeted JOINs)
-- `[x]` Verify build `npm run build`
