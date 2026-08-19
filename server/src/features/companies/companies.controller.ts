@@ -5,6 +5,8 @@ import {
   Patch,
   Body,
   ForbiddenException,
+  Delete,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -12,6 +14,8 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
+import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { CompaniesService } from './companies.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
@@ -62,5 +66,93 @@ export class CompaniesController {
       );
     }
     return this.companiesService.updateCompany(companyId, dto);
+  }
+
+  @Patch('me/logo')
+  @Roles(UserType.EMPLOYER)
+  @ApiImageUpload('image')
+  @ApiOperation({
+    summary: 'Upload or update company logo (Admin/Hiring Manager only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Company logo updated',
+    type: Company,
+  })
+  async uploadLogo(
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+    @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
+  ) {
+    if (!companyId)
+      throw new ForbiddenException('You are not associated with any company.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('Insufficient permissions.');
+    }
+    return this.companiesService.uploadLogo(companyId, file);
+  }
+
+  @Delete('me/logo')
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Remove company logo (Admin/Hiring Manager only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Company logo removed',
+    type: Company,
+  })
+  async removeLogo(
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+  ) {
+    if (!companyId)
+      throw new ForbiddenException('You are not associated with any company.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('Insufficient permissions.');
+    }
+    return this.companiesService.removeLogo(companyId);
+  }
+
+  @Patch('me/cover')
+  @Roles(UserType.EMPLOYER)
+  @ApiImageUpload('image')
+  @ApiOperation({
+    summary: 'Upload or update company cover (Admin/Hiring Manager only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Company cover updated',
+    type: Company,
+  })
+  async uploadCover(
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+    @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
+  ) {
+    if (!companyId)
+      throw new ForbiddenException('You are not associated with any company.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('Insufficient permissions.');
+    }
+    return this.companiesService.uploadCover(companyId, file);
+  }
+
+  @Delete('me/cover')
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Remove company cover (Admin/Hiring Manager only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Company cover removed',
+    type: Company,
+  })
+  async removeCover(
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+  ) {
+    if (!companyId)
+      throw new ForbiddenException('You are not associated with any company.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException('Insufficient permissions.');
+    }
+    return this.companiesService.removeCover(companyId);
   }
 }

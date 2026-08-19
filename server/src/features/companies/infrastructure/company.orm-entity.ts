@@ -16,11 +16,17 @@ export class CompanyOrmEntity {
   @Column({ type: 'varchar' })
   name!: string;
 
-  @Column({ nullable: true })
-  logoUrl?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  logoUrl?: string | null;
 
-  @Column({ nullable: true })
-  coverUrl?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  logoPublicId?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  coverUrl?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  coverPublicId?: string | null;
 
   @Column({ type: 'text', nullable: true })
   description?: string;

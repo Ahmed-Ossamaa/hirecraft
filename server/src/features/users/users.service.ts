@@ -11,6 +11,10 @@ import {
   USER_REPOSITORY,
   CreateUserParams,
 } from './domain/user.repo.interface';
+import {
+  type IStorageService,
+  STORAGE_SERVICE,
+} from '@/integrations/storage/storage.interface';
 import { User } from './domain/user.entity';
 import { UserType } from './domain/user-type.enum';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -29,6 +33,8 @@ export class UsersService {
     @Inject(appConfig.KEY)
     private readonly config: ConfigType<typeof appConfig>,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(STORAGE_SERVICE)
+    private readonly storageService: IStorageService,
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
@@ -183,5 +189,45 @@ export class UsersService {
 
     await this.userRepository.verifyEmail(user.id);
     await this.userRepository.clearVerifyEmailToken(user.id);
+  }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
+    const user = await this.userRepository.findForAuthById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const publicId = `user_${userId}_avatar`;
+    const result = await this.storageService.uploadImage(file, {
+      folder: 'avatars',
+      type: 'avatar',
+      publicId,
+      overwrite: true,
+    });
+
+    const updatedUser = await this.userRepository.updateProfile(userId, {
+      avatarURL: result.url,
+      avatarPublicId: result.publicId,
+    });
+
+    return updatedUser!;
+  }
+
+  async removeAvatar(userId: string): Promise<User> {
+    const user = await this.userRepository.findForAuthById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.avatarPublicId) {
+      await this.storageService.deleteFile(user.avatarPublicId);
+    }
+
+    const updatedUser = await this.userRepository.updateProfile(userId, {
+      avatarURL: null,
+      avatarPublicId: null,
+    });
+
+    return updatedUser!;
   }
 }

@@ -3,8 +3,10 @@ import { CompanyMember } from '@/features/company-members/domain/company-member.
 export class Company {
   id!: string;
   name!: string;
-  logoUrl?: string;
-  coverUrl?: string;
+  logoUrl?: string | null;
+  logoPublicId?: string | null;
+  coverUrl?: string | null;
+  coverPublicId?: string | null;
   description?: string;
   location?: string;
   size?: string;

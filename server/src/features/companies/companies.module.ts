@@ -6,8 +6,10 @@ import { CompanyOrmEntity } from './infrastructure/company.orm-entity';
 import { COMPANY_REPOSITORY } from './domain/company.repo.interface';
 import { CompanyTypeormRepository } from './infrastructure/company.typeorm.repository';
 
+import { StorageModule } from '@/integrations/storage/storage.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([CompanyOrmEntity])],
+  imports: [TypeOrmModule.forFeature([CompanyOrmEntity]), StorageModule],
   controllers: [CompaniesController],
   providers: [
     {

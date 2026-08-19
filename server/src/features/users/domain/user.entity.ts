@@ -11,7 +11,8 @@ export class User {
   phoneNumber!: string;
   gender?: string;
   dob?: Date;
-  avatarURL?: string;
+  avatarURL?: string | null;
+  avatarPublicId?: string | null;
   isBanned!: boolean;
   isEmailVerified!: boolean;
   verifyEmailToken?: string | null;

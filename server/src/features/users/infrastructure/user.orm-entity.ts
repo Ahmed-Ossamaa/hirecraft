@@ -40,8 +40,11 @@ export class UserOrmEntity {
   @Column({ nullable: true })
   phoneNumber?: string;
 
-  @Column({ nullable: true })
-  avatarURL?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  avatarURL?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  avatarPublicId?: string | null;
 
   @OneToMany(() => CompanyMemberOrmEntity, (member) => member.user)
   companyMembers!: CompanyMemberOrmEntity[];
