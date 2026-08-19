@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException, UnauthorizedException, NotImplementedException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
@@ -63,7 +68,10 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    const isMatch = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
     if (!isMatch) {
       throw new UnauthorizedException('Incorrect current password');
     }
@@ -115,7 +123,12 @@ export class UsersService {
     await this.userRepository.clearResetToken(user.id);
   }
 
-  async createInvitedUser(email: string, firstName: string, lastName: string, userType: UserType): Promise<{ user: User, inviteToken: string }> {
+  async createInvitedUser(
+    email: string,
+    firstName: string,
+    lastName: string,
+    userType: UserType,
+  ): Promise<{ user: User; inviteToken: string }> {
     const randomPassword = crypto.randomBytes(32).toString('hex');
     const passwordHash = await bcrypt.hash(randomPassword, 10);
 
@@ -157,8 +170,6 @@ export class UsersService {
   async banUser(userId: string, isBanned: boolean): Promise<void> {
     await this.userRepository.updateBanStatus(userId, isBanned);
   }
-
-
 
   async verifyEmailWithToken(token: string): Promise<void> {
     const user = await this.userRepository.findByVerifyEmailToken(token);

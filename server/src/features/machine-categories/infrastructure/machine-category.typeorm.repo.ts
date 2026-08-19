@@ -8,9 +8,7 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 
 @Injectable()
-export class MachineCategoryTypeormRepository
-  implements MachineCategoryRepositoryInterface
-{
+export class MachineCategoryTypeormRepository implements MachineCategoryRepositoryInterface {
   constructor(
     @InjectRepository(MachineCategoryOrmEntity)
     private readonly repository: Repository<MachineCategoryOrmEntity>,

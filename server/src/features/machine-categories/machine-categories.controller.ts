@@ -7,12 +7,25 @@ import { MachineCategory } from './domain/machine-category.entity';
 @ApiTags('Machine Categories')
 @Controller('machine-categories')
 export class MachineCategoriesController {
-  constructor(private readonly machineCategoriesService: MachineCategoriesService) {}
+  constructor(
+    private readonly machineCategoriesService: MachineCategoriesService,
+  ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get a paginated list of machine categories with optional search' })
-  @ApiQuery({ name: 'q', required: false, type: String, description: 'Search term' })
-  @ApiResponse({ status: 200, description: 'Returns paginated categories', type: [MachineCategory] })
+  @ApiOperation({
+    summary: 'Get a paginated list of machine categories with optional search',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    type: String,
+    description: 'Search term',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated categories',
+    type: [MachineCategory],
+  })
   async findAll(
     @Query() pageOptionsDto: PageOptionsDto,
     @Query('q') searchQuery?: string,

@@ -29,7 +29,11 @@ export interface IUserRepository {
   updateBanStatus(userId: string, isBanned: boolean): Promise<void>;
   verifyEmail(userId: string): Promise<void>;
 
-  saveVerifyEmailToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  saveVerifyEmailToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void>;
   findByVerifyEmailToken(token: string): Promise<User | null>;
   clearVerifyEmailToken(userId: string): Promise<void>;
 
@@ -37,7 +41,11 @@ export interface IUserRepository {
   findByResetToken(token: string): Promise<User | null>;
   clearResetToken(userId: string): Promise<void>;
 
-  saveInviteToken(userId: string, token: string, expiresAt: Date): Promise<void>;
+  saveInviteToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void>;
   findByInviteToken(token: string): Promise<User | null>;
   clearInviteToken(userId: string): Promise<void>;
 }

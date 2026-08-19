@@ -102,8 +102,14 @@ export class ApplicationsController {
     @Query() pageOptionsDto: PageOptionsDto,
   ) {
     if (!companyId) {
-      throw new ForbiddenException('You must belong to a company to view applications.');
+      throw new ForbiddenException(
+        'You must belong to a company to view applications.',
+      );
     }
-    return this.applicationsService.getApplicationsForJob(jobId, companyId, pageOptionsDto);
+    return this.applicationsService.getApplicationsForJob(
+      jobId,
+      companyId,
+      pageOptionsDto,
+    );
   }
 }

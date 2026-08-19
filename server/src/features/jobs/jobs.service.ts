@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   type IJobRepository,
   JOB_REPOSITORY,
@@ -48,10 +53,16 @@ export class JobsService {
     });
   }
 
-  async updateJob(id: string, companyId: string, params: Partial<CreateJobParams>): Promise<Job> {
+  async updateJob(
+    id: string,
+    companyId: string,
+    params: Partial<CreateJobParams>,
+  ): Promise<Job> {
     const job = await this.getJobById(id);
     if (job.companyId !== companyId) {
-      throw new ForbiddenException('You do not have permission to update this job');
+      throw new ForbiddenException(
+        'You do not have permission to update this job',
+      );
     }
     const updated = await this.jobRepository.update(id, params);
     if (!updated) {
@@ -60,14 +71,20 @@ export class JobsService {
     return updated;
   }
 
-  async updateJobStatus(id: string, companyId: string, status: JobStatus): Promise<Job> {
+  async updateJobStatus(
+    id: string,
+    companyId: string,
+    status: JobStatus,
+  ): Promise<Job> {
     return this.updateJob(id, companyId, { status });
   }
 
   async deleteJob(id: string, companyId: string): Promise<void> {
     const job = await this.getJobById(id);
     if (job.companyId !== companyId) {
-      throw new ForbiddenException('You do not have permission to delete this job');
+      throw new ForbiddenException(
+        'You do not have permission to delete this job',
+      );
     }
     const success = await this.jobRepository.delete(id);
     if (!success) {

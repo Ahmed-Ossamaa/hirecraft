@@ -57,7 +57,10 @@ export class UserTypeormRepository implements IUserRepository {
     await this.repository.update(userId, { hashedRefreshToken: hashedToken });
   }
 
-  async updateProfile(userId: string, data: Partial<User>): Promise<User | null> {
+  async updateProfile(
+    userId: string,
+    data: Partial<User>,
+  ): Promise<User | null> {
     await this.repository.update(userId, data);
     return this.findById(userId);
   }
@@ -74,7 +77,11 @@ export class UserTypeormRepository implements IUserRepository {
     await this.repository.update(userId, { isEmailVerified: true });
   }
 
-  async saveVerifyEmailToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+  async saveVerifyEmailToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void> {
     await this.repository.update(userId, {
       verifyEmailToken: token,
       verifyEmailTokenExpiresAt: expiresAt,
@@ -99,7 +106,11 @@ export class UserTypeormRepository implements IUserRepository {
     return this.mapToDomain(ormEntity);
   }
 
-  async saveResetToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+  async saveResetToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void> {
     await this.repository.update(userId, {
       resetPasswordToken: token,
       resetPasswordExpiresAt: expiresAt,
@@ -124,7 +135,11 @@ export class UserTypeormRepository implements IUserRepository {
     return this.mapToDomain(ormEntity);
   }
 
-  async saveInviteToken(userId: string, token: string, expiresAt: Date): Promise<void> {
+  async saveInviteToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<void> {
     await this.repository.update(userId, {
       inviteToken: token,
       inviteTokenExpiresAt: expiresAt,

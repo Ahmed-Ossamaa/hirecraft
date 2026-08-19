@@ -12,7 +12,10 @@ import { CompanyRole } from './domain/company-role.enum';
 import { UsersService } from '../users/users.service';
 import { CompaniesService } from '../companies/companies.service';
 import { UserType } from '../users/domain/user-type.enum';
-import { UserInvitedEvent, UserAddedToCompanyEvent } from '@/integrations/mail/mail.events';
+import {
+  UserInvitedEvent,
+  UserAddedToCompanyEvent,
+} from '@/integrations/mail/mail.events';
 import appConfig from '@/config/app.config';
 
 @Injectable()
@@ -52,14 +55,22 @@ export class CompanyMembersService {
   }
 
   async removeMember(userId: string, companyId: string): Promise<void> {
-    const success = await this.companyMemberRepository.remove(userId, companyId);
+    const success = await this.companyMemberRepository.remove(
+      userId,
+      companyId,
+    );
     if (!success) {
       throw new NotFoundException('Member not found in this company.');
     }
   }
 
   async inviteUser(
-    dto: { email: string; firstName: string; lastName: string; role: CompanyRole },
+    dto: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: CompanyRole;
+    },
     companyId: string,
   ): Promise<void> {
     const company = await this.companiesService.getMyCompany(companyId);
@@ -74,7 +85,9 @@ export class CompanyMembersService {
       // User exists, just check if they are already in the company
       const existingMembership = await this.checkMembership(user.id, companyId);
       if (existingMembership) {
-        throw new NotFoundException('User is already a member of this company.'); // better as BadRequest, but keeping it simple
+        throw new NotFoundException(
+          'User is already a member of this company.',
+        ); // better as BadRequest, but keeping it simple
       }
     } else {
       // Create new invited user
@@ -99,7 +112,7 @@ export class CompanyMembersService {
       // new user -> send invite email
       const clientUrl = this.config.clientURL;
       const inviteLink = `${clientUrl}/accept-invite?token=${inviteToken}`;
-      
+
       this.eventEmitter.emit(
         'user.invited',
         new UserInvitedEvent(user.email, company.name, dto.role, inviteLink),

@@ -88,9 +88,11 @@ export class ApplicationsService {
   ): Promise<PaginatedResult<JobApplication>> {
     const job = await this.jobsService.getJobById(jobId);
     if (job.companyId !== companyId) {
-      throw new ForbiddenException('You do not have permission to view applications for this job.');
+      throw new ForbiddenException(
+        'You do not have permission to view applications for this job.',
+      );
     }
-    
+
     return this.applicationRepo.findByJobId(jobId, options);
   }
 }

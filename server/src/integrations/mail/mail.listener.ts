@@ -23,7 +23,11 @@ export class MailListener {
   @OnEvent('user.invited', { async: true })
   async handleUserInvitedEvent(payload: UserInvitedEvent) {
     this.logger.log(`Handling user.invited event for ${payload.email}`);
-    const html = getInviteEmailHtml(payload.companyName, payload.role, payload.inviteLink);
+    const html = getInviteEmailHtml(
+      payload.companyName,
+      payload.role,
+      payload.inviteLink,
+    );
     await this.mailService.sendEmail(
       payload.email,
       'New Member',
@@ -34,7 +38,9 @@ export class MailListener {
 
   @OnEvent('user.added_to_company', { async: true })
   async handleUserAddedToCompanyEvent(payload: UserAddedToCompanyEvent) {
-    this.logger.log(`Handling user.added_to_company event for ${payload.email}`);
+    this.logger.log(
+      `Handling user.added_to_company event for ${payload.email}`,
+    );
     const html = getAddedToCompanyHtml(payload.companyName, payload.role);
     await this.mailService.sendEmail(
       payload.email,
@@ -45,8 +51,12 @@ export class MailListener {
   }
 
   @OnEvent('password.reset.requested', { async: true })
-  async handlePasswordResetRequestedEvent(payload: PasswordResetRequestedEvent) {
-    this.logger.log(`Handling password.reset.requested event for ${payload.email}`);
+  async handlePasswordResetRequestedEvent(
+    payload: PasswordResetRequestedEvent,
+  ) {
+    this.logger.log(
+      `Handling password.reset.requested event for ${payload.email}`,
+    );
     const html = getPasswordResetHtml(payload.firstName, payload.resetLink);
     await this.mailService.sendEmail(
       payload.email,

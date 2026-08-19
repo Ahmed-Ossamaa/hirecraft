@@ -29,7 +29,7 @@ export const envSchema = z
     BREVO_API_URL: z.string().default('https://api.brevo.com/v3/smtp/email'),
     MAIL_SENDER_EMAIL: z.email().default('noreply@technically.com'),
     MAIL_SENDER_NAME: z.string().default('Technically Team'),
-    
+
     // Storage (Cloudinary)
     CLOUDINARY_CLOUD_NAME: z.string().optional(),
     CLOUDINARY_API_KEY: z.string().optional(),
