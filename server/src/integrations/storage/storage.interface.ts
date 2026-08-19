@@ -1,4 +1,5 @@
-export type ImageUploadType = 'avatar' | 'company_logo' | 'document' | 'other';
+export type ImageUploadType =
+  'avatar' | 'company_logo' | 'company_cover' | 'standard';
 
 export interface UploadImageOptions {
   folder: string;
@@ -7,12 +8,17 @@ export interface UploadImageOptions {
   type?: ImageUploadType;
 }
 
+export interface UploadImageResult {
+  url: string;
+  publicId: string;
+}
+
 export interface IStorageService {
-  uploadFile(
+  uploadImage(
     file: Express.Multer.File,
     options: UploadImageOptions,
-  ): Promise<{ url: string; publicId: string }>;
-  
+  ): Promise<UploadImageResult>;
+
   deleteFile(publicId: string): Promise<void>;
 }
 

@@ -1,5 +1,20 @@
-import { Controller, Get, Post, Delete, Param, Query, Body, UseGuards, ForbiddenException, NotImplementedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Query,
+  Body,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CompanyMembersService } from './company-members.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
@@ -21,7 +36,11 @@ export class CompanyMembersController {
   @Get()
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Get a list of members in my company' })
-  @ApiResponse({ status: 200, description: 'Returns paginated members', type: [CompanyMember] })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated members',
+    type: [CompanyMember],
+  })
   async getMembers(
     @CurrentUser('companyId') companyId: string,
     @Query() pageOptionsDto: PageOptionsDto,
@@ -38,16 +57,18 @@ export class CompanyMembersController {
   @ApiResponse({ status: 201, description: 'Invite sent' })
   async inviteMember(
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: string,
+    @CurrentUser('role') role: CompanyRole,
     @Body() dto: InviteMemberDto,
   ) {
     if (!companyId) {
       throw new ForbiddenException('You are not associated with any company.');
     }
     if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException('You do not have permission to invite members.');
+      throw new ForbiddenException(
+        'You do not have permission to invite members.',
+      );
     }
-    
+
     await this.companyMembersService.inviteUser(
       {
         email: dto.email,
@@ -67,15 +88,17 @@ export class CompanyMembersController {
   async removeMember(
     @Param('userId') targetUserId: string,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: string,
+    @CurrentUser('role') role: CompanyRole,
   ) {
     if (!companyId) {
       throw new ForbiddenException('You are not associated with any company.');
     }
     if (role !== CompanyRole.ADMIN) {
-      throw new ForbiddenException('Only company administrators can remove members.');
+      throw new ForbiddenException(
+        'Only company administrators can remove members.',
+      );
     }
-    
+
     await this.companyMembersService.removeMember(targetUserId, companyId);
     return { success: true };
   }

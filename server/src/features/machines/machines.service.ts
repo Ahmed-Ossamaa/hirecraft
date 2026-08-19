@@ -12,7 +12,11 @@ export class MachinesService {
     private readonly machineRepository: MachineRepositoryInterface,
   ) {}
 
-  async findAll(options: PageOptionsDto, categoryId?: string, searchQuery?: string) {
+  async findAll(
+    options: PageOptionsDto,
+    categoryId?: string,
+    searchQuery?: string,
+  ) {
     return this.machineRepository.findAll(options, categoryId, searchQuery);
   }
 }

@@ -1,4 +1,8 @@
-export const getInviteEmailHtml = (companyName: string, role: string, inviteLink: string) => `
+export const getInviteEmailHtml = (
+  companyName: string,
+  role: string,
+  inviteLink: string,
+) => `
   <h1>You've been invited!</h1>
   <p>You have been invited to join <strong>${companyName}</strong> on Technically as a <strong>${role}</strong>.</p>
   <p>Click the link below to accept the invitation and set up your account:</p>

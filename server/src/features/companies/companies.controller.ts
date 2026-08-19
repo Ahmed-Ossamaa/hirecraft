@@ -1,5 +1,17 @@
-import { Controller, UseGuards, Get, Patch, Body, ForbiddenException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  UseGuards,
+  Get,
+  Patch,
+  Body,
+  ForbiddenException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CompaniesService } from './companies.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
@@ -20,7 +32,11 @@ export class CompaniesController {
   @Get('me')
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Get details of my company' })
-  @ApiResponse({ status: 200, description: 'Returns company details', type: Company })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns company details',
+    type: Company,
+  })
   async getMyCompany(@CurrentUser('companyId') companyId: string) {
     if (!companyId) {
       throw new ForbiddenException('You are not associated with any company.');
@@ -34,14 +50,16 @@ export class CompaniesController {
   @ApiResponse({ status: 200, description: 'Company updated', type: Company })
   async updateMyCompany(
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: string,
+    @CurrentUser('role') role: CompanyRole,
     @Body() dto: UpdateCompanyDto,
   ) {
     if (!companyId) {
       throw new ForbiddenException('You are not associated with any company.');
     }
     if (role !== CompanyRole.ADMIN) {
-      throw new ForbiddenException('Only company administrators can update company details.');
+      throw new ForbiddenException(
+        'Only company administrators can update company details.',
+      );
     }
     return this.companiesService.updateCompany(companyId, dto);
   }

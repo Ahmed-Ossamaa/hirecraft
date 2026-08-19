@@ -10,7 +10,12 @@ import { UsersModule } from '../users/users.module';
 import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CompanyMemberOrmEntity]), MailModule, UsersModule, CompaniesModule],
+  imports: [
+    TypeOrmModule.forFeature([CompanyMemberOrmEntity]),
+    MailModule,
+    UsersModule,
+    CompaniesModule,
+  ],
   controllers: [CompanyMembersController],
   providers: [
     {

@@ -46,7 +46,7 @@ export class JobsController {
     @Body() dto: CreateJobDto,
     @CurrentUser('id') userId: string,
     @CurrentUser('companyId') companyId?: string,
-    @CurrentUser('role') role?: string,
+    @CurrentUser('role') role?: CompanyRole,
   ) {
     if (!companyId) {
       throw new ForbiddenException(
@@ -116,16 +116,22 @@ export class JobsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Update a job posting (Employer only)' })
-  @ApiResponse({ status: 200, description: 'Job updated successfully.', type: Job })
+  @ApiResponse({
+    status: 200,
+    description: 'Job updated successfully.',
+    type: Job,
+  })
   async updateJob(
     @Param('id') id: string,
     @Body() dto: UpdateJobDto,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: string,
+    @CurrentUser('role') role: CompanyRole,
   ) {
     if (!companyId) throw new ForbiddenException('No company association.');
     if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException('You do not have permission to update job postings.');
+      throw new ForbiddenException(
+        'You do not have permission to update job postings.',
+      );
     }
     return this.jobsService.updateJob(id, companyId, dto);
   }
@@ -138,11 +144,13 @@ export class JobsController {
   async deleteJob(
     @Param('id') id: string,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: string,
+    @CurrentUser('role') role: CompanyRole,
   ) {
     if (!companyId) throw new ForbiddenException('No company association.');
     if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException('You do not have permission to delete job postings.');
+      throw new ForbiddenException(
+        'You do not have permission to delete job postings.',
+      );
     }
     await this.jobsService.deleteJob(id, companyId);
     return { success: true };

@@ -11,6 +11,6 @@ export interface MachineCategoryRepositoryInterface {
     options: PageOptionsDto,
     searchQuery?: string,
   ): Promise<PaginatedResult<MachineCategory>>;
-  
+
   findById(id: string): Promise<MachineCategory | null>;
 }

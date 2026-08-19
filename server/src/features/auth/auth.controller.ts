@@ -93,7 +93,10 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request a password reset link' })
-  @ApiResponse({ status: 200, description: 'If email exists, a reset link is sent.' })
+  @ApiResponse({
+    status: 200,
+    description: 'If email exists, a reset link is sent.',
+  })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.usersService.resetPassword(dto.email);
     return { success: true, message: 'Reset email sent.' };
@@ -112,7 +115,10 @@ export class AuthController {
   @Patch('accept-invite')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Accept a company invite and set your password' })
-  @ApiResponse({ status: 200, description: 'Invite accepted and password set.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Invite accepted and password set.',
+  })
   @ApiResponse({ status: 401, description: 'Invalid or expired invite token.' })
   async acceptInvite(@Body() dto: AcceptInviteDto) {
     await this.usersService.acceptInvite(dto);
