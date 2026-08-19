@@ -111,7 +111,7 @@ export class JobTypeormRepository implements IJobRepository {
 
     if (ormEntity.company) {
       job.companyName = ormEntity.company.name;
-      job.companyLogo = ormEntity.company.logoUrl;
+      job.companyLogo = ormEntity.company.logoUrl ?? undefined;
     }
 
     if (ormEntity.machine) {

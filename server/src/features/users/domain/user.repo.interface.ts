@@ -1,6 +1,8 @@
 import { UserType } from './user-type.enum';
 import { User } from './user.entity';
 
+import { Gender } from './gender.enum';
+
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
 export type CreateUserParams = {
@@ -10,7 +12,7 @@ export type CreateUserParams = {
   lastName: string;
   userType: UserType;
   phoneNumber: string;
-  gender?: string;
+  gender?: Gender;
   dob?: Date;
 };
 
@@ -21,6 +23,7 @@ export interface IUserRepository {
 
   findForAuthByEmail(email: string): Promise<User | null>;
   findForAuthById(id: string): Promise<User | null>;
+  findById(id: string): Promise<User | null>;
 
   updateRefreshToken(userId: string, hashedToken: string | null): Promise<void>;
 

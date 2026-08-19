@@ -4,10 +4,14 @@ import {
   Body,
   UseGuards,
   Param,
+  Get,
   ParseBoolPipe,
   Query,
   HttpCode,
   HttpStatus,
+  Delete,
+  UploadedFile,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,6 +19,8 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
+import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -28,6 +34,17 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get your own profile details' })
+  @ApiResponse({ status: 200, description: 'Returns the user profile.' })
+  async getProfile(@CurrentUser('id') userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
@@ -77,5 +94,29 @@ export class UsersController {
   ) {
     await this.usersService.banUser(targetUserId, isBanned);
     return { success: true, isBanned };
+  }
+
+  @Patch('me/avatar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiImageUpload('image')
+  @ApiOperation({ summary: 'Upload or update your avatar' })
+  @ApiResponse({ status: 200, description: 'Avatar updated successfully.' })
+  async uploadAvatar(
+    @CurrentUser('id') userId: string,
+    @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
+  ) {
+    const updatedUser = await this.usersService.uploadAvatar(userId, file);
+    return { success: true, avatarURL: updatedUser.avatarURL };
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Remove your avatar' })
+  @ApiResponse({ status: 200, description: 'Avatar removed successfully.' })
+  async removeAvatar(@CurrentUser('id') userId: string) {
+    await this.usersService.removeAvatar(userId);
+    return { success: true };
   }
 }

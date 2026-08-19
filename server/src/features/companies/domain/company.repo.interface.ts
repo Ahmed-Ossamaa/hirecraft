@@ -4,8 +4,10 @@ export const COMPANY_REPOSITORY = Symbol('COMPANY_REPOSITORY');
 
 export type CreateCompanyParams = {
   name: string;
-  logoUrl?: string;
-  coverUrl?: string;
+  logoUrl?: string | null;
+  logoPublicId?: string | null;
+  coverUrl?: string | null;
+  coverPublicId?: string | null;
   description?: string;
   location?: string;
   size?: string;
