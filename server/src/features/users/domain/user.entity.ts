@@ -1,4 +1,5 @@
 import { UserType } from './user-type.enum';
+import { Gender } from './gender.enum';
 
 export class User {
   id!: string;
@@ -9,7 +10,7 @@ export class User {
   lastName!: string;
   userType!: UserType;
   phoneNumber!: string;
-  gender?: string;
+  gender?: Gender;
   dob?: Date;
   avatarURL?: string | null;
   avatarPublicId?: string | null;

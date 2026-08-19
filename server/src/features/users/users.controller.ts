@@ -4,12 +4,14 @@ import {
   Body,
   UseGuards,
   Param,
+  Get,
   ParseBoolPipe,
   Query,
   HttpCode,
   HttpStatus,
   Delete,
   UploadedFile,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -32,6 +34,17 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get your own profile details' })
+  @ApiResponse({ status: 200, description: 'Returns the user profile.' })
+  async getProfile(@CurrentUser('id') userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)

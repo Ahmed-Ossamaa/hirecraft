@@ -10,6 +10,7 @@ import {
 import { UserType } from '../domain/user-type.enum';
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import { WorkerProfileOrmEntity } from '@/features/worker-profiles/infrastructure/worker-profile.orm-entity';
+import { Gender } from '../domain/gender.enum';
 
 @Entity('users')
 export class UserOrmEntity {
@@ -36,6 +37,9 @@ export class UserOrmEntity {
 
   @Column({ type: 'date', nullable: true })
   dob?: Date;
+
+  @Column({ type: 'enum', enum: Gender, nullable: true })
+  gender?: Gender;
 
   @Column({ nullable: true })
   phoneNumber?: string;
