@@ -12,6 +12,7 @@ import {
   Delete,
   UploadedFile,
   NotFoundException,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,6 +23,7 @@ import {
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
+import { User } from './domain/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
@@ -39,7 +41,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get your own profile details' })
-  @ApiResponse({ status: 200, description: 'Returns the user profile.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the user profile.',
+    type: User,
+  })
   async getProfile(@CurrentUser('id') userId: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
@@ -50,7 +56,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update your own profile details' })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully.',
+    type: User,
+  })
   async updateProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateProfileDto,
@@ -89,7 +99,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Ban or unban a user (Platform Admin only)' })
   @ApiResponse({ status: 200, description: 'User ban status updated.' })
   async updateBanStatus(
-    @Param('id') targetUserId: string,
+    @Param('id', ParseUUIDPipe) targetUserId: string,
     @Query('isBanned', ParseBoolPipe) isBanned: boolean,
   ) {
     await this.usersService.banUser(targetUserId, isBanned);

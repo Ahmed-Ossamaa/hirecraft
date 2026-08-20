@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
+import { RequireAtLeastOne } from '@/common/decorators/require-at-least-one.decorator';
 
+@RequireAtLeastOne()
 export class UpdateCompanyDto {
   @ApiPropertyOptional()
   @IsString()

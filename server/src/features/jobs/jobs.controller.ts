@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
@@ -40,7 +41,8 @@ export class JobsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden. User lacks permissions.',
+    description:
+      'Forbidden. Employer must belong to a company to post a job, or lacks permissions.',
   })
   async createJob(
     @Body() dto: CreateJobDto,
@@ -108,7 +110,7 @@ export class JobsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific job' })
   @ApiResponse({ status: 200, description: 'Returns job details', type: Job })
-  async getJobById(@Param('id') id: string) {
+  async getJobById(@Param('id', ParseUUIDPipe) id: string) {
     return this.jobsService.getJobById(id);
   }
 
@@ -122,7 +124,7 @@ export class JobsController {
     type: Job,
   })
   async updateJob(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateJobDto,
     @CurrentUser('companyId') companyId: string,
     @CurrentUser('role') role: CompanyRole,
@@ -142,7 +144,7 @@ export class JobsController {
   @ApiOperation({ summary: 'Delete a job posting (Employer only)' })
   @ApiResponse({ status: 200, description: 'Job deleted successfully.' })
   async deleteJob(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('companyId') companyId: string,
     @CurrentUser('role') role: CompanyRole,
   ) {

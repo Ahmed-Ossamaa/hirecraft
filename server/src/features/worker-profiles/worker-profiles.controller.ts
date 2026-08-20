@@ -7,6 +7,7 @@ import {
   UseGuards,
   Delete,
   Patch,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { WorkerProfilesService } from './worker-profiles.service';
 import { CreateWorkerProfileDto } from './dto/create-worker-profile.dto';
@@ -100,7 +101,7 @@ export class WorkerProfilesController {
     type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
-  async getProfileById(@Param('id') id: string) {
+  async getProfileById(@Param('id', ParseUUIDPipe) id: string) {
     return this.profilesService.getProfileById(id);
   }
 
@@ -131,7 +132,7 @@ export class WorkerProfilesController {
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async updateSkill(
     @CurrentUser('id') userId: string,
-    @Param('skillId') skillId: string,
+    @Param('skillId', ParseUUIDPipe) skillId: string,
     @Body() dto: UpdateMachineSkillDto,
   ) {
     return this.profilesService.updateSkill(userId, skillId, dto);
@@ -148,7 +149,7 @@ export class WorkerProfilesController {
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async deleteSkill(
     @CurrentUser('id') userId: string,
-    @Param('skillId') skillId: string,
+    @Param('skillId', ParseUUIDPipe) skillId: string,
   ) {
     return this.profilesService.deleteSkill(userId, skillId);
   }
