@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   ForbiddenException,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -86,7 +87,7 @@ export class CompanyMembersController {
   @ApiOperation({ summary: 'Remove a member from the company' })
   @ApiResponse({ status: 200, description: 'Member removed' })
   async removeMember(
-    @Param('userId') targetUserId: string,
+    @Param('userId', ParseUUIDPipe) targetUserId: string,
     @CurrentUser('companyId') companyId: string,
     @CurrentUser('role') role: CompanyRole,
   ) {

@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   ForbiddenException,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -80,7 +81,7 @@ export class ApplicationsController {
     type: JobApplication,
   })
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('companyId') companyId: string,
     @Body() dto: UpdateApplicationStatusDto,
   ) {
@@ -96,8 +97,13 @@ export class ApplicationsController {
     status: 200,
     description: 'Returns a paginated list of applications for the job.',
   })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden. Employer must belong to a company to view applications.',
+  })
   async getApplicationsForJob(
-    @Param('jobId') jobId: string,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
     @CurrentUser('companyId') companyId: string,
     @Query() pageOptionsDto: PageOptionsDto,
   ) {
