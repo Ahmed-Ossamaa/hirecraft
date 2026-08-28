@@ -42,6 +42,7 @@ export interface PaymentProvider {
     name: string,
     idempotencyKey?: string,
   ): Promise<{ id: string }>;
+
   createCheckoutSession(params: {
     customerId: string;
     priceId: string;
@@ -50,7 +51,13 @@ export interface PaymentProvider {
     clientReferenceId: string;
     idempotencyKey?: string;
   }): Promise<{ url: string | null }>;
+
   retrieveSubscription(subscriptionId: string): Promise<PaymentSubscription>;
+
+  cancelSubscriptionAtPeriodEnd(
+    subscriptionId: string,
+  ): Promise<PaymentSubscription>;
+
   verifyWebhook(params: {
     payload: Buffer;
     headers: Record<string, string | string[] | undefined>;

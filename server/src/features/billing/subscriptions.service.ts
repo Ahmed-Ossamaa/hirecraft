@@ -13,10 +13,12 @@ import { Repository, DataSource, IsNull, EntityManager } from 'typeorm';
 import { SubscriptionOrmEntity } from './infrastructure/subscription.orm-entity';
 import { ProcessedWebhookOrmEntity } from './infrastructure/processed-webhook.orm-entity';
 import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.orm-entity';
+import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import { SubscriptionStatus } from './domain/subscription-status.enum';
 import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
+import { Plan } from '@/features/plans/domain/plan.entity';
 import {
   PAYMENT_PROVIDER,
   type PaymentProvider,
@@ -43,81 +45,36 @@ export class SubscriptionsService {
     private readonly plansService: PlansService,
   ) {}
 
+  /**
+   * - Orchestrates the checkout session creation flow for a company.
+   * - Validates company admin access, paid plan eligibility, ensures no active subscription exists,
+   * creates/resolves the payment provider customer, and returns the Stripe checkout URL.
+   */
   async createCheckoutSession(
     companyId: string,
-    planId: string,
+    planId: PlanId,
     userId: string,
     idempotencyKey?: string,
   ): Promise<string> {
-    const plan = this.plansService.getPlanById(planId as PlanId);
+    const { company, adminMember } = await this.getCompanyWithAdminCheck(
+      companyId,
+      userId,
+    );
 
-    if (plan.isFree || !plan.paymentPriceId) {
-      throw new BadRequestException(
-        'Cannot create a payment checkout session for the Free plan.',
-      );
-    }
+    const plan = this.validatePaidPlan(planId);
 
-    // Check for existing active subscription
-    const activeSub = await this.subscriptionRepo.findOne({
-      where: { companyId, status: SubscriptionStatus.ACTIVE },
-    });
+    await this.ensureNoActiveSubscription(companyId);
 
-    if (activeSub) {
-      throw new ConflictException(
-        'Company already has an active subscription.',
-      );
-    }
-
-    const company = await this.companyRepo.findOne({
-      where: { id: companyId },
-      relations: { members: { user: true } },
-    });
-
-    if (!company) {
-      throw new NotFoundException('Company not found.');
-    }
-
-    let customerId = company.paymentCustomerId;
-
-    const member = company.members?.find((m) => m.userId === userId);
-    if (!member || member.role !== CompanyRole.ADMIN) {
-      throw new ForbiddenException(
-        'You are not authorized to manage subscriptions for this company.',
-      );
-    }
-
-    if (!customerId) {
-      const email = member.user?.email;
-      if (!email) {
-        throw new BadRequestException('User email is required for billing.');
-      }
-
-      const customer = await this.paymentProvider.createCustomer(
-        email,
-        company.name,
-        idempotencyKey ? `create_customer_company_${companyId}` : undefined,
-      );
-
-      const updateResult = await this.companyRepo.update(
-        { id: companyId, paymentCustomerId: IsNull() },
-        { paymentCustomerId: customer.id },
-      );
-
-      if (updateResult.affected === 0) {
-        const reloaded = await this.companyRepo.findOne({
-          where: { id: companyId },
-        });
-        customerId = reloaded!.paymentCustomerId;
-      } else {
-        customerId = customer.id;
-      }
-    }
+    const customerId = await this.getOrCreatePaymentCustomer(
+      company,
+      adminMember.user?.email,
+    );
 
     const sessionIdempotencyKey = idempotencyKey || crypto.randomUUID();
 
     const session = await this.paymentProvider.createCheckoutSession({
-      customerId: customerId!,
-      priceId: plan.paymentPriceId,
+      customerId,
+      priceId: plan.paymentPriceId!,
       successUrl: '',
       cancelUrl: '',
       clientReferenceId: companyId,
@@ -133,9 +90,213 @@ export class SubscriptionsService {
     return session.url;
   }
 
-  async handlePaymentWebhook(event: PaymentEvent): Promise<void> {
-    const { id: eventId, type, subscriptionId } = event;
+  /**
+   * - Retrieves the current subscription details for a company.
+   * - Returns active subscription information and plan details if present,
+   * Or defaults to the free plan tier.
+   */
+  async getSubscriptionForCompany(companyId: string) {
+    const activeSub = await this.subscriptionRepo.findOne({
+      where: { companyId, status: SubscriptionStatus.ACTIVE },
+    });
 
+    if (activeSub) {
+      const plan = this.plansService.getPlanById(activeSub.planId);
+      return {
+        id: activeSub.id,
+        companyId: activeSub.companyId,
+        planId: activeSub.planId,
+        plan,
+        status: activeSub.status,
+        currentPeriodStart: activeSub.currentPeriodStart,
+        currentPeriodEnd: activeSub.currentPeriodEnd,
+        cancelAtPeriodEnd: activeSub.cancelAtPeriodEnd,
+      };
+    }
+
+    const freePlan = this.plansService.getPlanById(PlanId.FREE_MONTHLY);
+    return {
+      id: null,
+      companyId,
+      planId: freePlan.id,
+      plan: freePlan,
+      status: SubscriptionStatus.ACTIVE,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false,
+    };
+  }
+
+  /**
+   * - Schedules cancellation of an active subscription at the end of the current billing period.
+   * - Verifies company admin privileges and requests period-end cancellation with the payment provider.
+   */
+  async cancelSubscriptionAtPeriodEnd(companyId: string, userId: string) {
+    await this.getCompanyWithAdminCheck(companyId, userId);
+
+    const activeSub = await this.subscriptionRepo.findOne({
+      where: { companyId, status: SubscriptionStatus.ACTIVE },
+    });
+
+    if (!activeSub) {
+      throw new NotFoundException('No active subscription found to cancel.');
+    }
+
+    if (activeSub.cancelAtPeriodEnd) {
+      throw new BadRequestException(
+        'Subscription is already scheduled for cancellation at the end of the period.',
+      );
+    }
+
+    if (!activeSub.providerSubId) {
+      throw new BadRequestException(
+        'Free or non-provider subscription cannot be canceled via payment provider.',
+      );
+    }
+
+    await this.paymentProvider.cancelSubscriptionAtPeriodEnd(
+      activeSub.providerSubId,
+    );
+
+    activeSub.cancelAtPeriodEnd = true;
+    await this.subscriptionRepo.save(activeSub);
+
+    return {
+      message:
+        'Subscription has been scheduled for cancellation at the end of the billing period.',
+      subscription: {
+        id: activeSub.id,
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: activeSub.currentPeriodEnd,
+      },
+    };
+  }
+
+  /**
+   * - Entry point for processing asynchronous payment provider webhooks.
+   * - Resolves the webhook context and delegates execution to the transactional processor.
+   */
+  async handlePaymentWebhook(event: PaymentEvent): Promise<void> {
+    const { latestPaymentSub, companyId } =
+      await this.resolveWebhookContext(event);
+
+    await this.processWebhookTransaction(event, latestPaymentSub, companyId);
+  }
+
+  // ----- Private Methods -------
+
+  /**
+   * - Loads a company by ID and verifies that the specified user is an active admin member.
+   * - Throws NotFoundException if company does not exist or ForbiddenException if user is not an admin.
+   */
+  private async getCompanyWithAdminCheck(
+    companyId: string,
+    userId: string,
+  ): Promise<{
+    company: CompanyOrmEntity;
+    adminMember: CompanyMemberOrmEntity;
+  }> {
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId },
+      relations: { members: { user: true } },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Company not found.');
+    }
+
+    const member = company.members?.find((m) => m.userId === userId);
+    if (!member || member.role !== CompanyRole.ADMIN) {
+      throw new ForbiddenException(
+        'You are not authorized to manage subscriptions for this company.',
+      );
+    }
+
+    return { company, adminMember: member };
+  }
+
+  /**
+   * - Validates that the requested plan exists and is a paid tier with a price ID.
+   * - Throws BadRequestException if attempting to initiate checkout for a free plan.
+   */
+  private validatePaidPlan(planId: PlanId): Plan {
+    const plan = this.plansService.getPlanById(planId);
+    if (plan.isFree || !plan.paymentPriceId) {
+      throw new BadRequestException(
+        'Cannot create a payment checkout session for the Free plan.',
+      );
+    }
+    return plan;
+  }
+
+  /**
+   * - Checks if the company already has an active subscription record.
+   * - Throws ConflictException if an active subscription is found.
+   */
+  private async ensureNoActiveSubscription(companyId: string): Promise<void> {
+    const activeSub = await this.subscriptionRepo.findOne({
+      where: { companyId, status: SubscriptionStatus.ACTIVE },
+    });
+
+    if (activeSub) {
+      throw new ConflictException(
+        'Company already has an active subscription.',
+      );
+    }
+  }
+
+  /**
+   * - Returns the companyexisting payment customer ID
+   * or creates a new customer via the provider using a deterministic key.
+   * - Handles concurrent customer creation safely using an atomic conditional database update.
+   */
+  private async getOrCreatePaymentCustomer(
+    company: CompanyOrmEntity,
+    userEmail?: string,
+  ): Promise<string> {
+    if (company.paymentCustomerId) {
+      return company.paymentCustomerId;
+    }
+
+    if (!userEmail) {
+      throw new BadRequestException('User email is required for billing.');
+    }
+
+    const customer = await this.paymentProvider.createCustomer(
+      userEmail,
+      company.name,
+      `create_customer_company_${company.id}`,
+    );
+
+    const updateResult = await this.companyRepo.update(
+      { id: company.id, paymentCustomerId: IsNull() },
+      { paymentCustomerId: customer.id },
+    );
+
+    if (updateResult.affected === 0) {
+      const reloaded = await this.companyRepo.findOne({
+        where: { id: company.id },
+      });
+      if (!reloaded?.paymentCustomerId) {
+        throw new InternalServerErrorException(
+          'Failed to resolve payment customer ID after customer creation.',
+        );
+      }
+      return reloaded.paymentCustomerId;
+    }
+
+    return customer.id;
+  }
+
+  /**
+   * Fetches latest subscription state from the payment provider
+   * and resolves the target company ID for a webhook event.
+   */
+  private async resolveWebhookContext(event: PaymentEvent): Promise<{
+    latestPaymentSub: PaymentSubscription | null;
+    companyId: string | null;
+  }> {
+    const { type, subscriptionId } = event;
     let latestPaymentSub: PaymentSubscription | null = null;
     let companyId: string | null = null;
 
@@ -174,6 +335,20 @@ export class SubscriptionsService {
         }
       }
     }
+
+    return { latestPaymentSub, companyId };
+  }
+
+  /**
+   * Handles database transaction lifecycle for webhooks,
+   * enforcing event idempotency and updating subscription state.
+   */
+  private async processWebhookTransaction(
+    event: PaymentEvent,
+    latestPaymentSub: PaymentSubscription | null,
+    companyId: string | null,
+  ): Promise<void> {
+    const { id: eventId, type } = event;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -240,6 +415,9 @@ export class SubscriptionsService {
     }
   }
 
+  /**
+   * Persists or updates the local subscription entity state based on the normalized status received from the payment provider.
+   */
   private async syncSubscriptionState(
     paymentSub: PaymentSubscription,
     companyId: string,
@@ -254,24 +432,17 @@ export class SubscriptionsService {
     let localStatus = SubscriptionStatus.ACTIVE;
 
     if (
-      paymentSub.status === PaymentSubscriptionStatus.CANCELED ||
+      // Expired
       paymentSub.status === PaymentSubscriptionStatus.UNPAID ||
       paymentSub.status === PaymentSubscriptionStatus.PAST_DUE
     ) {
-      localStatus = SubscriptionStatus.EXPIRED; // Entitlement ended
-    } else if (paymentSub.cancelAtPeriodEnd) {
-      localStatus = SubscriptionStatus.ACTIVE; // Still entitled
-    }
-
-    if (
-      paymentSub.status === PaymentSubscriptionStatus.CANCELED &&
-      localSub?.status === SubscriptionStatus.CANCELLED
-    ) {
       localStatus = SubscriptionStatus.EXPIRED;
-    }
-
-    if (paymentSub.status === PaymentSubscriptionStatus.CANCELED) {
+      // Cancelled
+    } else if (paymentSub.status === PaymentSubscriptionStatus.CANCELED) {
       localStatus = SubscriptionStatus.CANCELLED;
+      // stays active even if cancelAtPeriodEnd is true
+    } else {
+      localStatus = SubscriptionStatus.ACTIVE;
     }
 
     const currentPeriodStart = paymentSub.currentPeriodStart;

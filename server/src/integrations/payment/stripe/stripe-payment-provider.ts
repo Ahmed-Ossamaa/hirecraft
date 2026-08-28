@@ -128,6 +128,43 @@ export class StripePaymentProvider implements PaymentProvider {
     }
   }
 
+  async cancelSubscriptionAtPeriodEnd(
+    subscriptionId: string,
+  ): Promise<PaymentSubscription> {
+    try {
+      const stripeSub = await this.stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+
+      return {
+        id: stripeSub.id,
+        customerId:
+          typeof stripeSub.customer === 'string'
+            ? stripeSub.customer
+            : stripeSub.customer.id,
+        status: this.mapStripeStatus(stripeSub.status),
+        currentPeriodStart: new Date(
+          (stripeSub.items.data[0]?.current_period_start ?? stripeSub.created) *
+            1000,
+        ),
+        currentPeriodEnd: new Date(
+          (stripeSub.items.data[0]?.current_period_end ?? stripeSub.created) *
+            1000,
+        ),
+        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+        priceId: stripeSub.items.data[0]?.price?.id || null,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to cancel subscription ${subscriptionId} at period end.`,
+        error instanceof Error ? error.stack : error,
+      );
+      throw new InternalServerErrorException(
+        'Failed to cancel subscription with payment provider.',
+      );
+    }
+  }
+
   verifyWebhook(params: {
     payload: Buffer;
     headers: Record<string, string | string[] | undefined>;

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.orm-entity';
 import { SubscriptionStatus } from '../domain/subscription-status.enum';
+import { PlanId } from '@/features/plans/domain/plan-id.enum';
 
 @Entity('subscriptions')
 @Index('IDX_UNIQUE_ACTIVE_SUBSCRIPTION', ['companyId'], {
@@ -33,8 +34,8 @@ export class SubscriptionOrmEntity {
   @Column({ type: 'varchar', unique: true, nullable: true })
   providerSubId?: string | null;
 
-  @Column({ type: 'varchar' })
-  planId!: string;
+  @Column({ type: 'enum', enum: PlanId })
+  planId!: PlanId;
 
   @Column({
     type: 'enum',
