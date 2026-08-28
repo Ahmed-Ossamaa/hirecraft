@@ -22,3 +22,11 @@ export const getPasswordResetHtml = (firstName: string, resetLink: string) => `
   <a href="${resetLink}">Reset Password</a>
   <p>This link will expire in 1 hour.</p>
 `;
+
+export const getVerifyEmailHtml = (firstName: string, verifyLink: string) => `
+  <h1>Email Verification</h1>
+  <p>Hello ${firstName},</p>
+  <p>Thank you for signing up for Technically! Please click the link below to verify your email address:</p>
+  <a href="${verifyLink}">Verify Email</a>
+  <p>This link will expire in 24 hours.</p>
+`;

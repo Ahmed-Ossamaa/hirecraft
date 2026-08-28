@@ -5,11 +5,13 @@ import {
   UserInvitedEvent,
   UserAddedToCompanyEvent,
   PasswordResetRequestedEvent,
+  UserVerificationRequestedEvent,
 } from './mail.events';
 import {
   getInviteEmailHtml,
   getAddedToCompanyHtml,
   getPasswordResetHtml,
+  getVerifyEmailHtml,
 } from './mail.templates';
 
 @Injectable()
@@ -62,6 +64,22 @@ export class MailListener {
       payload.email,
       `${payload.firstName} ${payload.lastName}`,
       'Password Reset Request',
+      html,
+    );
+  }
+
+  @OnEvent('user.verification.requested', { async: true })
+  async handleUserVerificationRequestedEvent(
+    payload: UserVerificationRequestedEvent,
+  ) {
+    this.logger.log(
+      `Handling user.verification.requested event for ${payload.email}`,
+    );
+    const html = getVerifyEmailHtml(payload.firstName, payload.verifyLink);
+    await this.mailService.sendEmail(
+      payload.email,
+      `${payload.firstName} ${payload.lastName}`,
+      'Verify Email Address - Technically',
       html,
     );
   }

@@ -12,7 +12,7 @@ export class Job {
   machineCategoryId!: string;
   machineId!: string;
 
-  // Joined fields for optimized API payload
+  // Joined fields
   companyName?: string;
   companyLogo?: string;
   machineNameEn?: string;
