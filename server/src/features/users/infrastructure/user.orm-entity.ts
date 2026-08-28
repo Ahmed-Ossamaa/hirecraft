@@ -63,19 +63,19 @@ export class UserOrmEntity {
   isEmailVerified!: boolean;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  verifyEmailToken?: string | null;
+  hashedVerifyEmailToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   verifyEmailTokenExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  resetPasswordToken?: string | null;
+  hashedResetPasswordToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   resetPasswordExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  inviteToken?: string | null;
+  hashedInviteToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   inviteTokenExpiresAt?: Date | null;

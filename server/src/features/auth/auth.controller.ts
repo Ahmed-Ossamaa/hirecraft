@@ -8,10 +8,12 @@ import {
   UseGuards,
   Patch,
 } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import { ChangePasswordDto } from '../users/dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import {
@@ -28,10 +30,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
@@ -98,8 +97,34 @@ export class AuthController {
     description: 'If email exists, a reset link is sent.',
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.usersService.resetPassword(dto.email);
+    await this.authService.resetPassword(dto.email);
     return { success: true, message: 'Reset email sent.' };
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email using a token' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    await this.authService.verifyEmailWithToken(dto.token);
+    return { success: true, message: 'Email verified successfully.' };
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend verification email' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'If the email exists and is unverified, a verification link has been sent.',
+  })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    await this.authService.resendVerification(dto.email);
+    return {
+      success: true,
+      message: 'If the email exists, a verification link has been sent.',
+    };
   }
 
   @Patch('reset-password/confirm')
@@ -108,7 +133,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password reset successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   async confirmResetPassword(@Body() dto: ConfirmResetPasswordDto) {
-    await this.usersService.confirmResetPassword(dto);
+    await this.authService.confirmResetPassword(dto);
     return { success: true, message: 'Password reset successfully.' };
   }
 
@@ -121,7 +146,21 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired invite token.' })
   async acceptInvite(@Body() dto: AcceptInviteDto) {
-    await this.usersService.acceptInvite(dto);
+    await this.authService.acceptInvite(dto);
     return { success: true, message: 'Account setup complete.' };
+  }
+
+  @Patch('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Change your password' })
+  @ApiResponse({ status: 200, description: 'Password changed successfully.' })
+  @ApiResponse({ status: 401, description: 'Incorrect current password.' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(userId, dto);
+    return { success: true };
   }
 }

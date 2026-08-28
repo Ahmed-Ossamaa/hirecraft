@@ -7,8 +7,6 @@ import {
   Get,
   ParseBoolPipe,
   Query,
-  HttpCode,
-  HttpStatus,
   Delete,
   UploadedFile,
   NotFoundException,
@@ -25,7 +23,6 @@ import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
 import { User } from './domain/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -66,30 +63,6 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.usersService.updateProfile(userId, dto);
-  }
-
-  @Patch('me/change-password')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Change your password' })
-  @ApiResponse({ status: 200, description: 'Password changed successfully.' })
-  @ApiResponse({ status: 401, description: 'Incorrect current password.' })
-  async changePassword(
-    @CurrentUser('id') userId: string,
-    @Body() dto: ChangePasswordDto,
-  ) {
-    await this.usersService.changePassword(userId, dto);
-    return { success: true };
-  }
-
-  @Patch('verify-email')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify email using a token' })
-  @ApiResponse({ status: 200, description: 'Email verified.' })
-  @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
-  async verifyEmail(@Query('token') token: string) {
-    await this.usersService.verifyEmailWithToken(token);
-    return { success: true, message: 'Email verified successfully.' };
   }
 
   @Patch(':id/ban')

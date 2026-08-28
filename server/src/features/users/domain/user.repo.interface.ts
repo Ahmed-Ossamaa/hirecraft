@@ -48,6 +48,7 @@ export interface IUserRepository {
     userId: string,
     token: string,
     expiresAt: Date,
+    tx?: any,
   ): Promise<void>;
   findByInviteToken(token: string): Promise<User | null>;
   clearInviteToken(userId: string): Promise<void>;

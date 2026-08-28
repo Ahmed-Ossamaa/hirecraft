@@ -83,14 +83,14 @@ export class UserTypeormRepository implements IUserRepository {
     expiresAt: Date,
   ): Promise<void> {
     await this.repository.update(userId, {
-      verifyEmailToken: token,
+      hashedVerifyEmailToken: token,
       verifyEmailTokenExpiresAt: expiresAt,
     });
   }
 
   async clearVerifyEmailToken(userId: string): Promise<void> {
     await this.repository.update(userId, {
-      verifyEmailToken: null,
+      hashedVerifyEmailToken: null,
       verifyEmailTokenExpiresAt: null,
     });
   }
@@ -98,8 +98,11 @@ export class UserTypeormRepository implements IUserRepository {
   async findByVerifyEmailToken(token: string): Promise<User | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
-      .where('user.verifyEmailToken = :token', { token })
-      .addSelect(['user.verifyEmailToken', 'user.verifyEmailTokenExpiresAt'])
+      .where('user.hashedVerifyEmailToken = :token', { token })
+      .addSelect([
+        'user.hashedVerifyEmailToken',
+        'user.verifyEmailTokenExpiresAt',
+      ])
       .getOne();
 
     if (!ormEntity) return null;
@@ -112,14 +115,14 @@ export class UserTypeormRepository implements IUserRepository {
     expiresAt: Date,
   ): Promise<void> {
     await this.repository.update(userId, {
-      resetPasswordToken: token,
+      hashedResetPasswordToken: token,
       resetPasswordExpiresAt: expiresAt,
     });
   }
 
   async clearResetToken(userId: string): Promise<void> {
     await this.repository.update(userId, {
-      resetPasswordToken: null,
+      hashedResetPasswordToken: null,
       resetPasswordExpiresAt: null,
     });
   }
@@ -127,8 +130,11 @@ export class UserTypeormRepository implements IUserRepository {
   async findByResetToken(token: string): Promise<User | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
-      .where('user.resetPasswordToken = :token', { token })
-      .addSelect(['user.resetPasswordToken', 'user.resetPasswordExpiresAt'])
+      .where('user.hashedResetPasswordToken = :token', { token })
+      .addSelect([
+        'user.hashedResetPasswordToken',
+        'user.resetPasswordExpiresAt',
+      ])
       .getOne();
 
     if (!ormEntity) return null;
@@ -139,16 +145,18 @@ export class UserTypeormRepository implements IUserRepository {
     userId: string,
     token: string,
     expiresAt: Date,
+    tx?: EntityManager,
   ): Promise<void> {
-    await this.repository.update(userId, {
-      inviteToken: token,
+    const manager = tx || this.repository.manager;
+    await manager.update(UserOrmEntity, userId, {
+      hashedInviteToken: token,
       inviteTokenExpiresAt: expiresAt,
     });
   }
 
   async clearInviteToken(userId: string): Promise<void> {
     await this.repository.update(userId, {
-      inviteToken: null,
+      hashedInviteToken: null,
       inviteTokenExpiresAt: null,
     });
   }
@@ -156,8 +164,8 @@ export class UserTypeormRepository implements IUserRepository {
   async findByInviteToken(token: string): Promise<User | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
-      .where('user.inviteToken = :token', { token })
-      .addSelect(['user.inviteToken', 'user.inviteTokenExpiresAt'])
+      .where('user.hashedInviteToken = :token', { token })
+      .addSelect(['user.hashedInviteToken', 'user.inviteTokenExpiresAt'])
       .getOne();
 
     if (!ormEntity) return null;

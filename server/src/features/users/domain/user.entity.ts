@@ -25,7 +25,7 @@ export class User {
   isEmailVerified!: boolean;
   @Exclude()
   @ApiHideProperty()
-  verifyEmailToken?: string | null;
+  hashedVerifyEmailToken?: string | null;
 
   @Exclude()
   @ApiHideProperty()
@@ -33,7 +33,7 @@ export class User {
 
   @Exclude()
   @ApiHideProperty()
-  resetPasswordToken?: string | null;
+  hashedResetPasswordToken?: string | null;
 
   @Exclude()
   @ApiHideProperty()
@@ -41,7 +41,7 @@ export class User {
 
   @Exclude()
   @ApiHideProperty()
-  inviteToken?: string | null;
+  hashedInviteToken?: string | null;
 
   @Exclude()
   @ApiHideProperty()

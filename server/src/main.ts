@@ -13,7 +13,7 @@ import { ApiResponseInterceptor } from './common/interceptors/api-response.inter
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const configService = app.get(ConfigService);
   const baseUrl = configService.get<string>('app.baseUrl');
   const port = configService.get<number>('app.port')!;
@@ -43,7 +43,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   const config = new DocumentBuilder()
-    .setTitle('Technically HiringF Platform API')
+    .setTitle('Technically Hiring Platform API')
     .setDescription('API for SaaS Hiring Platform')
     .setVersion('1.0')
     .addBearerAuth()
