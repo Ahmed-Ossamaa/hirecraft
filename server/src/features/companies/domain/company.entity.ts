@@ -11,6 +11,7 @@ export class Company {
   location?: string;
   size?: string;
   industry?: string;
+  paymentCustomerId?: string | null;
   members?: CompanyMember[];
   createdAt!: Date;
   updatedAt!: Date;

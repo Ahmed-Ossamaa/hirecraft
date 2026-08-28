@@ -40,6 +40,9 @@ export class CompanyOrmEntity {
   @Column({ nullable: true })
   industry?: string;
 
+  @Column({ nullable: true, type: 'varchar', unique: true })
+  paymentCustomerId?: string | null;
+
   @OneToMany(() => CompanyMemberOrmEntity, (member) => member.company, {
     cascade: true,
   })
