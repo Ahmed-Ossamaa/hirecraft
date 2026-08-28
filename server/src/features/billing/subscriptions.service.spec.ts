@@ -38,6 +38,7 @@ describe('SubscriptionsService', () => {
       createCustomer: jest.fn(),
       createCheckoutSession: jest.fn(),
       retrieveSubscription: jest.fn(),
+      cancelSubscriptionAtPeriodEnd: jest.fn(),
       verifyWebhook: jest.fn(),
     };
 
