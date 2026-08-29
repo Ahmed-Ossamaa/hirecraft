@@ -7,6 +7,8 @@ import {
   Res,
   UseGuards,
   Patch,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ChangePasswordDto } from '../users/dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -23,7 +25,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
-import { type Response } from 'express';
+import { type Response, type Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
@@ -87,6 +89,39 @@ export class AuthController {
     });
 
     return null;
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
+  @ApiResponse({ status: 200, description: 'Tokens successfully refreshed.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token missing or invalid.',
+  })
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refresh_token as string;
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token missing');
+    }
+
+    try {
+      const tokens = await this.authService.refreshTokens(refreshToken);
+
+      res.cookie('refresh_token', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return { accessToken: tokens.accessToken };
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
   @Post('reset-password')
