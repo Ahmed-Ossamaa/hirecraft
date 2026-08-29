@@ -31,7 +31,7 @@ import { LoginDto } from './dto/login.dto';
 import { User } from '../users/domain/user.entity';
 import { type ConfigType } from '@nestjs/config';
 import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
-import { JwtUser } from '@/common/types/jwt.types';
+import { JwtUser, JwtPayload } from '@/common/types/jwt.types';
 
 @Injectable()
 export class AuthService {
@@ -95,28 +95,9 @@ export class AuthService {
       );
     }
 
-    let companyId: string | undefined;
-    let role: string | undefined;
+    const tokens = await this.issueTokens(user);
 
-    if (user.userType === UserType.EMPLOYER) {
-      const membership = await this.companyMembersService.getMembershipByUserId(
-        user.id,
-      );
-
-      if (membership && membership.isActive) {
-        companyId = membership.companyId;
-        role = membership.role;
-      }
-    }
-    const tokens = await this.getTokens({
-      id: user.id,
-      email: user.email,
-      userType: user.userType,
-      companyId,
-      role,
-    });
-
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     return {
       user,
@@ -125,52 +106,42 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
-    const user = await this.usersService.findForAuthById(userId);
-
-    if (!user || !user.hashedRefreshToken) {
-      throw new ForbiddenException('Access Denied');
-    }
-
-    const refreshTokenMatches = await bcrypt.compare(
-      refreshToken,
-      user.hashedRefreshToken,
-    );
-    if (!refreshTokenMatches) {
-      throw new ForbiddenException('Access Denied');
-    }
-
-    let companyId: string | undefined;
-    let role: string | undefined;
-
-    if (user.userType === UserType.EMPLOYER) {
-      const membership = await this.companyMembersService.getMembershipByUserId(
-        user.id,
+  async refreshTokens(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        refreshToken,
+        {
+          secret: this.config.refreshSecret,
+        },
       );
+      const userId = payload.sub;
 
-      if (membership && membership.isActive) {
-        companyId = membership.companyId;
-        role = membership.role;
+      const user = await this.usersService.findForAuthById(userId);
+
+      if (!user || !user.hashedRefreshToken) {
+        throw new ForbiddenException('Access Denied');
       }
+
+      const refreshTokenMatches = await bcrypt.compare(
+        refreshToken,
+        user.hashedRefreshToken,
+      );
+      if (!refreshTokenMatches) {
+        throw new ForbiddenException('Access Denied');
+      }
+
+      const tokens = await this.issueTokens(user);
+
+      await this.storeRefreshToken(user.id, tokens.refreshToken);
+
+      return tokens;
+    } catch {
+      throw new ForbiddenException('Access Denied');
     }
-
-    // Generate new tokens
-    const tokens = await this.getTokens({
-      id: user.id,
-      email: user.email,
-      userType: user.userType,
-      companyId,
-      role,
-    });
-
-    // Rotate the refresh token
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-
-    return tokens;
   }
 
   async logout(userId: string): Promise<void> {
-    await this.updateRefreshToken(userId, null);
+    await this.storeRefreshToken(userId, null);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
@@ -352,10 +323,31 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async updateRefreshToken(
-    userId: string,
-    refreshToken: string | null,
-  ) {
+  private async issueTokens(user: User) {
+    let companyId: string | undefined;
+    let role: string | undefined;
+
+    if (user.userType === UserType.EMPLOYER) {
+      const membership = await this.companyMembersService.getMembershipByUserId(
+        user.id,
+      );
+
+      if (membership && membership.isActive) {
+        companyId = membership.companyId;
+        role = membership.role;
+      }
+    }
+
+    return this.getTokens({
+      id: user.id,
+      email: user.email,
+      userType: user.userType,
+      companyId,
+      role,
+    });
+  }
+
+  private async storeRefreshToken(userId: string, refreshToken: string | null) {
     if (refreshToken) {
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
       await this.usersService.updateRefreshToken(userId, hashedRefreshToken);
