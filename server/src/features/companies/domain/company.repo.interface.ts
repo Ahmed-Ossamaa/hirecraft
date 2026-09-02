@@ -1,4 +1,5 @@
 import { Company } from './company.entity';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 
 export const COMPANY_REPOSITORY = Symbol('COMPANY_REPOSITORY');
 
@@ -14,9 +15,17 @@ export type CreateCompanyParams = {
   industry?: string;
 };
 
+export interface FindCompaniesOptions {
+  page?: number;
+  limit?: number;
+  order?: 'ASC' | 'DESC';
+  search?: string;
+}
+
 export interface ICompanyRepository {
   create(params: CreateCompanyParams, tx?: any): Promise<Company>;
   findById(id: string): Promise<Company | null>;
+  findAll(options?: FindCompaniesOptions): Promise<PaginatedResult<Company>>;
   update(
     id: string,
     params: Partial<CreateCompanyParams>,

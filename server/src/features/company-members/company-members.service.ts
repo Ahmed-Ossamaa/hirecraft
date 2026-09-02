@@ -1,4 +1,9 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
@@ -67,6 +72,73 @@ export class CompanyMembersService {
     if (!success) {
       throw new NotFoundException('Member not found in this company.');
     }
+  }
+
+  async updateMemberRole(
+    targetUserId: string,
+    newRole: CompanyRole,
+    callerUserType: UserType,
+    callerUserId: string,
+    callerCompanyId?: string,
+    callerRole?: CompanyRole,
+  ): Promise<CompanyMember> {
+    return this.dataSource.transaction(async (tx) => {
+      const activeMember =
+        await this.companyMemberRepository.findActiveByUserId(targetUserId, tx);
+
+      if (!activeMember) {
+        throw new NotFoundException('Active company membership not found.');
+      }
+
+      const targetCompanyId = activeMember.companyId;
+
+      if (callerUserType === UserType.EMPLOYER) {
+        if (callerRole !== CompanyRole.ADMIN) {
+          throw new ForbiddenException(
+            'Only company administrators can update member roles.',
+          );
+        }
+
+        if (callerCompanyId !== targetCompanyId) {
+          throw new ForbiddenException(
+            'You do not have permission to change members belonging to another company.',
+          );
+        }
+
+        if (callerUserId === targetUserId) {
+          throw new ForbiddenException('You cant change your own role.');
+        }
+      }
+      //keep atleast 1 admin per company
+      if (
+        activeMember.role === CompanyRole.ADMIN &&
+        newRole !== CompanyRole.ADMIN
+      ) {
+        const activeAdminsCount =
+          await this.companyMemberRepository.countActiveAdminsInCompany(
+            targetCompanyId,
+            tx,
+          );
+
+        if (activeAdminsCount <= 1) {
+          throw new ForbiddenException(
+            'Cannot demote the last active admin of a company.',
+          );
+        }
+      }
+
+      const updatedMember = await this.companyMemberRepository.updateRole(
+        targetUserId,
+        newRole,
+        tx,
+      );
+
+      if (!updatedMember) {
+        throw new NotFoundException('Active company membership not found.');
+      }
+
+      return updatedMember;
+    });
   }
 
   async inviteUser(

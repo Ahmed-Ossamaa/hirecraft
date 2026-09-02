@@ -14,6 +14,10 @@ import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.or
 
 @Entity('company_members')
 @Index(['userId', 'companyId'], { unique: true })
+@Index('IDX_one_active_company_per_user', ['userId'], {
+  unique: true,
+  where: '"isActive" = true',
+})
 export class CompanyMemberOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

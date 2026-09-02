@@ -15,6 +15,7 @@ export interface ICompanyMemberRepository {
   create(params: CreateCompanyMemberParams, tx?: any): Promise<CompanyMember>;
 
   findByUserId(userId: string): Promise<CompanyMember | null>;
+  findActiveByUserId(userId: string, tx?: any): Promise<CompanyMember | null>;
   findByUserIdAndCompanyId(
     userId: string,
     companyId: string,
@@ -24,6 +25,14 @@ export interface ICompanyMemberRepository {
     companyId: string,
     options: PageOptionsDto,
   ): Promise<PaginatedResult<CompanyMember>>;
+
+  updateRole(
+    userId: string,
+    role: CompanyRole,
+    tx?: any,
+  ): Promise<CompanyMember | null>;
+
+  countActiveAdminsInCompany(companyId: string, tx?: any): Promise<number>;
 
   remove(userId: string, companyId: string): Promise<boolean>;
 }

@@ -21,6 +21,7 @@ import stripeConfig from './config/stripe.config';
 import plansConfig from './config/plans.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BillingModule } from './features/billing/billing.module';
+import { AdminModule } from './features/admin/admin.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { BillingModule } from './features/billing/billing.module';
     MachinesModule,
     WorkerProfilesModule,
     BillingModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

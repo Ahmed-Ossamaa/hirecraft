@@ -4,9 +4,11 @@ import { EntityManager, Repository } from 'typeorm';
 import {
   IUserRepository,
   CreateUserParams,
+  FindUsersOptions,
 } from '../domain/user.repo.interface';
 import { User } from '../domain/user.entity';
 import { UserOrmEntity } from './user.orm-entity';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 
 @Injectable()
 export class UserTypeormRepository implements IUserRepository {
@@ -176,6 +178,51 @@ export class UserTypeormRepository implements IUserRepository {
     const ormEntity = await this.repository.findOne({ where: { id } });
     if (!ormEntity) return null;
     return this.mapToDomain(ormEntity);
+  }
+
+  async findAll(options?: FindUsersOptions): Promise<PaginatedResult<User>> {
+    const page = options?.page && options.page > 0 ? options.page : 1;
+    const limit = options?.limit && options.limit > 0 ? options.limit : 10;
+    const skip = (page - 1) * limit;
+    const order = options?.order || 'DESC';
+
+    const qb = this.repository.createQueryBuilder('user');
+
+    if (options?.search) {
+      const search = `%${options.search.trim()}%`;
+      qb.andWhere(
+        '(user.email ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search)',
+        { search },
+      );
+    }
+
+    if (options?.userType) {
+      qb.andWhere('user.userType = :userType', { userType: options.userType });
+    }
+
+    if (options?.isBanned !== undefined) {
+      qb.andWhere('user.isBanned = :isBanned', { isBanned: options.isBanned });
+    }
+
+    if (options?.isEmailVerified !== undefined) {
+      qb.andWhere('user.isEmailVerified = :isEmailVerified', {
+        isEmailVerified: options.isEmailVerified,
+      });
+    }
+
+    qb.orderBy('user.createdAt', order);
+    qb.skip(skip).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: items.map((orm) => this.mapToDomain(orm)),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   // convert ORM entity -> Domain entity

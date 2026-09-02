@@ -30,6 +30,13 @@ export class JobTypeormRepository implements IJobRepository {
   ): Promise<PaginatedResult<Job>> {
     const qb = this.repository.createQueryBuilder('job');
 
+    if (filters?.search) {
+      const search = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        '(job.title ILIKE :search OR job.description ILIKE :search)',
+        { search },
+      );
+    }
     if (filters?.status)
       qb.andWhere('job.status = :status', { status: filters.status });
     if (filters?.companyId)

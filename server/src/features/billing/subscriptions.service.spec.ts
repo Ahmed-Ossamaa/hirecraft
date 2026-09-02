@@ -131,7 +131,11 @@ describe('SubscriptionsService', () => {
         throw new NotFoundException();
       });
       await expect(
-        service.createCheckoutSession('comp_1', 'invalid_price', 'user_1'),
+        service.createCheckoutSession(
+          'comp_1',
+          'invalid_price' as PlanId,
+          'user_1',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 

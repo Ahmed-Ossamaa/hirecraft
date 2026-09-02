@@ -2,6 +2,7 @@ import { UserType } from './user-type.enum';
 import { User } from './user.entity';
 
 import { Gender } from './gender.enum';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
@@ -16,6 +17,16 @@ export type CreateUserParams = {
   dob?: Date;
 };
 
+export interface FindUsersOptions {
+  page?: number;
+  limit?: number;
+  order?: 'ASC' | 'DESC';
+  search?: string;
+  userType?: UserType;
+  isBanned?: boolean;
+  isEmailVerified?: boolean;
+}
+
 export interface IUserRepository {
   create(params: CreateUserParams, tx?: any): Promise<User>;
 
@@ -24,6 +35,7 @@ export interface IUserRepository {
   findForAuthByEmail(email: string): Promise<User | null>;
   findForAuthById(id: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
+  findAll(options?: FindUsersOptions): Promise<PaginatedResult<User>>;
 
   updateRefreshToken(userId: string, hashedToken: string | null): Promise<void>;
 

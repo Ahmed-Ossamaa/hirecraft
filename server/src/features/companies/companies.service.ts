@@ -3,11 +3,13 @@ import {
   type ICompanyRepository,
   COMPANY_REPOSITORY,
   CreateCompanyParams,
+  FindCompaniesOptions,
 } from './domain/company.repo.interface';
 import { Company } from './domain/company.entity';
 import { EntityManager } from 'typeorm';
 import { STORAGE_SERVICE } from '@/integrations/storage/storage.interface';
 import type { IStorageService } from '@/integrations/storage/storage.interface';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 
 @Injectable()
 export class CompaniesService {
@@ -25,12 +27,22 @@ export class CompaniesService {
     return this.companyRepository.create(params, tx);
   }
 
-  async getMyCompany(companyId: string): Promise<Company> {
+  async getCompanyById(companyId: string): Promise<Company> {
     const company = await this.companyRepository.findById(companyId);
     if (!company) {
       throw new NotFoundException('Company not found');
     }
     return company;
+  }
+
+  async getMyCompany(companyId: string): Promise<Company> {
+    return this.getCompanyById(companyId);
+  }
+
+  async findAllCompanies(
+    options?: FindCompaniesOptions,
+  ): Promise<PaginatedResult<Company>> {
+    return this.companyRepository.findAll(options);
   }
 
   async updateCompany(

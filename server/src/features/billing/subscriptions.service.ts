@@ -28,6 +28,8 @@ import {
   PaymentSubscriptionStatus,
   PaymentProviderName,
 } from './domain/payment-provider.interface';
+import { PageOptionsDto } from '@/common/pagination/page-options.dto';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -124,6 +126,65 @@ export class SubscriptionsService {
       currentPeriodStart: null,
       currentPeriodEnd: null,
       cancelAtPeriodEnd: false,
+    };
+  }
+
+  async findSubscriptions(
+    options: PageOptionsDto,
+    status?: SubscriptionStatus,
+    planId?: PlanId,
+  ): Promise<
+    PaginatedResult<{
+      id: string;
+      companyId: string;
+      planId: string;
+      provider: string;
+      status: SubscriptionStatus;
+      currentPeriodStart: Date;
+      currentPeriodEnd: Date;
+      cancelAtPeriodEnd: boolean;
+      createdAt: Date;
+    }>
+  > {
+    const page = options.page && options.page > 0 ? options.page : 1;
+    const limit = options.limit && options.limit > 0 ? options.limit : 10;
+    const skip = (page - 1) * limit;
+    const order = options.order || 'DESC';
+
+    const qb = this.subscriptionRepo.createQueryBuilder('sub');
+
+    if (status) {
+      qb.andWhere('sub.status = :status', { status });
+    }
+
+    if (planId) {
+      qb.andWhere('sub.planId = :planId', { planId });
+    }
+
+    qb.orderBy('sub.createdAt', order);
+    qb.skip(skip).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    const sanitizedData = items.map((sub) => ({
+      id: sub.id,
+      companyId: sub.companyId,
+      planId: sub.planId,
+      provider: sub.provider,
+      status: sub.status,
+      currentPeriodStart: sub.currentPeriodStart,
+      currentPeriodEnd: sub.currentPeriodEnd,
+      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
+      createdAt: sub.createdAt,
+    }));
+
+    return {
+      data: sanitizedData,
+      total,
+      page,
+      limit,
+      totalPages,
     };
   }
 

@@ -9,6 +9,7 @@ import { CompanyMember } from '../domain/company-member.entity';
 import { CompanyMemberOrmEntity } from './company-member.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { CompanyRole } from '../domain/company-role.enum';
 
 @Injectable()
 export class CompanyMemberTypeormRepository implements ICompanyMemberRepository {
@@ -17,6 +18,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     private readonly repository: Repository<CompanyMemberOrmEntity>,
   ) {}
 
+  /**
+   * Creates a new company member record.
+   */
   async create(
     params: CreateCompanyMemberParams,
     tx?: EntityManager,
@@ -27,6 +31,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     return this.mapToDomain(savedMember);
   }
 
+  /**
+   * Finds a company member by user ID and company ID.
+   */
   async findByUserIdAndCompanyId(
     userId: string,
     companyId: string,
@@ -42,6 +49,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     return member ? this.mapToDomain(member) : null;
   }
 
+  /**
+   * Finds a company member by user ID.
+   */
   async findByUserId(userId: string): Promise<CompanyMember | null> {
     const member = await this.repository
       .createQueryBuilder('member')
@@ -53,6 +63,64 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     return member ? this.mapToDomain(member) : null;
   }
 
+  /**
+   * Finds the active company member record for a user.
+   */
+  async findActiveByUserId(
+    userId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null> {
+    const manager = tx || this.repository.manager;
+    const member = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .where('member.userId = :userId', { userId })
+      .andWhere('member.isActive = true')
+      .leftJoin('member.user', 'user')
+      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
+      .getOne();
+
+    return member ? this.mapToDomain(member) : null;
+  }
+
+  /**
+   * Updates the role of a user's active company membership.
+   */
+  async updateRole(
+    userId: string,
+    role: CompanyRole,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null> {
+    const manager = tx || this.repository.manager;
+    await manager.update(
+      CompanyMemberOrmEntity,
+      { userId, isActive: true },
+      { role },
+    );
+
+    return this.findActiveByUserId(userId, tx);
+  }
+
+  /**
+   * Counts the number of active admins in a company using pessimistic write lock to prevent race conditions.
+   */
+  async countActiveAdminsInCompany(
+    companyId: string,
+    tx: EntityManager,
+  ): Promise<number> {
+    const activeAdmins = await tx
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .setLock('pessimistic_write')
+      .where('member.companyId = :companyId', { companyId })
+      .andWhere('member.role = :role', { role: CompanyRole.ADMIN })
+      .andWhere('member.isActive = true')
+      .getMany();
+
+    return activeAdmins.length;
+  }
+
+  /**
+   * Retrieves paginated company members for a specific company.
+   */
   async findAllByCompanyId(
     companyId: string,
     options: PageOptionsDto,
@@ -87,11 +155,17 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     };
   }
 
+  /**
+   * Removes a company member record by user ID and company ID.
+   */
   async remove(userId: string, companyId: string): Promise<boolean> {
     const result = await this.repository.delete({ userId, companyId });
     return (result.affected ?? 0) > 0;
   }
 
+  /**
+   * Maps a TypeORM entity to a domain CompanyMember model.
+   */
   private mapToDomain(ormEntity: CompanyMemberOrmEntity): CompanyMember {
     const member = new CompanyMember();
     Object.assign(member, ormEntity);
