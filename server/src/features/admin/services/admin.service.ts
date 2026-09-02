@@ -47,7 +47,6 @@ export class AdminService {
   }
 
   async updateUserBanStatus(userId: string, isBanned: boolean): Promise<void> {
-    await this.getUserById(userId);
     await this.usersService.banUser(userId, isBanned);
   }
 

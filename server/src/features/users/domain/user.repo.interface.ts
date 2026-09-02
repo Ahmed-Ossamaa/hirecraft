@@ -41,7 +41,7 @@ export interface IUserRepository {
 
   updateProfile(userId: string, data: Partial<User>): Promise<User | null>;
   updatePassword(userId: string, passwordHash: string): Promise<void>;
-  updateBanStatus(userId: string, isBanned: boolean): Promise<void>;
+  updateBanStatus(userId: string, isBanned: boolean): Promise<boolean>;
   verifyEmail(userId: string): Promise<void>;
 
   saveVerifyEmailToken(

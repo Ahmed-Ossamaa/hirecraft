@@ -71,8 +71,9 @@ export class UserTypeormRepository implements IUserRepository {
     await this.repository.update(userId, { passwordHash });
   }
 
-  async updateBanStatus(userId: string, isBanned: boolean): Promise<void> {
-    await this.repository.update(userId, { isBanned });
+  async updateBanStatus(userId: string, isBanned: boolean): Promise<boolean> {
+    const result = await this.repository.update(userId, { isBanned });
+    return (result.affected ?? 0) > 0;
   }
 
   async verifyEmail(userId: string): Promise<void> {

@@ -114,7 +114,10 @@ export class UsersService {
   }
 
   async banUser(userId: string, isBanned: boolean): Promise<void> {
-    await this.userRepository.updateBanStatus(userId, isBanned);
+    const updated = await this.userRepository.updateBanStatus(userId, isBanned);
+    if (!updated) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
