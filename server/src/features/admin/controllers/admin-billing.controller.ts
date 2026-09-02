@@ -11,6 +11,8 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
 import { AdminService } from '../services/admin.service';
 import { AdminBillingQueryDto } from '../dto/admin-billing-query.dto';
+import { AdminSubscriptionResponseDto } from '../dto/admin-subscription-response.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Admin Billing')
 @ApiBearerAuth()
@@ -24,10 +26,7 @@ export class AdminBillingController {
   @ApiOperation({
     summary: 'Get paginated list of all platform subscriptions (Admin only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of subscriptions.',
-  })
+  @ApiPaginatedResponse(AdminSubscriptionResponseDto)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',

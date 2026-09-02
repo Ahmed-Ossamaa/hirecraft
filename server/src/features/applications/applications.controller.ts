@@ -26,6 +26,7 @@ import { CreateJobApplicationDto } from './dto/apply-to-job.dto';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { JobApplication } from './domain/job-application.entity';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Job Applications')
 @ApiBearerAuth()
@@ -59,10 +60,7 @@ export class ApplicationsController {
   @ApiOperation({
     summary: 'Get all my job applications with pagination (Worker only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of applications.',
-  })
+  @ApiPaginatedResponse(JobApplication)
   async getMyApplications(
     @CurrentUser('id') userId: string,
     @Query() pageOptionsDto: PageOptionsDto,
@@ -93,10 +91,7 @@ export class ApplicationsController {
   @ApiOperation({
     summary: 'Get all applications for a specific job (Employer only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of applications for the job.',
-  })
+  @ApiPaginatedResponse(JobApplication)
   @ApiResponse({
     status: 403,
     description:

@@ -37,7 +37,7 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),
-    new ApiResponseInterceptor(),
+    new ApiResponseInterceptor(app.get(Reflector)),
   );
 
   app.useGlobalFilters(new GlobalExceptionFilter());

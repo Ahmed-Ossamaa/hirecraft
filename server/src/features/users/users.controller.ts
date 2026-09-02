@@ -3,14 +3,12 @@ import {
   Patch,
   Body,
   UseGuards,
-  Param,
   Get,
-  ParseBoolPipe,
-  Query,
   Delete,
   UploadedFile,
   NotFoundException,
-  ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,25 +16,23 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
 import { User } from './domain/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/role.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
-import { UserType } from './domain/user-type.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
+@ApiBearerAuth()
 @ApiTags('Users')
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get your own profile details' })
   @ApiResponse({
     status: 200,
@@ -50,8 +46,6 @@ export class UsersController {
   }
 
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update your own profile details' })
   @ApiResponse({
     status: 200,
@@ -65,24 +59,9 @@ export class UsersController {
     return this.usersService.updateProfile(userId, dto);
   }
 
-  @Patch(':id/ban')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.PLATFORM_ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Ban or unban a user (Platform Admin only)' })
-  @ApiResponse({ status: 200, description: 'User ban status updated.' })
-  async updateBanStatus(
-    @Param('id', ParseUUIDPipe) targetUserId: string,
-    @Query('isBanned', ParseBoolPipe) isBanned: boolean,
-  ) {
-    await this.usersService.banUser(targetUserId, isBanned);
-    return { success: true, isBanned };
-  }
-
   @Patch('me/avatar')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiImageUpload('image')
+  @ResponseMessage('Avatar updated successfully.')
   @ApiOperation({ summary: 'Upload or update your avatar' })
   @ApiResponse({ status: 200, description: 'Avatar updated successfully.' })
   async uploadAvatar(
@@ -90,16 +69,14 @@ export class UsersController {
     @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
   ) {
     const updatedUser = await this.usersService.uploadAvatar(userId, file);
-    return { success: true, avatarURL: updatedUser.avatarURL };
+    return { avatarURL: updatedUser.avatarURL };
   }
 
   @Delete('me/avatar')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove your avatar' })
-  @ApiResponse({ status: 200, description: 'Avatar removed successfully.' })
+  @ApiResponse({ status: 204, description: 'Avatar removed successfully.' })
   async removeAvatar(@CurrentUser('id') userId: string) {
     await this.usersService.removeAvatar(userId);
-    return { success: true };
   }
 }

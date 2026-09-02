@@ -24,6 +24,7 @@ import { User } from '@/features/users/domain/user.entity';
 import { AdminService } from '../services/admin.service';
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { UpdateUserStatusDto } from '../dto/update-user-status.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Admin - Manage Users')
 @ApiBearerAuth()
@@ -37,10 +38,7 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get paginated list of users with filters (Admin only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of users.',
-  })
+  @ApiPaginatedResponse(User)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
