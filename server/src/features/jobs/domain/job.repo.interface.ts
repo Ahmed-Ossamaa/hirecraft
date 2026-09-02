@@ -26,6 +26,7 @@ export type CreateJobParams = {
 };
 
 export type FindJobsFilters = {
+  search?: string;
   status?: JobStatus;
   companyId?: string;
   experienceLevel?: ExperienceLevel;

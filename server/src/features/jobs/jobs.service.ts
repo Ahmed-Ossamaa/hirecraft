@@ -8,6 +8,7 @@ import {
   type IJobRepository,
   JOB_REPOSITORY,
   CreateJobParams,
+  FindJobsFilters,
 } from './domain/job.repo.interface';
 import { Job } from './domain/job.entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
@@ -24,6 +25,13 @@ export class JobsService {
 
   async createJob(params: CreateJobParams): Promise<Job> {
     return this.jobRepository.create(params);
+  }
+
+  async findAllJobs(
+    options: PageOptionsDto,
+    filters?: FindJobsFilters,
+  ): Promise<PaginatedResult<Job>> {
+    return this.jobRepository.findAll(options, filters);
   }
 
   async findAllPublishedJobs(
@@ -79,6 +87,15 @@ export class JobsService {
     return this.updateJob(id, companyId, { status });
   }
 
+  async adminUpdateJobStatus(id: string, status: JobStatus): Promise<Job> {
+    await this.getJobById(id);
+    const updated = await this.jobRepository.update(id, { status });
+    if (!updated) {
+      throw new NotFoundException(`Job with ID ${id} not found`);
+    }
+    return updated;
+  }
+
   async deleteJob(id: string, companyId: string): Promise<void> {
     const job = await this.getJobById(id);
     if (job.companyId !== companyId) {
@@ -86,6 +103,14 @@ export class JobsService {
         'You do not have permission to delete this job',
       );
     }
+    const success = await this.jobRepository.delete(id);
+    if (!success) {
+      throw new NotFoundException(`Job with ID ${id} not found`);
+    }
+  }
+
+  async adminDeleteJob(id: string): Promise<void> {
+    await this.getJobById(id);
     const success = await this.jobRepository.delete(id);
     if (!success) {
       throw new NotFoundException(`Job with ID ${id} not found`);

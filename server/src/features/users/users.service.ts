@@ -3,7 +3,9 @@ import {
   type IUserRepository,
   USER_REPOSITORY,
   CreateUserParams,
+  FindUsersOptions,
 } from './domain/user.repo.interface';
+import { PaginatedResult } from '@/common/pagination/paginated-results';
 import {
   type IStorageService,
   STORAGE_SERVICE,
@@ -153,5 +155,11 @@ export class UsersService {
     });
 
     return updatedUser!;
+  }
+
+  async findAllUsers(
+    options?: FindUsersOptions,
+  ): Promise<PaginatedResult<User>> {
+    return this.userRepository.findAll(options);
   }
 }
