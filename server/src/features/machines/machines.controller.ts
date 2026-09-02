@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { MachinesService } from './machines.service';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { Machine } from './domain/machine.entity';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Machines')
 @Controller('machines')
@@ -26,11 +27,7 @@ export class MachinesController {
     type: String,
     description: 'Search term',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns paginated machines',
-    type: [Machine],
-  })
+  @ApiPaginatedResponse(Machine)
   async findAll(
     @Query() pageOptionsDto: PageOptionsDto,
     @Query('categoryId') categoryId?: string,

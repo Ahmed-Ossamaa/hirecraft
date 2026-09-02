@@ -25,6 +25,7 @@ import { Job } from '@/features/jobs/domain/job.entity';
 import { AdminService } from '../services/admin.service';
 import { AdminJobsQueryDto } from '../dto/admin-jobs-query.dto';
 import { UpdateJobStatusDto } from '../dto/update-job-status.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Admin Jobs')
 @ApiBearerAuth()
@@ -38,10 +39,7 @@ export class AdminJobsController {
   @ApiOperation({
     summary: 'Get paginated list of all jobs across platform (Admin only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of jobs.',
-  })
+  @ApiPaginatedResponse(Job)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',

@@ -19,6 +19,7 @@ import { UserType } from '@/features/users/domain/user-type.enum';
 import { Company } from '@/features/companies/domain/company.entity';
 import { AdminService } from '../services/admin.service';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Admin Companies')
 @ApiBearerAuth()
@@ -32,10 +33,7 @@ export class AdminCompaniesController {
   @ApiOperation({
     summary: 'Get paginated list of companies with filters (Admin only)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of companies.',
-  })
+  @ApiPaginatedResponse(Company)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
