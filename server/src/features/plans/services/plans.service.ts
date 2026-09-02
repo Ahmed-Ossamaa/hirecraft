@@ -111,4 +111,8 @@ export class PlansService {
     }
     return this.getPlanById(planId);
   }
+
+  getPlans(): Plan[] {
+    return Array.from(this.plans.values());
+  }
 }
