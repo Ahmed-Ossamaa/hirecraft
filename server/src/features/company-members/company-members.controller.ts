@@ -10,6 +10,8 @@ import {
   UseGuards,
   ForbiddenException,
   ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,7 +29,9 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { CompanyMember } from './domain/company-member.entity';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 
 @ApiTags('Company Members')
 @ApiBearerAuth()
@@ -39,11 +43,7 @@ export class CompanyMembersController {
   @Get()
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Get a list of members in my company' })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns paginated members',
-    type: [CompanyMember],
-  })
+  @ApiPaginatedResponse(CompanyMember)
   async getMembers(
     @CurrentUser('companyId') companyId: string,
     @Query() pageOptionsDto: PageOptionsDto,
@@ -56,6 +56,7 @@ export class CompanyMembersController {
 
   @Post('invite')
   @Roles(UserType.EMPLOYER)
+  @ResponseMessage('Invite sent successfully.')
   @ApiOperation({ summary: 'Invite a new member to the company' })
   @ApiResponse({ status: 201, description: 'Invite sent' })
   async inviteMember(
@@ -81,7 +82,6 @@ export class CompanyMembersController {
       },
       companyId,
     );
-    return { success: true, message: 'Invite sent successfully.' };
   }
 
   @Patch(':userId/role')
@@ -120,9 +120,10 @@ export class CompanyMembersController {
   }
 
   @Delete(':userId')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Remove a member from the company' })
-  @ApiResponse({ status: 200, description: 'Member removed' })
+  @ApiResponse({ status: 204, description: 'Member removed' })
   async removeMember(
     @Param('userId', ParseUUIDPipe) targetUserId: string,
     @CurrentUser('companyId') companyId: string,
@@ -138,6 +139,5 @@ export class CompanyMembersController {
     }
 
     await this.companyMembersService.removeMember(targetUserId, companyId);
-    return { success: true };
   }
 }

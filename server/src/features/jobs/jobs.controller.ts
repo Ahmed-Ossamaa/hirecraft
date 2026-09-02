@@ -10,6 +10,8 @@ import {
   Patch,
   Delete,
   ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
@@ -21,6 +23,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Job } from './domain/job.entity';
 import { UpdateJobDto } from './dto/update-job.dto';
@@ -75,10 +78,7 @@ export class JobsController {
   @ApiOperation({
     summary: 'Get all published jobs for all companies with filter',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of jobs.',
-  })
+  @ApiPaginatedResponse(Job)
   async findAll(@Query() query: FindJobsQueryDto) {
     return this.jobsService.findAllPublishedJobs(query);
   }
@@ -87,10 +87,7 @@ export class JobsController {
   @ApiOperation({
     summary: 'Get all jobs for a specific company -My company- (paginated)',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Returns a paginated list of company jobs.',
-  })
+  @ApiPaginatedResponse(Job)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   async getCompanyJobs(
@@ -139,10 +136,11 @@ export class JobsController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Delete a job posting (Employer only)' })
-  @ApiResponse({ status: 200, description: 'Job deleted successfully.' })
+  @ApiResponse({ status: 204, description: 'Job deleted successfully.' })
   async deleteJob(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('companyId') companyId: string,
@@ -155,6 +153,5 @@ export class JobsController {
       );
     }
     await this.jobsService.deleteJob(id, companyId);
-    return { success: true };
   }
 }

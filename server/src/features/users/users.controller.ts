@@ -7,6 +7,8 @@ import {
   Delete,
   UploadedFile,
   NotFoundException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
@@ -58,6 +61,7 @@ export class UsersController {
 
   @Patch('me/avatar')
   @ApiImageUpload('image')
+  @ResponseMessage('Avatar updated successfully.')
   @ApiOperation({ summary: 'Upload or update your avatar' })
   @ApiResponse({ status: 200, description: 'Avatar updated successfully.' })
   async uploadAvatar(
@@ -65,14 +69,14 @@ export class UsersController {
     @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
   ) {
     const updatedUser = await this.usersService.uploadAvatar(userId, file);
-    return { success: true, avatarURL: updatedUser.avatarURL };
+    return { avatarURL: updatedUser.avatarURL };
   }
 
   @Delete('me/avatar')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove your avatar' })
-  @ApiResponse({ status: 200, description: 'Avatar removed successfully.' })
+  @ApiResponse({ status: 204, description: 'Avatar removed successfully.' })
   async removeAvatar(@CurrentUser('id') userId: string) {
     await this.usersService.removeAvatar(userId);
-    return { success: true };
   }
 }

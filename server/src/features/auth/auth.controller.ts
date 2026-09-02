@@ -16,6 +16,7 @@ import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import {
@@ -126,6 +127,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Reset email sent.')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiResponse({
     status: 200,
@@ -133,21 +135,21 @@ export class AuthController {
   })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await this.authService.resetPassword(dto.email);
-    return { success: true, message: 'Reset email sent.' };
   }
 
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Email verified successfully.')
   @ApiOperation({ summary: 'Verify email using a token' })
   @ApiResponse({ status: 200, description: 'Email verified successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   async verifyEmail(@Body() dto: VerifyEmailDto) {
     await this.authService.verifyEmailWithToken(dto.token);
-    return { success: true, message: 'Email verified successfully.' };
   }
 
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
+  @ResponseMessage('If the email exists, a verification link has been sent.')
   @ApiOperation({ summary: 'Resend verification email' })
   @ApiResponse({
     status: 200,
@@ -156,24 +158,21 @@ export class AuthController {
   })
   async resendVerification(@Body() dto: ResendVerificationDto) {
     await this.authService.resendVerification(dto.email);
-    return {
-      success: true,
-      message: 'If the email exists, a verification link has been sent.',
-    };
   }
 
   @Patch('reset-password/confirm')
   @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Password reset successfully.')
   @ApiOperation({ summary: 'Confirm a password reset using a token' })
   @ApiResponse({ status: 200, description: 'Password reset successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   async confirmResetPassword(@Body() dto: ConfirmResetPasswordDto) {
     await this.authService.confirmResetPassword(dto);
-    return { success: true, message: 'Password reset successfully.' };
   }
 
   @Patch('accept-invite')
   @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Account setup complete.')
   @ApiOperation({ summary: 'Accept a company invite and set your password' })
   @ApiResponse({
     status: 200,
@@ -182,12 +181,12 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid or expired invite token.' })
   async acceptInvite(@Body() dto: AcceptInviteDto) {
     await this.authService.acceptInvite(dto);
-    return { success: true, message: 'Account setup complete.' };
   }
 
   @Patch('change-password')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ResponseMessage('Password changed successfully.')
   @ApiOperation({ summary: 'Change your password' })
   @ApiResponse({ status: 200, description: 'Password changed successfully.' })
   @ApiResponse({ status: 401, description: 'Incorrect current password.' })
@@ -196,6 +195,5 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     await this.authService.changePassword(userId, dto);
-    return { success: true };
   }
 }
