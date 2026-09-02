@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Query,
@@ -26,6 +27,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { CompanyMember } from './domain/company-member.entity';
 import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 @ApiTags('Company Members')
 @ApiBearerAuth()
@@ -80,6 +82,41 @@ export class CompanyMembersController {
       companyId,
     );
     return { success: true, message: 'Invite sent successfully.' };
+  }
+
+  @Patch(':userId/role')
+  @Roles(UserType.EMPLOYER, UserType.PLATFORM_ADMIN)
+  @ApiOperation({ summary: "Update a member's role in their active company" })
+  @ApiResponse({
+    status: 200,
+    description: 'Member role updated successfully.',
+    type: CompanyMember,
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden. Company admin changing self-role, non-admin employer, cross-company modification, or demoting last admin.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Active company membership not found.',
+  })
+  async updateMemberRole(
+    @Param('userId', ParseUUIDPipe) targetUserId: string,
+    @Body() dto: UpdateMemberRoleDto,
+    @CurrentUser('id') callerUserId: string,
+    @CurrentUser('userType') callerUserType: UserType,
+    @CurrentUser('companyId') callerCompanyId?: string,
+    @CurrentUser('role') callerRole?: CompanyRole,
+  ) {
+    return this.companyMembersService.updateMemberRole(
+      targetUserId,
+      dto.role,
+      callerUserType,
+      callerUserId,
+      callerCompanyId,
+      callerRole,
+    );
   }
 
   @Delete(':userId')
