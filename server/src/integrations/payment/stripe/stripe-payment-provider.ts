@@ -168,7 +168,7 @@ export class StripePaymentProvider implements PaymentProvider {
   verifyWebhook(params: {
     payload: Buffer;
     headers: Record<string, string | string[] | undefined>;
-  }): PaymentEvent {
+  }): PaymentEvent | null {
     const signature = params.headers['stripe-signature'];
 
     if (!signature) {
@@ -176,59 +176,64 @@ export class StripePaymentProvider implements PaymentProvider {
       throw new BadRequestException('Missing signature header');
     }
 
+    let event: Stripe.Event;
+
     try {
-      const event = this.stripe.webhooks.constructEvent(
+      event = this.stripe.webhooks.constructEvent(
         params.payload,
         signature,
         this.webhookSecret,
       );
-
-      const eventData = event.data.object;
-      let subscriptionId: string | undefined;
-
-      if (event.type.startsWith('customer.subscription.')) {
-        const subscription = eventData as Stripe.Subscription;
-        subscriptionId = subscription.id;
-      } else if (
-        eventData !== null &&
-        typeof eventData === 'object' &&
-        'id' in eventData &&
-        typeof eventData.id === 'string'
-      ) {
-        subscriptionId = eventData.id;
-      }
-
-      let mappedType: PaymentEventType;
-      switch (event.type) {
-        case 'checkout.session.completed':
-          mappedType = PaymentEventType.CHECKOUT_COMPLETED;
-          break;
-        case 'customer.subscription.created':
-          mappedType = PaymentEventType.SUBSCRIPTION_CREATED;
-          break;
-        case 'customer.subscription.updated':
-          mappedType = PaymentEventType.SUBSCRIPTION_UPDATED;
-          break;
-        case 'customer.subscription.deleted':
-          mappedType = PaymentEventType.SUBSCRIPTION_DELETED;
-          break;
-        default:
-          throw new BadRequestException(
-            `Unhandled Stripe event type: ${event.type}`,
-          );
-      }
-
-      return {
-        id: event.id,
-        provider: PaymentProviderName.STRIPE,
-        type: mappedType,
-        subscriptionId,
-      };
-    } catch (err) {
-      if (err instanceof BadRequestException) throw err;
+    } catch {
       this.logger.warn('Stripe webhook signature verification failed.');
       throw new BadRequestException('Invalid webhook signature.');
     }
+
+    let mappedType: PaymentEventType;
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        mappedType = PaymentEventType.CHECKOUT_COMPLETED;
+        break;
+
+      case 'customer.subscription.created':
+        mappedType = PaymentEventType.SUBSCRIPTION_CREATED;
+        break;
+
+      case 'customer.subscription.updated':
+        mappedType = PaymentEventType.SUBSCRIPTION_UPDATED;
+        break;
+
+      case 'customer.subscription.deleted':
+        mappedType = PaymentEventType.SUBSCRIPTION_DELETED;
+        break;
+
+      default:
+        this.logger.debug(`Ignoring Stripe event: ${event.type}`);
+        return null;
+    }
+
+    const eventData = event.data.object;
+    let subscriptionId: string | undefined;
+
+    if (event.type.startsWith('customer.subscription.')) {
+      const subscription = eventData as Stripe.Subscription;
+      subscriptionId = subscription.id;
+    } else if (
+      eventData !== null &&
+      typeof eventData === 'object' &&
+      'id' in eventData &&
+      typeof eventData.id === 'string'
+    ) {
+      subscriptionId = eventData.id;
+    }
+
+    return {
+      id: event.id,
+      provider: PaymentProviderName.STRIPE,
+      type: mappedType,
+      subscriptionId,
+    };
   }
 
   private mapStripeStatus(

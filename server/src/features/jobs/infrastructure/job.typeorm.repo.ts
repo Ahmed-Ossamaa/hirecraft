@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import {
   IJobRepository,
   CreateJobParams,
   FindJobsFilters,
 } from '../domain/job.repo.interface';
 import { Job } from '../domain/job.entity';
+import { JobStatus } from '../domain/job-status.enum';
 import { JobOrmEntity } from './job.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
@@ -18,9 +19,10 @@ export class JobTypeormRepository implements IJobRepository {
     private readonly repository: Repository<JobOrmEntity>,
   ) {}
 
-  async create(params: CreateJobParams): Promise<Job> {
-    const job = this.repository.create(params);
-    const savedJob = await this.repository.save(job);
+  async create(params: CreateJobParams, tx?: EntityManager): Promise<Job> {
+    const manager = tx || this.repository.manager;
+    const job = manager.create(JobOrmEntity, params);
+    const savedJob = await manager.save(job);
     return this.mapToDomain(savedJob);
   }
 
@@ -97,6 +99,19 @@ export class JobTypeormRepository implements IJobRepository {
       .getMany();
 
     return jobs.map((job) => this.mapToDomain(job));
+  }
+
+  async countActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    const manager = tx || this.repository.manager;
+    return manager.count(JobOrmEntity, {
+      where: {
+        companyId,
+        status: JobStatus.PUBLISHED,
+      },
+    });
   }
 
   async update(
