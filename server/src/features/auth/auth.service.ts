@@ -49,6 +49,10 @@ export class AuthService {
   ) {}
 
   async signup(dto: SignupDto, companyData?: CreateCompanyParams) {
+    if (dto.userType === UserType.PLATFORM_ADMIN) {
+      throw new ForbiddenException('Cannot register as a Platform Admin.');
+    }
+
     await this.ensureEmailIsUnique(dto.email);
 
     const passwordHash = await this.hashPassword(dto.password);
