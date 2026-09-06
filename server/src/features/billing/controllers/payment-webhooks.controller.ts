@@ -26,7 +26,7 @@ export class PaymentWebhooksController {
   @Post()
   @ApiExcludeEndpoint()
   async handleWebhook(@Req() req: RawBodyRequest<Request>) {
-    let event: PaymentEvent;
+    let event: PaymentEvent | null;
     try {
       const rawBody = req.rawBody;
 
@@ -41,6 +41,10 @@ export class PaymentWebhooksController {
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Webhook Error';
       throw new BadRequestException(`Webhook Error: ${error}`);
+    }
+
+    if (!event) {
+      return { received: true };
     }
 
     await this.subscriptionsService.handlePaymentWebhook(event);
