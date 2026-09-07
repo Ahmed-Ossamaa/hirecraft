@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 
 @ApiTags('Billing')
 @ApiBearerAuth()
@@ -46,6 +47,9 @@ export class BillingController {
   }
 
   @Post('subscription/cancel')
+  @ResponseMessage(
+    'Subscription has been scheduled for cancellation at the end of the billing period.',
+  )
   @ApiOperation({
     summary:
       'Cancel active subscription at the end of the current billing period',

@@ -37,12 +37,14 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
+  @ResponseMessage(
+    'Signup successful. Please check your email to verify your account.',
+  )
   @ApiOperation({ summary: 'Register a new user (Candidate or Employer)' })
   @ApiResponse({ status: 201, description: 'User successfully created.' })
   @ApiResponse({ status: 409, description: 'Email already exists.' })
-  async signup(@Body() dto: SignupDto) {
-    const result = await this.authService.signup(dto, dto.companyData);
-    return result;
+  async signup(@Body() dto: SignupDto): Promise<void> {
+    await this.authService.signup(dto, dto.companyData);
   }
 
   @Post('login')

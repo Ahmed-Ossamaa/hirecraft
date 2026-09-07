@@ -48,7 +48,13 @@ export class AuthService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async signup(dto: SignupDto, companyData?: CreateCompanyParams) {
+  async signup(
+    dto: SignupDto,
+    companyData?: CreateCompanyParams,
+  ): Promise<void> {
+    if (dto.userType === UserType.PLATFORM_ADMIN) {
+      throw new ForbiddenException('Cannot register as a Platform Admin.');
+    }
     await this.ensureEmailIsUnique(dto.email);
 
     const passwordHash = await this.hashPassword(dto.password);
@@ -78,12 +84,6 @@ export class AuthService {
     );
 
     await this.requestEmailVerification(result.user.id);
-
-    return {
-      success: true,
-      message:
-        'Signup successful. Please check your email to verify your account.',
-    };
   }
 
   async login(dto: LoginDto) {
