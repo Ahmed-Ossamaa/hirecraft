@@ -10,6 +10,11 @@ import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
 import { AdminAnalyticsService } from '../services/admin-analytics.service';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
+import {
+  AdminOverviewStatsDto,
+  DeferredAnalyticsResponseDto,
+} from '../dto/admin-analytics.dto';
 
 @ApiTags('Admin Analytics')
 @ApiBearerAuth()
@@ -23,6 +28,7 @@ export class AdminAnalyticsController {
   @ApiOperation({
     summary: 'Get platform-wide overview aggregate metrics (Admin only)',
   })
+  @ApiStandardResponse(AdminOverviewStatsDto)
   @ApiResponse({
     status: 200,
     description:
@@ -40,6 +46,7 @@ export class AdminAnalyticsController {
   @ApiOperation({
     summary: 'Get user growth metrics over time (Admin only)',
   })
+  @ApiStandardResponse(DeferredAnalyticsResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns user growth time-series data.',
@@ -56,6 +63,7 @@ export class AdminAnalyticsController {
   @ApiOperation({
     summary: 'Get revenue metrics over time (Admin only)',
   })
+  @ApiStandardResponse(DeferredAnalyticsResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns revenue time-series data.',

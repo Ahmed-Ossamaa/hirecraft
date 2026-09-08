@@ -19,6 +19,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { CompanyMembersService } from './company-members.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
@@ -87,10 +88,10 @@ export class CompanyMembersController {
   @Patch(':userId/role')
   @Roles(UserType.EMPLOYER, UserType.PLATFORM_ADMIN)
   @ApiOperation({ summary: "Update a member's role in their active company" })
+  @ApiStandardResponse(CompanyMember)
   @ApiResponse({
     status: 200,
     description: 'Member role updated successfully.',
-    type: CompanyMember,
   })
   @ApiResponse({
     status: 403,

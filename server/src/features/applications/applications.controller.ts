@@ -18,6 +18,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { ApplicationsService } from './applications.service';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '../users/domain/user-type.enum';
@@ -38,10 +39,10 @@ export class ApplicationsController {
   @Post()
   @Roles(UserType.CANDIDATE)
   @ApiOperation({ summary: 'Submit an application for a job (Worker only)' })
+  @ApiStandardResponse(JobApplication)
   @ApiResponse({
     status: 201,
     description: 'Application submitted successfully.',
-    type: JobApplication,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   @ApiResponse({
@@ -73,10 +74,10 @@ export class ApplicationsController {
   @ApiOperation({
     summary: 'Update the status of a specific application (Employer only)',
   })
+  @ApiStandardResponse(JobApplication)
   @ApiResponse({
     status: 200,
     description: 'Application status updated.',
-    type: JobApplication,
   })
   async updateStatus(
     @Param('id', ParseUUIDPipe) id: string,

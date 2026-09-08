@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiStandardArrayResponse } from '@/common/swagger/api-standard-array-response.decorator';
 import { PlansService } from './services/plans.service';
 import { Plan } from './domain/plan.entity';
 
@@ -10,10 +11,10 @@ export class PlansController {
 
   @Get()
   @ApiOperation({ summary: 'Get all available subscription plans (Public)' })
+  @ApiStandardArrayResponse(Plan)
   @ApiResponse({
     status: 200,
     description: 'Returns all available subscription plans and their limits.',
-    type: [Plan],
   })
   getPlans(): Plan[] {
     return this.plansService.getPlans();

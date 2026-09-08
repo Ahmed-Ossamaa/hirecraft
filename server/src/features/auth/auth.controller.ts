@@ -29,6 +29,8 @@ import { LoginDto } from './dto/login.dto';
 import { type Response, type Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
+import { LoginResponseDto, RefreshResponseDto } from './dto/auth-responses.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -50,6 +52,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
+  @ApiStandardResponse(LoginResponseDto)
   @ApiResponse({ status: 200, description: 'Successfully logged in.' })
   async login(
     @Body() loginDto: LoginDto,
@@ -97,6 +100,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token using refresh token cookie' })
+  @ApiStandardResponse(RefreshResponseDto)
   @ApiResponse({ status: 200, description: 'Tokens successfully refreshed.' })
   @ApiResponse({
     status: 401,

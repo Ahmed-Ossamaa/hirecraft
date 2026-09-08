@@ -14,6 +14,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -37,10 +38,10 @@ export class JobsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Create a new job posting for a company' })
+  @ApiStandardResponse(Job)
   @ApiResponse({
     status: 201,
     description: 'Job created successfully.',
-    type: Job,
   })
   @ApiResponse({
     status: 403,
@@ -106,7 +107,8 @@ export class JobsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific job' })
-  @ApiResponse({ status: 200, description: 'Returns job details', type: Job })
+  @ApiStandardResponse(Job)
+  @ApiResponse({ status: 200, description: 'Returns job details' })
   async getJobById(@Param('id', ParseUUIDPipe) id: string) {
     return this.jobsService.getJobById(id);
   }
@@ -115,10 +117,10 @@ export class JobsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Update a job posting (Employer only)' })
+  @ApiStandardResponse(Job)
   @ApiResponse({
     status: 200,
     description: 'Job updated successfully.',
-    type: Job,
   })
   async updateJob(
     @Param('id', ParseUUIDPipe) id: string,
