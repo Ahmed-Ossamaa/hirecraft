@@ -17,6 +17,7 @@ import { MachineCategoryOrmEntity } from '@/features/machine-categories/infrastr
 import { MachineOrmEntity } from '@/features/machines/infrastructure/machine.orm-entity';
 
 @Entity('jobs')
+@Index('job_location_idx', ['country', 'city'])
 export class JobOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -57,11 +58,12 @@ export class JobOrmEntity {
   @Column({ type: 'int', nullable: true })
   yearsOfExperience?: number;
 
-  @Index('job_country_idx')
+  @Column({ type: 'text', array: true, nullable: true })
+  requirements?: string[];
+
   @Column({ type: 'varchar', length: 100 })
   country!: string;
 
-  @Index('job_city_idx')
   @Column({ type: 'varchar', length: 100 })
   city!: string;
 

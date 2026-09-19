@@ -22,6 +22,7 @@ export class Job {
   city!: string;
   experienceLevel!: ExperienceLevel;
   yearsOfExperience?: number;
+  requirements?: string[];
 
   status!: JobStatus;
   jobType?: JobType;
