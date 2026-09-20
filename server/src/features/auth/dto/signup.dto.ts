@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { UserType } from '../../users/domain/user-type.enum';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { CreateCompanyDto } from '@/features/companies/dto/create-company.dto';
 
@@ -56,6 +56,7 @@ export class SignupDto {
   })
   userType!: UserType;
 
+  @ApiPropertyOptional({ type: () => CreateCompanyDto })
   @ValidateNested()
   @Type(() => CreateCompanyDto)
   @IsOptional()

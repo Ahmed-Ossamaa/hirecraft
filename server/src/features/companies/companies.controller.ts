@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { CompaniesService } from './companies.service';
@@ -36,10 +37,10 @@ export class CompaniesController {
   @Get('me')
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Get details of my company' })
+  @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
     description: 'Returns company details',
-    type: Company,
   })
   async getMyCompany(@CurrentUser('companyId') companyId: string) {
     if (!companyId) {
@@ -51,8 +52,9 @@ export class CompaniesController {
   @Patch('me')
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Update my company details (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Company updated', type: Company })
-  async updateMyCompany(
+  @ApiStandardResponse(Company)
+  @ApiResponse({ status: 200, description: 'Company updated' })
+  async updateCompanyProfile(
     @CurrentUser('companyId') companyId: string,
     @CurrentUser('role') role: CompanyRole,
     @Body() dto: UpdateCompanyDto,
@@ -74,10 +76,10 @@ export class CompaniesController {
   @ApiOperation({
     summary: 'Upload or update company logo (Admin/Hiring Manager only)',
   })
+  @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
     description: 'Company logo updated',
-    type: Company,
   })
   async uploadLogo(
     @CurrentUser('companyId') companyId: string,
@@ -95,10 +97,10 @@ export class CompaniesController {
   @Delete('me/logo')
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Remove company logo (Admin/Hiring Manager only)' })
+  @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
     description: 'Company logo removed',
-    type: Company,
   })
   async removeLogo(
     @CurrentUser('companyId') companyId: string,
@@ -118,10 +120,10 @@ export class CompaniesController {
   @ApiOperation({
     summary: 'Upload or update company cover (Admin/Hiring Manager only)',
   })
+  @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
     description: 'Company cover updated',
-    type: Company,
   })
   async uploadCover(
     @CurrentUser('companyId') companyId: string,
@@ -139,10 +141,10 @@ export class CompaniesController {
   @Delete('me/cover')
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Remove company cover (Admin/Hiring Manager only)' })
+  @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
     description: 'Company cover removed',
-    type: Company,
   })
   async removeCover(
     @CurrentUser('companyId') companyId: string,

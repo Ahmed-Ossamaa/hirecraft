@@ -18,6 +18,13 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { ResponseMessage } from '@/common/decorators/response-message.decorator';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
+import {
+  CurrentSubscriptionDto,
+  CancelSubscriptionDto,
+} from '../dto/billing-responses.dto';
+import { CheckoutSessionResponseDto } from '../dto/checkout-session-response.dto';
 
 @ApiTags('Billing')
 @ApiBearerAuth()
@@ -30,6 +37,7 @@ export class BillingController {
   @ApiOperation({
     summary: 'Get current subscription for the authenticated user company',
   })
+  @ApiStandardResponse(CurrentSubscriptionDto)
   @ApiResponse({
     status: 200,
     description: 'Returns current active subscription or default free plan.',
@@ -46,10 +54,14 @@ export class BillingController {
   }
 
   @Post('subscription/cancel')
+  @ResponseMessage(
+    'Subscription has been scheduled for cancellation at the end of the billing period.',
+  )
   @ApiOperation({
     summary:
       'Cancel active subscription at the end of the current billing period',
   })
+  @ApiStandardResponse(CancelSubscriptionDto)
   @ApiResponse({
     status: 200,
     description:
@@ -79,6 +91,7 @@ export class BillingController {
 
   @Post('checkout/company/:companyId')
   @ApiOperation({ summary: 'Create a checkout session for a company' })
+  @ApiStandardResponse(CheckoutSessionResponseDto)
   @ApiResponse({ status: 201, description: 'Returns the Stripe checkout URL.' })
   @ApiResponse({
     status: 409,

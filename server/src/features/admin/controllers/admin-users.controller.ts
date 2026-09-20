@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -51,10 +52,10 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get details of a specific user by ID (Admin only)',
   })
+  @ApiStandardResponse(User)
   @ApiResponse({
     status: 200,
     description: 'Returns user details.',
-    type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found.' })
   @ApiResponse({

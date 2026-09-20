@@ -54,9 +54,11 @@ export class JobsService {
     query: FindJobsQueryDto,
   ): Promise<PaginatedResult<Job>> {
     return this.jobRepository.findAll(query, {
+      search: query.search,
       status: JobStatus.PUBLISHED,
       companyId: query.companyId,
       experienceLevel: query.experienceLevel,
+      yearsOfExperience: query.yearsOfExperience,
       jobType: query.jobType,
       country: query.country!,
       city: query.city!,

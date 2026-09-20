@@ -31,6 +31,7 @@ export type FindJobsFilters = {
   status?: JobStatus;
   companyId?: string;
   experienceLevel?: ExperienceLevel;
+  yearsOfExperience?: number;
   jobType?: JobType;
   country?: string;
   city?: string;

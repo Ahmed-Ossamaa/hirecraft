@@ -23,7 +23,7 @@ export class MachineCategoriesController {
     description: 'Search term',
   })
   @ApiPaginatedResponse(MachineCategory)
-  async findAll(
+  async getMachineCategories(
     @Query() pageOptionsDto: PageOptionsDto,
     @Query('q') searchQuery?: string,
   ) {

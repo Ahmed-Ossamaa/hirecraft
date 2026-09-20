@@ -232,13 +232,9 @@ export class SubscriptionsService {
     await this.subscriptionRepo.save(activeSub);
 
     return {
-      message:
-        'Subscription has been scheduled for cancellation at the end of the billing period.',
-      subscription: {
-        id: activeSub.id,
-        cancelAtPeriodEnd: true,
-        currentPeriodEnd: activeSub.currentPeriodEnd,
-      },
+      id: activeSub.id,
+      cancelAtPeriodEnd: true,
+      currentPeriodEnd: activeSub.currentPeriodEnd,
     };
   }
 
