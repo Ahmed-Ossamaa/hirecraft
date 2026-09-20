@@ -1,6 +1,6 @@
 import {
   IsEmail,
-  IsEnum,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -47,8 +47,13 @@ export class SignupDto {
   @MaxLength(15, { message: 'Invalid phone number' })
   phoneNumber!: string;
 
-  @ApiProperty({ enum: UserType, example: UserType.EMPLOYER })
-  @IsEnum(UserType)
+  @ApiProperty({
+    enum: [UserType.CANDIDATE, UserType.EMPLOYER],
+    example: UserType.EMPLOYER,
+  })
+  @IsIn([UserType.CANDIDATE, UserType.EMPLOYER], {
+    message: 'userType must be either CANDIDATE or EMPLOYER',
+  })
   userType!: UserType;
 
   @ApiPropertyOptional({ type: () => CreateCompanyDto })

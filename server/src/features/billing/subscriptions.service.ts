@@ -30,6 +30,8 @@ import {
 } from './domain/payment-provider.interface';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SubscriptionCreatedEvent } from '@/integrations/mail/mail.events';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -45,6 +47,7 @@ export class SubscriptionsService {
     private readonly paymentProvider: PaymentProvider,
     private readonly dataSource: DataSource,
     private readonly plansService: PlansService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -97,8 +100,11 @@ export class SubscriptionsService {
    * - Returns active subscription information and plan details if present,
    * Or defaults to the free plan tier.
    */
-  async getSubscriptionForCompany(companyId: string) {
-    const activeSub = await this.subscriptionRepo.findOne({
+  async getSubscriptionForCompany(companyId: string, tx?: EntityManager) {
+    const repo = tx
+      ? tx.getRepository(SubscriptionOrmEntity)
+      : this.subscriptionRepo;
+    const activeSub = await repo.findOne({
       where: { companyId, status: SubscriptionStatus.ACTIVE },
     });
 
@@ -129,6 +135,9 @@ export class SubscriptionsService {
     };
   }
 
+  /**
+   * Retrieves a paginated list of all subscriptions with optional filtering.
+   */
   async findSubscriptions(
     options: PageOptionsDto,
     status?: SubscriptionStatus,
@@ -433,6 +442,12 @@ export class SubscriptionsService {
         throw err;
       }
 
+      let notificationData: {
+        companyId: string;
+        planName: string;
+        currentPeriodEnd: Date | null;
+      } | null = null;
+
       if (latestPaymentSub) {
         if (!companyId) {
           this.logger.error(
@@ -443,7 +458,7 @@ export class SubscriptionsService {
           );
         }
 
-        await this.syncSubscriptionState(
+        notificationData = await this.syncSubscriptionState(
           latestPaymentSub,
           companyId,
           queryRunner.manager,
@@ -452,6 +467,14 @@ export class SubscriptionsService {
       }
 
       await queryRunner.commitTransaction();
+
+      if (notificationData) {
+        await this.notifySubscriptionActivated(
+          notificationData.companyId,
+          notificationData.planName,
+          notificationData.currentPeriodEnd,
+        );
+      }
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
@@ -480,79 +503,162 @@ export class SubscriptionsService {
     companyId: string,
     entityManager: EntityManager,
     provider: PaymentProviderName,
-  ) {
-    const subRepo = entityManager.getRepository(SubscriptionOrmEntity);
-    const localSub = await subRepo.findOne({
-      where: { providerSubId: paymentSub.id },
-    });
-
-    let localStatus = SubscriptionStatus.ACTIVE;
-
-    if (
-      // Expired
-      paymentSub.status === PaymentSubscriptionStatus.UNPAID ||
-      paymentSub.status === PaymentSubscriptionStatus.PAST_DUE
-    ) {
-      localStatus = SubscriptionStatus.EXPIRED;
-      // Cancelled
-    } else if (paymentSub.status === PaymentSubscriptionStatus.CANCELED) {
-      localStatus = SubscriptionStatus.CANCELLED;
-      // stays active even if cancelAtPeriodEnd is true
-    } else {
-      localStatus = SubscriptionStatus.ACTIVE;
-    }
-
-    const currentPeriodStart = paymentSub.currentPeriodStart;
-    const currentPeriodEnd = paymentSub.currentPeriodEnd;
-    const priceId = paymentSub.priceId;
-
-    if (!priceId) {
+  ): Promise<{
+    companyId: string;
+    planName: string;
+    currentPeriodEnd: Date | null;
+  } | null> {
+    if (!paymentSub.priceId) {
       throw new BadRequestException(
         `Subscription ${paymentSub.id} has no price ID.`,
       );
     }
 
-    const plan = this.plansService.getPlanByPaymentPriceId(priceId);
+    const localStatus = this.mapProviderStatusToLocal(paymentSub.status);
+    const plan = this.plansService.getPlanByPaymentPriceId(paymentSub.priceId);
 
     try {
-      if (localSub) {
-        // Update existing
-        localSub.status = localStatus;
-        localSub.currentPeriodStart = currentPeriodStart;
-        localSub.currentPeriodEnd = currentPeriodEnd;
-        localSub.cancelAtPeriodEnd = paymentSub.cancelAtPeriodEnd;
-        localSub.planId = plan.id;
-        await subRepo.save(localSub);
-      } else {
-        // Create new
-        const newSub = subRepo.create({
+      await this.persistSubscriptionEntity({
+        paymentSub,
+        companyId,
+        planId: plan.id,
+        localStatus,
+        provider,
+        entityManager,
+      });
+
+      if (localStatus === SubscriptionStatus.ACTIVE) {
+        return {
           companyId,
-          providerSubId: paymentSub.id,
-          provider,
-          planId: plan.id,
-          status: localStatus,
-          currentPeriodStart,
-          currentPeriodEnd,
-          cancelAtPeriodEnd: paymentSub.cancelAtPeriodEnd,
-        });
-        await subRepo.save(newSub);
+          planName: plan.name,
+          currentPeriodEnd: paymentSub.currentPeriodEnd,
+        };
       }
+      return null;
     } catch (err: unknown) {
-      // Partial Unique Index Violation: UNIQUE(companyId) WHERE status = 'ACTIVE'
-      if (
-        err instanceof Error &&
-        'code' in err &&
-        err.code === '23505' &&
-        'constraint' in err &&
-        err.constraint === 'IDX_UNIQUE_ACTIVE_SUBSCRIPTION'
-      ) {
-        this.logger.error(
-          `Billing Inconsistency: Duplicate active subscription attempt for company ${companyId}. Payment Sub: ${paymentSub.id}`,
-        );
-        // throw (tx roll back)
-        throw new Error('DUPLICATE_ACTIVE_SUBSCRIPTION_ANOMALY');
-      }
-      throw err;
+      this.handleSubscriptionSyncError(err, companyId, paymentSub.id);
     }
+  }
+
+  /**
+   * Maps payment provider subscription status to local domain subscription status.
+   */
+  private mapProviderStatusToLocal(
+    status: PaymentSubscriptionStatus,
+  ): SubscriptionStatus {
+    switch (status) {
+      case PaymentSubscriptionStatus.UNPAID:
+      case PaymentSubscriptionStatus.PAST_DUE:
+        return SubscriptionStatus.EXPIRED;
+      case PaymentSubscriptionStatus.CANCELED:
+        return SubscriptionStatus.CANCELLED;
+      default:
+        return SubscriptionStatus.ACTIVE;
+    }
+  }
+
+  /**
+   * Creates or updates local subscription entity in the database.
+   */
+  private async persistSubscriptionEntity(params: {
+    paymentSub: PaymentSubscription;
+    companyId: string;
+    planId: PlanId;
+    localStatus: SubscriptionStatus;
+    provider: PaymentProviderName;
+    entityManager: EntityManager;
+  }): Promise<void> {
+    const {
+      paymentSub,
+      companyId,
+      planId,
+      localStatus,
+      provider,
+      entityManager,
+    } = params;
+    const subRepo = entityManager.getRepository(SubscriptionOrmEntity);
+    const localSub = await subRepo.findOne({
+      where: { providerSubId: paymentSub.id },
+    });
+
+    if (localSub) {
+      localSub.status = localStatus;
+      localSub.currentPeriodStart = paymentSub.currentPeriodStart;
+      localSub.currentPeriodEnd = paymentSub.currentPeriodEnd;
+      localSub.cancelAtPeriodEnd = paymentSub.cancelAtPeriodEnd;
+      localSub.planId = planId;
+      await subRepo.save(localSub);
+    } else {
+      const newSub = subRepo.create({
+        companyId,
+        providerSubId: paymentSub.id,
+        provider,
+        planId,
+        status: localStatus,
+        currentPeriodStart: paymentSub.currentPeriodStart,
+        currentPeriodEnd: paymentSub.currentPeriodEnd,
+        cancelAtPeriodEnd: paymentSub.cancelAtPeriodEnd,
+      });
+      await subRepo.save(newSub);
+    }
+  }
+
+  /**
+   * Resolves the company admin user details and emits the subscription activation event.
+   */
+  private async notifySubscriptionActivated(
+    companyId: string,
+    planName: string,
+    currentPeriodEnd: Date | null,
+  ): Promise<void> {
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId },
+      relations: { members: { user: true } },
+    });
+
+    const adminMember = company?.members?.find(
+      (m) => m.role === CompanyRole.ADMIN && m.isActive && m.user?.email,
+    );
+
+    if (company && adminMember?.user?.email) {
+      const recipientName =
+        adminMember.user.firstName && adminMember.user.lastName
+          ? `${adminMember.user.firstName} ${adminMember.user.lastName}`
+          : company.name;
+
+      this.eventEmitter.emit(
+        'subscription.created',
+        new SubscriptionCreatedEvent(
+          adminMember.user.email,
+          company.name,
+          planName,
+          currentPeriodEnd,
+          recipientName,
+        ),
+      );
+    }
+  }
+
+  /**
+   * Handles unique constraint violations and unexpected errors during subscription synchronization.
+   */
+  private handleSubscriptionSyncError(
+    err: unknown,
+    companyId: string,
+    providerSubId: string,
+  ): never {
+    if (
+      err instanceof Error &&
+      'code' in err &&
+      err.code === '23505' &&
+      'constraint' in err &&
+      err.constraint === 'IDX_UNIQUE_ACTIVE_SUBSCRIPTION'
+    ) {
+      this.logger.error(
+        `Billing Inconsistency: Duplicate active subscription attempt for company ${companyId}. Payment Sub: ${providerSubId}`,
+      );
+      throw new Error('DUPLICATE_ACTIVE_SUBSCRIPTION_ANOMALY');
+    }
+    throw err;
   }
 }

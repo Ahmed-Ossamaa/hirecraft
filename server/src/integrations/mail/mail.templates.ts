@@ -30,3 +30,19 @@ export const getVerifyEmailHtml = (firstName: string, verifyLink: string) => `
   <a href="${verifyLink}">Verify Email</a>
   <p>This link will expire in 24 hours.</p>
 `;
+
+export const getSubscriptionConfirmationHtml = (
+  companyName: string,
+  planName: string,
+  currentPeriodEnd: Date | null,
+) => `
+  <h1>Subscription Confirmed!</h1>
+  <p>Congratulations!</p>
+  <p><strong>${companyName}</strong> is now subscribed to the <strong>${planName}</strong> plan on Technically.</p>
+  ${
+    currentPeriodEnd
+      ? `<p>Your current billing period will renew on <strong>${new Date(currentPeriodEnd).toLocaleDateString()}</strong>.</p>`
+      : ''
+  }
+  <p>Thank you for choosing Technically!</p>
+`;
