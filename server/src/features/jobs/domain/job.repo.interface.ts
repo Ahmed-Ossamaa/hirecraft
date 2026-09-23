@@ -1,3 +1,4 @@
+import { EntityManager } from 'typeorm';
 import { Job } from './job.entity';
 import { JobStatus } from './job-status.enum';
 import { JobType } from './job-type.enum';
@@ -26,6 +27,7 @@ export type CreateJobParams = {
 };
 
 export type FindJobsFilters = {
+  search?: string;
   status?: JobStatus;
   companyId?: string;
   experienceLevel?: ExperienceLevel;
@@ -35,9 +37,13 @@ export type FindJobsFilters = {
 };
 
 export interface IJobRepository {
-  create(params: CreateJobParams): Promise<Job>;
+  create(params: CreateJobParams, tx?: EntityManager): Promise<Job>;
   findById(id: string): Promise<Job | null>;
   findByCompanyId(companyId: string): Promise<Job[]>;
+  countActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number>;
   findAll(
     options: PageOptionsDto,
     filters?: FindJobsFilters,

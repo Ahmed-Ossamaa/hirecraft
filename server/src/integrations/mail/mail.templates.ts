@@ -1,4 +1,8 @@
-export const getInviteEmailHtml = (companyName: string, role: string, inviteLink: string) => `
+export const getInviteEmailHtml = (
+  companyName: string,
+  role: string,
+  inviteLink: string,
+) => `
   <h1>You've been invited!</h1>
   <p>You have been invited to join <strong>${companyName}</strong> on Technically as a <strong>${role}</strong>.</p>
   <p>Click the link below to accept the invitation and set up your account:</p>
@@ -17,4 +21,28 @@ export const getPasswordResetHtml = (firstName: string, resetLink: string) => `
   <p>You requested to reset your password. Click the link below to set a new password:</p>
   <a href="${resetLink}">Reset Password</a>
   <p>This link will expire in 1 hour.</p>
+`;
+
+export const getVerifyEmailHtml = (firstName: string, verifyLink: string) => `
+  <h1>Email Verification</h1>
+  <p>Hello ${firstName},</p>
+  <p>Thank you for signing up for Technically! Please click the link below to verify your email address:</p>
+  <a href="${verifyLink}">Verify Email</a>
+  <p>This link will expire in 24 hours.</p>
+`;
+
+export const getSubscriptionConfirmationHtml = (
+  companyName: string,
+  planName: string,
+  currentPeriodEnd: Date | null,
+) => `
+  <h1>Subscription Confirmed!</h1>
+  <p>Congratulations!</p>
+  <p><strong>${companyName}</strong> is now subscribed to the <strong>${planName}</strong> plan on Technically.</p>
+  ${
+    currentPeriodEnd
+      ? `<p>Your current billing period will renew on <strong>${new Date(currentPeriodEnd).toLocaleDateString()}</strong>.</p>`
+      : ''
+  }
+  <p>Thank you for choosing Technically!</p>
 `;

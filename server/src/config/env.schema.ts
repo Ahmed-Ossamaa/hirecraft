@@ -29,6 +29,25 @@ export const envSchema = z
     BREVO_API_URL: z.string().default('https://api.brevo.com/v3/smtp/email'),
     MAIL_SENDER_EMAIL: z.email().default('noreply@technically.com'),
     MAIL_SENDER_NAME: z.string().default('Technically Team'),
+
+    // Storage (Cloudinary)
+    CLOUDINARY_CLOUD_NAME: z.string().optional(),
+    CLOUDINARY_API_KEY: z.string().optional(),
+    CLOUDINARY_API_SECRET: z.string().optional(),
+
+    // Billing (Stripe)
+    STRIPE_SECRET_KEY: z.string().min(1, 'STRIPE_SECRET_KEY is required'),
+    STRIPE_WEBHOOK_SECRET: z
+      .string()
+      .min(1, 'STRIPE_WEBHOOK_SECRET is required'),
+    STRIPE_SUCCESS_URL: z.string(),
+    STRIPE_CANCEL_URL: z.string(),
+    STRIPE_STARTER_MONTHLY_PRICE_ID: z.string(),
+    STRIPE_STARTER_YEARLY_PRICE_ID: z.string(),
+    STRIPE_PRO_MONTHLY_PRICE_ID: z.string(),
+    STRIPE_PRO_YEARLY_PRICE_ID: z.string(),
+    STRIPE_ENTERPRISE_MONTHLY_PRICE_ID: z.string(),
+    STRIPE_ENTERPRISE_YEARLY_PRICE_ID: z.string(),
   })
   .refine(
     (env) => {

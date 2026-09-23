@@ -1,3 +1,4 @@
+import { EntityManager } from 'typeorm';
 import { CompanyMember } from './company-member.entity';
 import { CompanyRole } from './company-role.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
@@ -12,9 +13,16 @@ export type CreateCompanyMemberParams = {
 };
 
 export interface ICompanyMemberRepository {
-  create(params: CreateCompanyMemberParams, tx?: any): Promise<CompanyMember>;
+  create(
+    params: CreateCompanyMemberParams,
+    tx?: EntityManager,
+  ): Promise<CompanyMember>;
 
   findByUserId(userId: string): Promise<CompanyMember | null>;
+  findActiveByUserId(
+    userId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null>;
   findByUserIdAndCompanyId(
     userId: string,
     companyId: string,
@@ -24,6 +32,21 @@ export interface ICompanyMemberRepository {
     companyId: string,
     options: PageOptionsDto,
   ): Promise<PaginatedResult<CompanyMember>>;
+
+  updateRole(
+    userId: string,
+    role: CompanyRole,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null>;
+
+  countActiveAdminsInCompany(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number>;
+  countActiveMembersByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number>;
 
   remove(userId: string, companyId: string): Promise<boolean>;
 }

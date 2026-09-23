@@ -7,11 +7,15 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { MdSquareFoot, MdAdd, MdDarkMode, MdLightMode } from 'react-icons/md';
 import { Button } from '@/shared/components/ui/Button';
+import { useAuthStore } from '@/shared/stores/auth-store';
+import { UserDropdown } from './UserDropdown';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     setMounted(true);
@@ -52,34 +56,35 @@ export const Navbar: React.FC = () => {
             </button>
           )}
 
-          {/* will be redered based on auth later */}
-          <Button 
-            variant="secondary"
-            className="uppercase tracking-wider px-space-md py-space-xs"
-            onClick={() => router.push('/auth')}
-          >
-            Sign In
-          </Button>
+          {mounted ? (
+            isAuthenticated ? (
+              <div className="ml-2">
+                <UserDropdown showName={false} />
+              </div>
+            ) : (
+              <>
+                <Button 
+                  variant="secondary"
+                  className="uppercase tracking-wider px-space-md py-space-xs"
+                  onClick={() => router.push('/auth')}
+                >
+                  Sign In
+                </Button>
 
-          <Button 
-            variant="primary"
-            className="uppercase tracking-wider px-space-lg py-space-xs shadow-md shadow-sky-950/40"
-            leftIcon={<MdAdd className="text-[16px]" />}
-            onClick={() => router.push('/post-job')}
-          >
-            Post a Job
-          </Button>
-
-          <div className="flex items-center pl-space-xs relative w-8 h-8 rounded-full overflow-hidden ring-1 ring-border">
-            {/* will be changed later to avatar and dropdown or maybe just dropdown */}
-            <Image 
-              alt="Profile" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaD1MiA1ugm4H7VdyOZzgA8OEKVVxoz6MEmEYXpUqMY4-q6eUD8iJQkcbrH4t1ussoY6wfIhVKfKrWvNP2zevb92sDuqBJnsIiwUP-VFyooyVN5KG3wtfBON8y1Tzdajs0TzNdNdaGshalz5P17nblZdakAy0TT-THK4Wb1QqQFVbRYba6WsakSD8YXy-kGvyhXBF8xW0CUy62bN64-W-CwrNOX5dNK1TwaD7mOBJRP9z8epxTUFyq" 
-              fill
-              sizes='500'
-              className="object-cover"
-            />
-          </div>
+                <Button 
+                  variant="primary"
+                  className="uppercase tracking-wider px-space-lg py-space-xs shadow-md shadow-sky-950/40"
+                  leftIcon={<MdAdd className="text-[16px]" />}
+                  onClick={() => router.push('/post-job')}
+                >
+                  Post a Job
+                </Button>
+              </>
+            )
+          ) : (
+            // fallback
+            <div className="w-50 h-9"></div>
+          )}
         </div>
       </div>
     </header>

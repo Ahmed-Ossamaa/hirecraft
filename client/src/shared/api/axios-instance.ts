@@ -52,8 +52,16 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Dont intercept if no response or if its already a refresh call
-    if (!error.response || originalRequest?.url?.includes("/auth/refresh")) {
+    const isAuthEndpoint =
+      originalRequest?.url?.includes("/auth/login") ||
+      originalRequest?.url?.includes("/auth/signup") ||
+      originalRequest?.url?.includes("/auth/refresh") ||
+      originalRequest?.url?.includes("/auth/reset-password") ||
+      originalRequest?.url?.includes("/auth/verify-email") ||
+      originalRequest?.url?.includes("/auth/resend-verification");
+
+    // Don't intercept if no response or if it's an auth endpoint
+    if (!error.response || isAuthEndpoint) {
       return Promise.reject(error);
     }
 
@@ -102,7 +110,7 @@ apiClient.interceptors.response.use(
         useAuthStore.getState().clearAuth();
 
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = "/auth";
         }
 
         return Promise.reject(refreshError);

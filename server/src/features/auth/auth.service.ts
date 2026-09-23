@@ -4,7 +4,18 @@ import {
   UnauthorizedException,
   Inject,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import * as crypto from 'crypto';
+import appConfig from '@/config/app.config';
+import {
+  PasswordResetRequestedEvent,
+  UserVerificationRequestedEvent,
+} from '@/integrations/mail/mail.events';
+import { ConfirmResetPasswordDto } from './dto/confirm-reset-password.dto';
+import { AcceptInviteDto } from './dto/accept-invite.dto';
+import { ChangePasswordDto } from '../users/dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { CompanyRole } from '../company-members/domain/company-role.enum';
 import { SignupDto } from './dto/signup.dto';
@@ -20,7 +31,7 @@ import { LoginDto } from './dto/login.dto';
 import { User } from '../users/domain/user.entity';
 import { type ConfigType } from '@nestjs/config';
 import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
-import { JwtUser } from '@/common/types/jwt.types';
+import { JwtUser, JwtPayload } from '@/common/types/jwt.types';
 
 @Injectable()
 export class AuthService {
@@ -32,120 +43,245 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly config: ConfigType<typeof jwtConfig>,
+    @Inject(appConfig.KEY)
+    private readonly appCfg: ConfigType<typeof appConfig>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async signup(dto: SignupDto, companyData?: CreateCompanyParams) {
+    if (dto.userType === UserType.PLATFORM_ADMIN) {
+      throw new ForbiddenException('Cannot register as a Platform Admin.');
+    }
+
     await this.ensureEmailIsUnique(dto.email);
 
     const passwordHash = await this.hashPassword(dto.password);
 
-    return this.dataSource.transaction(async (tx: EntityManager) => {
-      const user = await this.usersService.createUser(
-        {
-          email: dto.email,
-          passwordHash,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          userType: dto.userType,
-          phoneNumber: dto.phoneNumber,
-        },
-        tx,
-      );
+    const result = await this.dataSource.transaction(
+      async (tx: EntityManager) => {
+        const user = await this.usersService.createUser(
+          {
+            email: dto.email,
+            passwordHash,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            userType: dto.userType,
+            phoneNumber: dto.phoneNumber,
+          },
+          tx,
+        );
 
-      let company: Company | null = null;
+        let company: Company | null = null;
 
-      if (dto.userType === UserType.EMPLOYER && companyData) {
-        company = await this.setupEmployer(user.id, companyData, tx);
-      }
+        if (dto.userType === UserType.EMPLOYER && companyData) {
+          company = await this.setupEmployer(user.id, companyData, tx);
+        }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordHash: _, ...safeUser } = user;
+        return { user, company };
+      },
+    );
 
-      return { user: safeUser, company };
-    });
+    await this.requestEmailVerification(result.user.id);
+
+    return {
+      success: true,
+      message:
+        'Signup successful. Please check your email to verify your account.',
+    };
   }
 
   async login(dto: LoginDto) {
     const user = await this.validateUserCredentials(dto.email, dto.password);
-    let companyId: string | undefined;
-    let role: string | undefined;
 
-    if (user.userType === UserType.EMPLOYER) {
-      const membership = await this.companyMembersService.getMembershipByUserId(
-        user.id,
+    if (!user.isEmailVerified) {
+      throw new ForbiddenException(
+        'Email is not verified. Please check your inbox.',
       );
-
-      if (membership && membership.isActive) {
-        companyId = membership.companyId;
-        role = membership.role;
-      }
     }
-    const tokens = await this.getTokens({
-      id: user.id,
-      email: user.email,
-      userType: user.userType,
-      companyId,
-      role,
-    });
 
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    const tokens = await this.issueTokens(user);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _, hashedRefreshToken: __, ...safeUser } = user;
+    await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      user: safeUser,
+      user,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
-    const user = await this.usersService.findForAuthById(userId);
-
-    if (!user || !user.hashedRefreshToken) {
-      throw new ForbiddenException('Access Denied');
-    }
-
-    const refreshTokenMatches = await bcrypt.compare(
-      refreshToken,
-      user.hashedRefreshToken,
-    );
-    if (!refreshTokenMatches) {
-      throw new ForbiddenException('Access Denied');
-    }
-
-    let companyId: string | undefined;
-    let role: string | undefined;
-
-    if (user.userType === UserType.EMPLOYER) {
-      const membership = await this.companyMembersService.getMembershipByUserId(
-        user.id,
+  async refreshTokens(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        refreshToken,
+        {
+          secret: this.config.refreshSecret,
+        },
       );
+      const userId = payload.sub;
 
-      if (membership && membership.isActive) {
-        companyId = membership.companyId;
-        role = membership.role;
+      const user = await this.usersService.findForAuthById(userId);
+
+      if (!user || !user.hashedRefreshToken) {
+        throw new ForbiddenException('Access Denied');
       }
+
+      const refreshTokenMatches = await bcrypt.compare(
+        refreshToken,
+        user.hashedRefreshToken,
+      );
+      if (!refreshTokenMatches) {
+        throw new ForbiddenException('Access Denied');
+      }
+
+      const tokens = await this.issueTokens(user);
+
+      await this.storeRefreshToken(user.id, tokens.refreshToken);
+
+      return tokens;
+    } catch {
+      throw new ForbiddenException('Access Denied');
     }
-
-    // Generate new tokens
-    const tokens = await this.getTokens({
-      id: user.id,
-      email: user.email,
-      userType: user.userType,
-      companyId,
-      role,
-    });
-
-    // Rotate the refresh token in the database
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
-
-    return tokens;
   }
 
   async logout(userId: string): Promise<void> {
-    await this.updateRefreshToken(userId, null);
+    await this.storeRefreshToken(userId, null);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.usersService.findForAuthById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isMatch = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
+    if (!isMatch) {
+      throw new UnauthorizedException('Incorrect current password');
+    }
+
+    const hash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.usersService.updatePassword(userId, hash);
+  }
+
+  async resetPassword(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour
+
+    await this.usersService.saveResetToken(user.id, hash, expiresAt);
+
+    const clientUrl = this.appCfg.clientURL;
+    const resetLink = `${clientUrl}/reset-password?token=${token}`;
+
+    this.eventEmitter.emit(
+      'password.reset.requested',
+      new PasswordResetRequestedEvent(
+        user.email,
+        user.firstName,
+        user.lastName,
+        resetLink,
+      ),
+    );
+  }
+
+  async confirmResetPassword(dto: ConfirmResetPasswordDto): Promise<void> {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(dto.token)
+      .digest('hex');
+    const user = await this.usersService.findByResetToken(tokenHash);
+    if (!user || !user.resetPasswordExpiresAt) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    if (user.resetPasswordExpiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const hash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.usersService.updatePassword(user.id, hash);
+    await this.usersService.clearResetToken(user.id);
+  }
+
+  async acceptInvite(dto: AcceptInviteDto): Promise<void> {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(dto.token)
+      .digest('hex');
+    const user = await this.usersService.findByInviteToken(tokenHash);
+    if (!user || !user.inviteTokenExpiresAt) {
+      throw new UnauthorizedException('Invalid or expired invite token');
+    }
+
+    if (user.inviteTokenExpiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired invite token');
+    }
+
+    const hash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.usersService.updatePassword(user.id, hash);
+    await this.usersService.verifyEmail(user.id);
+    await this.usersService.clearInviteToken(user.id);
+  }
+
+  async requestEmailVerification(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user || user.isEmailVerified) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours
+
+    await this.usersService.saveVerifyEmailToken(userId, hash, expiresAt);
+
+    const clientUrl = this.appCfg.clientURL;
+    const verifyLink = `${clientUrl}/verify-email?token=${token}`;
+
+    this.eventEmitter.emit(
+      'user.verification.requested',
+      new UserVerificationRequestedEvent(
+        user.email,
+        user.firstName,
+        user.lastName,
+        verifyLink,
+      ),
+    );
+  }
+
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || user.isEmailVerified) {
+      return;
+    }
+    await this.requestEmailVerification(user.id);
+  }
+
+  async verifyEmailWithToken(token: string): Promise<void> {
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.usersService.findByVerifyEmailToken(hash);
+    if (!user || !user.verifyEmailTokenExpiresAt) {
+      throw new UnauthorizedException('Invalid or expired verification token');
+    }
+
+    if (user.verifyEmailTokenExpiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired verification token');
+    }
+
+    await this.usersService.verifyEmail(user.id);
+    await this.usersService.clearVerifyEmailToken(user.id);
   }
 
   // ------------------------------
@@ -167,6 +303,7 @@ export class AuthService {
 
     return user;
   }
+
   private async getTokens(user: JwtUser) {
     const jwtPayload = {
       sub: user.id,
@@ -190,10 +327,31 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async updateRefreshToken(
-    userId: string,
-    refreshToken: string | null,
-  ) {
+  private async issueTokens(user: User) {
+    let companyId: string | undefined;
+    let role: string | undefined;
+
+    if (user.userType === UserType.EMPLOYER) {
+      const membership = await this.companyMembersService.getMembershipByUserId(
+        user.id,
+      );
+
+      if (membership && membership.isActive) {
+        companyId = membership.companyId;
+        role = membership.role;
+      }
+    }
+
+    return this.getTokens({
+      id: user.id,
+      email: user.email,
+      userType: user.userType,
+      companyId,
+      role,
+    });
+  }
+
+  private async storeRefreshToken(userId: string, refreshToken: string | null) {
     if (refreshToken) {
       const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
       await this.usersService.updateRefreshToken(userId, hashedRefreshToken);

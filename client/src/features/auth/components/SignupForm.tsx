@@ -17,22 +17,50 @@ const signupSchema = z.object({
   confirmPassword: z.string().min(8, 'Min 8 characters'),
   userType: z.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']),
   companyData: z.object({
-    name: z.string().min(1, 'Required'),
-    location: z.string().min(1, 'Required'),
-    size: z.string().min(1, 'Required'),
-    industry: z.string().min(1, 'Required'),
+    name: z.string().optional(),
+    location: z.string().optional(),
+    size: z.string().optional(),
+    industry: z.string().optional(),
   }).optional()
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword']
-}).refine(data => {
-  if (data.userType === 'EMPLOYER') {
-    return !!data.companyData?.name && !!data.companyData?.location && !!data.companyData?.size && !!data.companyData?.industry;
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Passwords don't match",
+      path: ['confirmPassword']
+    });
   }
-  return true;
-}, {
-  message: "Company details are required for Employer",
-  path: ['companyData']
+  
+  if (data.userType === 'EMPLOYER') {
+    if (!data.companyData?.name || data.companyData.name.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company Name is required",
+        path: ['companyData', 'name']
+      });
+    }
+    if (!data.companyData?.location || data.companyData.location.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Location is required",
+        path: ['companyData', 'location']
+      });
+    }
+    if (!data.companyData?.size || data.companyData.size.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company Size is required",
+        path: ['companyData', 'size']
+      });
+    }
+    if (!data.companyData?.industry || data.companyData.industry.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Industry is required",
+        path: ['companyData', 'industry']
+      });
+    }
+  }
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -86,7 +114,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         lastName: data.lastName,
         phoneNumber: data.phoneNumber,
         userType: data.userType,
-        ...(data.userType === 'EMPLOYER' && data.companyData ? { companyData: data.companyData } : {})
+        ...(data.userType === 'EMPLOYER' && data.companyData ? { companyData: data.companyData as any } : {})
       };
       
       await signupMutation.mutateAsync({ data: payload });
@@ -168,17 +196,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
           {/* 1st basic info */}
           <div className={userType === 'EMPLOYER' && employerStep === 2 ? 'hidden' : 'space-y-3'}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label="First Name" placeholder="Ahmed" {...register('firstName')} error={errors.firstName?.message} />
               <Input label="Last Name" placeholder="Ossama" {...register('lastName')} error={errors.lastName?.message} />
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label="Email" type="email" placeholder="name@domain.pro" {...register('email')} error={errors.email?.message} />
               <Input label="Phone Number" type="tel" placeholder="+1 (555) 019-2831" {...register('phoneNumber')} error={errors.phoneNumber?.message} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label="Password" type="password" placeholder="Min 8 characters" {...register('password')} error={errors.password?.message} />
               <Input label="Confirm Password" type="password" placeholder="Re-enter password" {...register('confirmPassword')} error={errors.confirmPassword?.message} />
             </div>

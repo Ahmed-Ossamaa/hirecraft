@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  Index
+  Index,
 } from 'typeorm';
 import { ApplicationStatus } from '../domain/application-status.enum';
 import { JobOrmEntity } from '../../jobs/infrastructure/job.orm-entity';

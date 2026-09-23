@@ -51,9 +51,9 @@ export const LoginForm = () => {
       setAuth(accessToken, user);
 
       if (user.userType === 'EMPLOYER') {
-        router.push('/employer');
+        router.push('/dashboard/company');
       } else {
-        router.push('/jobs');
+        router.push('/dashboard/profile');
       }
     } catch (error: any) {
       console.error('Login failed:', error);

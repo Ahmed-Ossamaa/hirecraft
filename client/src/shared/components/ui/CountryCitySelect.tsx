@@ -15,6 +15,8 @@ export interface CountryCitySelectProps {
   className?: string;
   disabled?: boolean;
   allowedCountries?: readonly string[];
+  countryError?: string;
+  cityError?: string;
 }
 
 export const CountryCitySelect: React.FC<CountryCitySelectProps> = ({
@@ -29,6 +31,8 @@ export const CountryCitySelect: React.FC<CountryCitySelectProps> = ({
   className,
   disabled = false,
   allowedCountries = ALLOWED_COUNTRY_CODES,
+  countryError,
+  cityError,
 }) => {
   const countries = Country.getAllCountries().filter((c) =>
     allowedCountries.includes(c.isoCode)
@@ -63,6 +67,7 @@ export const CountryCitySelect: React.FC<CountryCitySelectProps> = ({
         disabled={disabled}
         onChange={handleCountryChange}
         className={className}
+        error={countryError}
       />
       <Select
         label={cityLabel}
@@ -71,6 +76,7 @@ export const CountryCitySelect: React.FC<CountryCitySelectProps> = ({
         disabled={disabled || !countryCode || cities.length === 0}
         onChange={handleCityChange}
         className={className}
+        error={cityError}
       />
     </React.Fragment>
   );

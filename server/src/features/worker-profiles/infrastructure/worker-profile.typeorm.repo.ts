@@ -56,28 +56,41 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
   }
 
   async findByUserId(userId: string): Promise<WorkerProfile | null> {
-    const profile = await this.repository.findOne({
-      where: { userId },
-      relations: {
-        skills: {
-          machine: true,
-        },
-      },
-    });
+    const profile = await this.repository
+      .createQueryBuilder('profile')
+      .where('profile.userId = :userId', { userId })
+      .leftJoin('profile.user', 'user')
+      .addSelect([
+        'user.firstName',
+        'user.lastName',
+        'user.avatarURL',
+        'user.dob',
+        'user.gender',
+      ])
+      .leftJoinAndSelect('profile.skills', 'skills')
+      .leftJoinAndSelect('skills.machine', 'machine')
+      .getOne();
+
     return profile ? this.mapToDomain(profile) : null;
   }
 
   async findById(id: string): Promise<WorkerProfile | null> {
-    const profile = await this.repository.findOne({
-      where: { id },
-      relations: {
-        skills: {
-          machine: {
-            category: true,
-          },
-        },
-      },
-    });
+    const profile = await this.repository
+      .createQueryBuilder('profile')
+      .where('profile.id = :id', { id })
+      .leftJoin('profile.user', 'user')
+      .addSelect([
+        'user.firstName',
+        'user.lastName',
+        'user.avatarURL',
+        'user.dob',
+        'user.gender',
+      ])
+      .leftJoinAndSelect('profile.skills', 'skills')
+      .leftJoinAndSelect('skills.machine', 'machine')
+      .leftJoinAndSelect('machine.category', 'category')
+      .getOne();
+
     return profile ? this.mapToDomain(profile) : null;
   }
 
@@ -106,6 +119,14 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     const profile = new WorkerProfile();
 
     Object.assign(profile, orm);
+
+    if (orm.user) {
+      profile.firstName = orm.user.firstName;
+      profile.lastName = orm.user.lastName;
+      profile.avatarURL = orm.user.avatarURL;
+      profile.dob = orm.user.dob;
+      profile.gender = orm.user.gender;
+    }
 
     if (orm.skills) {
       profile.skills = orm.skills.map((ormSkill) => {

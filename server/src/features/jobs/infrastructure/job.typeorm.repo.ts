@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import {
   IJobRepository,
   CreateJobParams,
   FindJobsFilters,
 } from '../domain/job.repo.interface';
 import { Job } from '../domain/job.entity';
+import { JobStatus } from '../domain/job-status.enum';
 import { JobOrmEntity } from './job.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
@@ -18,9 +19,10 @@ export class JobTypeormRepository implements IJobRepository {
     private readonly repository: Repository<JobOrmEntity>,
   ) {}
 
-  async create(params: CreateJobParams): Promise<Job> {
-    const job = this.repository.create(params);
-    const savedJob = await this.repository.save(job);
+  async create(params: CreateJobParams, tx?: EntityManager): Promise<Job> {
+    const manager = tx || this.repository.manager;
+    const job = manager.create(JobOrmEntity, params);
+    const savedJob = await manager.save(job);
     return this.mapToDomain(savedJob);
   }
 
@@ -30,11 +32,27 @@ export class JobTypeormRepository implements IJobRepository {
   ): Promise<PaginatedResult<Job>> {
     const qb = this.repository.createQueryBuilder('job');
 
-    if (filters?.status) qb.andWhere('job.status = :status', { status: filters.status });
-    if (filters?.companyId) qb.andWhere('job.companyId = :companyId', { companyId: filters.companyId });
-    if (filters?.experienceLevel) qb.andWhere('job.experienceLevel = :experienceLevel', { experienceLevel: filters.experienceLevel });
-    if (filters?.jobType) qb.andWhere('job.jobType = :jobType', { jobType: filters.jobType });
-    if (filters?.country) qb.andWhere('job.country = :country', { country: filters.country });
+    if (filters?.search) {
+      const search = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        '(job.title ILIKE :search OR job.description ILIKE :search)',
+        { search },
+      );
+    }
+    if (filters?.status)
+      qb.andWhere('job.status = :status', { status: filters.status });
+    if (filters?.companyId)
+      qb.andWhere('job.companyId = :companyId', {
+        companyId: filters.companyId,
+      });
+    if (filters?.experienceLevel)
+      qb.andWhere('job.experienceLevel = :experienceLevel', {
+        experienceLevel: filters.experienceLevel,
+      });
+    if (filters?.jobType)
+      qb.andWhere('job.jobType = :jobType', { jobType: filters.jobType });
+    if (filters?.country)
+      qb.andWhere('job.country = :country', { country: filters.country });
     if (filters?.city) qb.andWhere('job.city = :city', { city: filters.city });
 
     qb.leftJoin('job.company', 'company')
@@ -83,7 +101,23 @@ export class JobTypeormRepository implements IJobRepository {
     return jobs.map((job) => this.mapToDomain(job));
   }
 
-  async update(id: string, params: Partial<CreateJobParams>): Promise<Job | null> {
+  async countActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    const manager = tx || this.repository.manager;
+    return manager.count(JobOrmEntity, {
+      where: {
+        companyId,
+        status: JobStatus.PUBLISHED,
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    params: Partial<CreateJobParams>,
+  ): Promise<Job | null> {
     await this.repository.update(id, params);
     return this.findById(id);
   }
@@ -96,12 +130,12 @@ export class JobTypeormRepository implements IJobRepository {
   private mapToDomain(ormEntity: JobOrmEntity): Job {
     const job = new Job();
     Object.assign(job, ormEntity);
-    
+
     if (ormEntity.company) {
       job.companyName = ormEntity.company.name;
-      job.companyLogo = ormEntity.company.logoUrl;
+      job.companyLogo = ormEntity.company.logoUrl ?? undefined;
     }
-    
+
     if (ormEntity.machine) {
       job.machineNameEn = ormEntity.machine.nameEn;
       job.machineNameAr = ormEntity.machine.nameAr;

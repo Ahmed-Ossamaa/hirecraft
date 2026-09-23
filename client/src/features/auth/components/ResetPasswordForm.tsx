@@ -51,7 +51,7 @@ const ResetPasswordFormInner: React.FC = () => {
       });
       setSuccess(true);
       setTimeout(() => {
-        router.push('/login');
+        router.push('/auth');
       }, 3000);
     } catch (error: any) {
       console.error('Password reset failed:', error);
@@ -69,7 +69,7 @@ const ResetPasswordFormInner: React.FC = () => {
         <p className="text-sm text-muted-foreground mb-6">
           The password reset link is invalid or missing. Please request a new one.
         </p>
-        <Button onClick={() => router.push('/login')} fullWidth>
+        <Button onClick={() => router.push('/auth')} fullWidth>
           Go to Login
         </Button>
       </div>
@@ -84,7 +84,7 @@ const ResetPasswordFormInner: React.FC = () => {
         <p className="text-sm text-muted-foreground mb-6">
           Your password has been successfully updated. Redirecting you to login...
         </p>
-        <Button onClick={() => router.push('/login')} fullWidth variant="secondary">
+        <Button onClick={() => router.push('/auth')} fullWidth variant="secondary">
           Go to Login Now
         </Button>
       </div>

@@ -10,7 +10,7 @@ export class BrevoMailService implements MailService {
   constructor(
     @Inject(mailConfig.KEY)
     private readonly config: ConfigType<typeof mailConfig>,
-  ) { }
+  ) {}
 
   async sendEmail(
     toEmail: string,
@@ -45,7 +45,7 @@ export class BrevoMailService implements MailService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text()
+        const errorText = await response.text();
         let message = `Brevo API returned ${response.status}`;
         try {
           const errorData = JSON.parse(errorText) as { message?: string };

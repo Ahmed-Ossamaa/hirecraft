@@ -17,7 +17,11 @@ import { WorkerProfilesModule } from './features/worker-profiles/worker-profiles
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
 import mailConfig from './config/mail.config';
+import stripeConfig from './config/stripe.config';
+import plansConfig from './config/plans.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { BillingModule } from './features/billing/billing.module';
+import { AdminModule } from './features/admin/admin.module';
 
 @Module({
   imports: [
@@ -28,7 +32,14 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
         process.env.NODE_ENV === 'production'
           ? '.env.production'
           : '.env.development',
-      load: [appConfig, dbConfig, jwtConfig, mailConfig],
+      load: [
+        appConfig,
+        dbConfig,
+        jwtConfig,
+        mailConfig,
+        stripeConfig,
+        plansConfig,
+      ],
       validate: validateEnv,
     }),
     TypeOrmModule.forRootAsync({
@@ -44,6 +55,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     MachineCategoriesModule,
     MachinesModule,
     WorkerProfilesModule,
+    BillingModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

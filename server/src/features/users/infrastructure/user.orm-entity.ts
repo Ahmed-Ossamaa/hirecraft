@@ -10,6 +10,7 @@ import {
 import { UserType } from '../domain/user-type.enum';
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import { WorkerProfileOrmEntity } from '@/features/worker-profiles/infrastructure/worker-profile.orm-entity';
+import { Gender } from '../domain/gender.enum';
 
 @Entity('users')
 export class UserOrmEntity {
@@ -37,11 +38,17 @@ export class UserOrmEntity {
   @Column({ type: 'date', nullable: true })
   dob?: Date;
 
+  @Column({ type: 'enum', enum: Gender, nullable: true })
+  gender?: Gender;
+
   @Column({ nullable: true })
   phoneNumber?: string;
 
-  @Column({ nullable: true })
-  avatarURL?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  avatarURL?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  avatarPublicId?: string | null;
 
   @OneToMany(() => CompanyMemberOrmEntity, (member) => member.user)
   companyMembers!: CompanyMemberOrmEntity[];
@@ -56,19 +63,19 @@ export class UserOrmEntity {
   isEmailVerified!: boolean;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  verifyEmailToken?: string | null;
+  hashedVerifyEmailToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   verifyEmailTokenExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  resetPasswordToken?: string | null;
+  hashedResetPasswordToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   resetPasswordExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
-  inviteToken?: string | null;
+  hashedInviteToken?: string | null;
 
   @Column({ type: 'timestamp', select: false, nullable: true })
   inviteTokenExpiresAt?: Date | null;
