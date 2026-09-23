@@ -18,6 +18,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '../users/domain/user-type.enum';
@@ -40,10 +41,10 @@ export class WorkerProfilesController {
   @ApiOperation({
     summary: 'Create a new worker profile for the logged-in user',
   })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 201,
     description: 'worker profile has been successfully created',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 409, description: 'User already has a profile.' })
   async createProfile(
@@ -58,10 +59,10 @@ export class WorkerProfilesController {
   @ApiOperation({
     summary: "Add a new machine skill to the logged-in worker's profile",
   })
+  @ApiStandardResponse(WorkerMachineSkill)
   @ApiResponse({
     status: 201,
     description: 'Skill successfully added.',
-    type: WorkerMachineSkill,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   @ApiResponse({
@@ -80,10 +81,10 @@ export class WorkerProfilesController {
   @ApiOperation({
     summary: 'Retrieve the profile of the currently logged-in worker',
   })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 200,
     description: 'Returns the worker profile with skills.',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async getMyProfile(@CurrentUser('id') userId: string) {
@@ -95,10 +96,10 @@ export class WorkerProfilesController {
   @ApiOperation({
     summary: 'Get a specific worker profile by its ID (For employers)',
   })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 200,
     description: 'Returns the requested worker profile.',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async getProfileById(@Param('id', ParseUUIDPipe) id: string) {
@@ -108,13 +109,13 @@ export class WorkerProfilesController {
   @Patch()
   @Roles(UserType.CANDIDATE)
   @ApiOperation({ summary: "Update the logged-in worker's profile" })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 200,
     description: 'Returns the updated worker profile.',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
-  async updateProfile(
+  async updateWorkerProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateWorkerProfileDto,
   ) {
@@ -124,10 +125,10 @@ export class WorkerProfilesController {
   @Patch('skills/:skillId')
   @Roles(UserType.CANDIDATE)
   @ApiOperation({ summary: 'Update an existing machine skill' })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 200,
     description: 'Returns the updated worker profile.',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async updateSkill(
@@ -141,10 +142,10 @@ export class WorkerProfilesController {
   @Delete('skills/:skillId')
   @Roles(UserType.CANDIDATE)
   @ApiOperation({ summary: 'Delete a machine skill from the profile' })
+  @ApiStandardResponse(WorkerProfile)
   @ApiResponse({
     status: 200,
     description: 'Returns the updated worker profile.',
-    type: WorkerProfile,
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async deleteSkill(

@@ -5,10 +5,9 @@ import { JOB_REPOSITORY } from './domain/job.repo.interface';
 import { JobTypeormRepository } from './infrastructure/job.typeorm.repo';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JobOrmEntity } from './infrastructure/job.orm-entity';
-import { SubscriptionLimitsModule } from '../billing/subscription-limits/subscription-limits.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([JobOrmEntity]), SubscriptionLimitsModule],
+  imports: [TypeOrmModule.forFeature([JobOrmEntity])],
   controllers: [JobsController],
   providers: [
     JobsService,

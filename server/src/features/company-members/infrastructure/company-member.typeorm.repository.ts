@@ -119,22 +119,6 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   }
 
   /**
-   * Counts the number of active members in a company.
-   */
-  async countActiveMembersByCompanyId(
-    companyId: string,
-    tx?: EntityManager,
-  ): Promise<number> {
-    const manager = tx || this.repository.manager;
-    return manager.count(CompanyMemberOrmEntity, {
-      where: {
-        companyId,
-        isActive: true,
-      },
-    });
-  }
-
-  /**
    * Retrieves paginated company members for a specific company.
    */
   async findAllByCompanyId(

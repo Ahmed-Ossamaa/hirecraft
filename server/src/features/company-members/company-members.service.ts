@@ -26,7 +26,6 @@ import {
 } from '@/integrations/mail/mail.events';
 import appConfig from '@/config/app.config';
 import { CompanyRole } from './domain/company-role.enum';
-import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
 @Injectable()
 export class CompanyMembersService {
@@ -39,12 +38,11 @@ export class CompanyMembersService {
     private readonly companiesService: CompaniesService,
     private readonly eventEmitter: EventEmitter2,
     private readonly dataSource: DataSource,
-    private readonly subscriptionLimitsService: SubscriptionLimitsService,
   ) {}
 
   async addMember(
     params: CreateCompanyMemberParams,
-    tx?: EntityManager,
+    tx?: any,
   ): Promise<CompanyMember> {
     return this.companyMemberRepository.create(params, tx);
   }
@@ -160,18 +158,6 @@ export class CompanyMembersService {
     const user = await this.usersService.findByEmail(dto.email);
     const { finalUser, finalInviteToken } = await this.dataSource.transaction(
       async (tx) => {
-        await this.subscriptionLimitsService.lockCompany(companyId, tx);
-        const currentCount =
-          await this.companyMemberRepository.countActiveMembersByCompanyId(
-            companyId,
-            tx,
-          );
-        await this.subscriptionLimitsService.checkCompanyMemberLimit(
-          companyId,
-          currentCount,
-          tx,
-        );
-
         let txUser = user;
         let txInviteToken: string | null = null;
 

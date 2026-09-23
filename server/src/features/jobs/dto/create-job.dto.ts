@@ -7,6 +7,7 @@ import {
   IsOptional,
   MaxLength,
   IsUUID,
+  IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JobStatus } from '../domain/job-status.enum';
@@ -53,6 +54,15 @@ export class CreateJobDto {
   @IsOptional()
   yearsOfExperience?: number;
 
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['Requirement 1', 'Requirement 2'],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  requirements?: string[];
+
   @ApiPropertyOptional({ enum: JobType, default: JobType.FULL_TIME })
   @IsEnum(JobType)
   @IsOptional()
@@ -72,6 +82,7 @@ export class CreateJobDto {
 
   @ApiPropertyOptional({ example: '15k - 20k' })
   @IsString()
+  @MaxLength(20)
   @IsOptional()
   salaryRange?: string;
 }

@@ -8,7 +8,6 @@ import { CompanyMemberTypeormRepository } from './infrastructure/company-member.
 import { MailModule } from '@/integrations/mail/mail.module';
 import { UsersModule } from '../users/users.module';
 import { CompaniesModule } from '../companies/companies.module';
-import { SubscriptionLimitsModule } from '../billing/subscription-limits/subscription-limits.module';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { SubscriptionLimitsModule } from '../billing/subscription-limits/subscri
     MailModule,
     UsersModule,
     CompaniesModule,
-    SubscriptionLimitsModule,
   ],
   controllers: [CompanyMembersController],
   providers: [

@@ -17,6 +17,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -44,23 +45,23 @@ export class AdminJobsController {
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getJobs(@Query() query: AdminJobsQueryDto) {
+  async getAdminJobs(@Query() query: AdminJobsQueryDto) {
     return this.adminService.getJobs(query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific job by ID (Admin only)' })
+  @ApiStandardResponse(Job)
   @ApiResponse({
     status: 200,
     description: 'Returns job details.',
-    type: Job,
   })
   @ApiResponse({ status: 404, description: 'Job not found.' })
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getJobById(@Param('id', ParseUUIDPipe) id: string) {
+  async getAdminJobById(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.getJobById(id);
   }
 
@@ -68,10 +69,10 @@ export class AdminJobsController {
   @ApiOperation({
     summary: 'Update job status (e.g. PUBLISHED, DRAFT, CLOSED) (Admin only)',
   })
+  @ApiStandardResponse(Job)
   @ApiResponse({
     status: 200,
     description: 'Job status updated successfully.',
-    type: Job,
   })
   @ApiResponse({ status: 404, description: 'Job not found.' })
   @ApiResponse({

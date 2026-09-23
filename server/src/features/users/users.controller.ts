@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
@@ -34,10 +35,10 @@ export class UsersController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get your own profile details' })
+  @ApiStandardResponse(User)
   @ApiResponse({
     status: 200,
     description: 'Returns the user profile.',
-    type: User,
   })
   async getProfile(@CurrentUser('id') userId: string) {
     const user = await this.usersService.findById(userId);
@@ -47,10 +48,10 @@ export class UsersController {
 
   @Patch('me')
   @ApiOperation({ summary: 'Update your own profile details' })
+  @ApiStandardResponse(User)
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully.',
-    type: User,
   })
   async updateProfile(
     @CurrentUser('id') userId: string,

@@ -6,14 +6,12 @@ import {
   UserAddedToCompanyEvent,
   PasswordResetRequestedEvent,
   UserVerificationRequestedEvent,
-  SubscriptionCreatedEvent,
 } from './mail.events';
 import {
   getInviteEmailHtml,
   getAddedToCompanyHtml,
   getPasswordResetHtml,
   getVerifyEmailHtml,
-  getSubscriptionConfirmationHtml,
 } from './mail.templates';
 
 @Injectable()
@@ -82,22 +80,6 @@ export class MailListener {
       payload.email,
       `${payload.firstName} ${payload.lastName}`,
       'Verify Email Address - Technically',
-      html,
-    );
-  }
-
-  @OnEvent('subscription.created', { async: true })
-  async handleSubscriptionCreatedEvent(payload: SubscriptionCreatedEvent) {
-    this.logger.log(`Handling subscription.created event for ${payload.email}`);
-    const html = getSubscriptionConfirmationHtml(
-      payload.companyName,
-      payload.planName,
-      payload.currentPeriodEnd,
-    );
-    await this.mailService.sendEmail(
-      payload.email,
-      payload.recipientName || payload.companyName,
-      `Subscription Confirmed: Welcome to ${payload.planName}!`,
       html,
     );
   }

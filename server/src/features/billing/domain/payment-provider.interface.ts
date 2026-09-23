@@ -61,5 +61,5 @@ export interface PaymentProvider {
   verifyWebhook(params: {
     payload: Buffer;
     headers: Record<string, string | string[] | undefined>;
-  }): PaymentEvent | null;
+  }): PaymentEvent;
 }

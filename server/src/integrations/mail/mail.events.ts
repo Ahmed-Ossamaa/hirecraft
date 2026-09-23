@@ -32,13 +32,3 @@ export class UserVerificationRequestedEvent {
     public readonly verifyLink: string,
   ) {}
 }
-
-export class SubscriptionCreatedEvent {
-  constructor(
-    public readonly email: string,
-    public readonly companyName: string,
-    public readonly planName: string,
-    public readonly currentPeriodEnd: Date | null,
-    public readonly recipientName?: string,
-  ) {}
-}

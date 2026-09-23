@@ -1,6 +1,6 @@
 import {
   IsEmail,
-  IsIn,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { UserType } from '../../users/domain/user-type.enum';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { CreateCompanyDto } from '@/features/companies/dto/create-company.dto';
 
@@ -47,15 +47,11 @@ export class SignupDto {
   @MaxLength(15, { message: 'Invalid phone number' })
   phoneNumber!: string;
 
-  @ApiProperty({
-    enum: [UserType.CANDIDATE, UserType.EMPLOYER],
-    example: UserType.EMPLOYER,
-  })
-  @IsIn([UserType.CANDIDATE, UserType.EMPLOYER], {
-    message: 'userType must be either CANDIDATE or EMPLOYER',
-  })
+  @ApiProperty({ enum: UserType, example: UserType.EMPLOYER })
+  @IsEnum(UserType)
   userType!: UserType;
 
+  @ApiPropertyOptional({ type: () => CreateCompanyDto })
   @ValidateNested()
   @Type(() => CreateCompanyDto)
   @IsOptional()

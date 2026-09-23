@@ -15,32 +15,16 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { JobStatus } from './domain/job-status.enum';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
-import { DataSource } from 'typeorm';
-import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
 @Injectable()
 export class JobsService {
   constructor(
     @Inject(JOB_REPOSITORY)
     private readonly jobRepository: IJobRepository,
-    private readonly subscriptionLimitsService: SubscriptionLimitsService,
-    private readonly dataSource: DataSource,
   ) {}
 
   async createJob(params: CreateJobParams): Promise<Job> {
-    return this.dataSource.transaction(async (tx) => {
-      await this.subscriptionLimitsService.lockCompany(params.companyId, tx);
-      const currentCount = await this.jobRepository.countActiveByCompanyId(
-        params.companyId,
-        tx,
-      );
-      await this.subscriptionLimitsService.checkJobPostingLimit(
-        params.companyId,
-        currentCount,
-        tx,
-      );
-      return this.jobRepository.create(params, tx);
-    });
+    return this.jobRepository.create(params);
   }
 
   async findAllJobs(
@@ -54,9 +38,11 @@ export class JobsService {
     query: FindJobsQueryDto,
   ): Promise<PaginatedResult<Job>> {
     return this.jobRepository.findAll(query, {
+      search: query.search,
       status: JobStatus.PUBLISHED,
       companyId: query.companyId,
       experienceLevel: query.experienceLevel,
+      yearsOfExperience: query.yearsOfExperience,
       jobType: query.jobType,
       country: query.country!,
       city: query.city!,
