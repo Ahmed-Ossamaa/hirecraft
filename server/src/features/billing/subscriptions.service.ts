@@ -97,8 +97,11 @@ export class SubscriptionsService {
    * - Returns active subscription information and plan details if present,
    * Or defaults to the free plan tier.
    */
-  async getSubscriptionForCompany(companyId: string) {
-    const activeSub = await this.subscriptionRepo.findOne({
+  async getSubscriptionForCompany(companyId: string, tx?: EntityManager) {
+    const repo = tx
+      ? tx.getRepository(SubscriptionOrmEntity)
+      : this.subscriptionRepo;
+    const activeSub = await repo.findOne({
       where: { companyId, status: SubscriptionStatus.ACTIVE },
     });
 
