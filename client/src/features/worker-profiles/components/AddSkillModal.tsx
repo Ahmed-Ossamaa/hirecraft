@@ -10,6 +10,8 @@ import { useGetMachines } from '@/shared/api/generated/machines/machines';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/worker-profiles';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 import { Machine } from '@/shared/api/generated/model';
 
@@ -31,15 +33,16 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
   const addSkillMutation = useAddSkill();
 
   // Basic fetch of machines for the dropdown
-  // In a real scenario, this might need search/pagination ().
+  // later : need search/pagination ().
   // For now, fetching first 100
   const { data: machinesResponse, isLoading: isLoadingMachines } = useGetMachines({ limit: 100 });
-  const machines: Machine[] = (machinesResponse?.data?.data as Machine[]) || [];
+  const machines: Machine[] = machinesResponse?.data?.data || [];
 
   const {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<AddSkillFormData>({
     resolver: zodResolver(addSkillSchema),
@@ -67,7 +70,7 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
       onClose();
     } catch (error) {
       console.error('Failed to add skill:', error);
-      toast.error("Failed to add skill");
+      setError('root', { type: 'manual', message: getApiError(error, 'Failed to add skill') });
     }
   };
 
@@ -79,6 +82,8 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Add Machine Skill">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+        <FormError message={errors.root?.message} className="mb-2" />
+        
         <Select
           label="Select Machine"
           {...register('machineId')}
@@ -118,13 +123,6 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
             error={errors.yearsOfExperience?.message}
           />
         </div>
-
-        {addSkillMutation.isError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-xs font-mono">
-            {/* @ts-ignore */}
-            {addSkillMutation.error?.response?.data?.message || 'An error occurred while adding the skill.'}
-          </div>
-        )}
 
         <div className="pt-4 flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={handleClose}>

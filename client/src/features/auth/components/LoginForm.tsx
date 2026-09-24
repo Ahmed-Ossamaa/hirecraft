@@ -10,6 +10,8 @@ import { useLogin } from '@/shared/api/generated/auth/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -55,11 +57,11 @@ export const LoginForm = () => {
       } else {
         router.push('/dashboard/profile');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login failed:', error);
       setError('root', {
         type: 'manual',
-        message: error.response?.data?.message || 'Invalid email or password. Please try again.',
+        message: getApiError(error, 'Invalid email or password. Please try again.'),
       });
     }
   };
@@ -104,11 +106,7 @@ export const LoginForm = () => {
             error={errors.email?.message}
           />
           
-          {errors.root && (
-            <div className="p-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-mono mb-2">
-              {errors.root.message}
-            </div>
-          )}
+          <FormError message={errors.root?.message} className="mb-2" />
           
           <div>
             <div className="flex items-center justify-between mb-1.5">

@@ -7,6 +7,8 @@ import { z } from "zod";
 import { Input, Button } from "@/shared/components/ui";
 import { useChangePassword } from "@/shared/api/generated/auth/auth";
 import { toast } from "sonner";
+import { FormError } from "@/shared/components/ui/FormError";
+import { getApiError } from "@/shared/utils/error";
 
 const changePasswordSchema = z
   .object({
@@ -30,6 +32,7 @@ export const ChangePasswordForm: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
@@ -51,12 +54,12 @@ export const ChangePasswordForm: React.FC = () => {
 
       toast.success("Password changed successfully");
       reset(); // Clear the form
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to change password:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to change password. Please check your current password and try again.",
-      );
+      setError("root", {
+        type: "manual",
+        message: getApiError(error, "Failed to change password. Please check your current password and try again."),
+      });
     }
   };
 
@@ -101,6 +104,8 @@ export const ChangePasswordForm: React.FC = () => {
           error={errors.confirmPassword?.message}
         />
       </div>
+      
+      <FormError message={errors.root?.message} className="mt-4" />
 
       <div className="mt-8 flex items-center justify-end border-t border-border/50 pt-5">
         <Button type="submit" disabled={changePasswordMutation.isPending}>

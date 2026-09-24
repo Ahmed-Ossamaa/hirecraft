@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { Input, Button, Select } from '@/shared/components/ui';
 import { COMPANY_SIZE_OPTIONS, INDUSTRY_SECTOR_OPTIONS } from '@/shared/constants/employer-options';
 import { useSignup } from '@/shared/api/generated/auth/auth';
+import { toast } from 'sonner';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const signupSchema = z.object({
   firstName: z.string().min(2, 'Min 2 characters').max(30),
@@ -72,7 +75,6 @@ interface SignupFormProps {
 export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [userType, setUserType] = useState<'CANDIDATE' | 'EMPLOYER'>('CANDIDATE');
   const [employerStep, setEmployerStep] = useState<1 | 2>(1);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const signupMutation = useSignup();
 
@@ -119,15 +121,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       
       await signupMutation.mutateAsync({ data: payload });
       
-      setSuccessMsg('Registration successful! Please verify your email and sign in.');
+      toast.success('Registration successful! Please verify your email and sign in.');
       setTimeout(() => {
         if (onSuccess) onSuccess();
       }, 3000);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Signup failed:', error);
-      const msg = error.response?.data?.message || 'Failed to register. Please try again.';
-      setError('root', { type: 'manual', message: msg });
+      setError('root', { type: 'manual', message: getApiError(error, 'Failed to register. Please try again.') });
     }
   };
 
@@ -183,16 +184,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         )}
 
         <form className="mt-4 space-y-3" onSubmit={handleSubmit(onSubmit)}>
-          {errors.root && (
-            <div className="p-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-mono mb-2">
-              {errors.root.message}
-            </div>
-          )}
-          {successMsg && (
-            <div className="p-2.5 rounded bg-green-500/10 border border-green-500/20 text-green-500 text-[11px] font-mono mb-2">
-              {successMsg}
-            </div>
-          )}
+          <FormError message={errors.root?.message} className="mb-2" />
 
           {/* 1st basic info */}
           <div className={userType === 'EMPLOYER' && employerStep === 2 ? 'hidden' : 'space-y-3'}>

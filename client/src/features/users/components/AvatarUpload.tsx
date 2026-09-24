@@ -6,6 +6,7 @@ import { useUploadAvatar, useRemoveAvatar, useGetProfile } from '@/shared/api/ge
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui';
+import { getApiError } from '@/shared/utils/error';
 
 export const AvatarUpload: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,9 +45,9 @@ export const AvatarUpload: React.FC = () => {
       if (res.data?.data && accessToken) {
         setAuth(accessToken, res.data.data as any, organizationId);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to upload avatar:', error);
-      toast.error(error.response?.data?.message || 'Failed to upload avatar');
+      toast.error(getApiError(error, 'Failed to upload avatar'));
     }
   };
 
@@ -59,9 +60,9 @@ export const AvatarUpload: React.FC = () => {
       if (res.data?.data && accessToken) {
         setAuth(accessToken, res.data.data as any, organizationId);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to remove avatar:', error);
-      toast.error(error.response?.data?.message || 'Failed to remove avatar');
+      toast.error(getApiError(error, 'Failed to remove avatar'));
     }
   };
 

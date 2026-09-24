@@ -8,6 +8,8 @@ import { Input, Button } from '@/shared/components/ui';
 import { useConfirmResetPassword } from '@/shared/api/generated/auth/auth';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { MdCheckCircle } from 'react-icons/md';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, 'Password must be at least 8 characters'),
@@ -53,11 +55,11 @@ const ResetPasswordFormInner: React.FC = () => {
       setTimeout(() => {
         router.push('/auth');
       }, 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password reset failed:', error);
       setError('root', {
         type: 'manual',
-        message: error.response?.data?.message || 'Failed to reset password. The link might be expired.',
+        message: getApiError(error, 'Failed to reset password. The link might be expired.'),
       });
     }
   };
@@ -115,11 +117,7 @@ const ResetPasswordFormInner: React.FC = () => {
           error={errors.confirmPassword?.message}
         />
 
-        {errors.root && (
-          <div className="p-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-mono mb-2">
-            {errors.root.message}
-          </div>
-        )}
+        <FormError message={errors.root?.message} className="mb-2" />
 
         <Button 
           type="submit" 
