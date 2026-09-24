@@ -5,6 +5,7 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { WorkerProfileEducationLevel } from './workerProfileEducationLevel';
 import type { WorkerProfileGender } from './workerProfileGender';
 import type { WorkerMachineSkill } from './workerMachineSkill';
 
@@ -18,12 +19,19 @@ export interface WorkerProfile {
   bio: string | null;
   country: string;
   city: string;
+  /** @nullable */
+  educationLevel: WorkerProfileEducationLevel;
+  /** @nullable */
+  educationDetails: string | null;
   firstName?: string;
   lastName?: string;
   /** @nullable */
   avatarURL?: string | null;
   dob?: string;
   gender?: WorkerProfileGender;
+  /** @nullable */
+  phone?: string | null;
+  email?: string;
   skills?: WorkerMachineSkill[];
   createdAt: string;
   updatedAt: string;

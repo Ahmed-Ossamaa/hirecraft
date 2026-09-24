@@ -1,5 +1,6 @@
 import { WorkerMachineSkill } from './worker-machine-skill.entity';
 import { Gender } from '../../users/domain/gender.enum';
+import { EducationLevel } from './educational-lvl.enum';
 
 export class WorkerProfile {
   id!: string;
@@ -9,6 +10,8 @@ export class WorkerProfile {
   bio!: string | null;
   country!: string;
   city!: string;
+  educationLevel!: EducationLevel | null;
+  educationDetails!: string | null;
 
   // Basic user info joined from User entity
   firstName?: string;
@@ -16,7 +19,8 @@ export class WorkerProfile {
   avatarURL?: string | null;
   dob?: Date;
   gender?: Gender;
-  //phone number/email (maybe later or never, to be decided later)
+  phone?: string | null;
+  email?: string;
 
   skills?: WorkerMachineSkill[];
 

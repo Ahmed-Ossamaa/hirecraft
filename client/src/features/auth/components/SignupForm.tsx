@@ -15,7 +15,7 @@ const signupSchema = z.object({
   phoneNumber: z.string().min(11, 'Min 11 digits'),
   password: z.string().min(8, 'Min 8 characters').max(50),
   confirmPassword: z.string().min(8, 'Min 8 characters'),
-  userType: z.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']),
+  userType: z.enum(['CANDIDATE', 'EMPLOYER']),
   companyData: z.object({
     name: z.string().optional(),
     location: z.string().optional(),

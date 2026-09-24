@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Input, Button, Textarea, CountryCitySelect } from '@/shared/components/ui';
+import { Input, Button, Textarea, CountryCitySelect, Select } from '@/shared/components/ui';
 import { useCreateProfile, useUpdateWorkerProfile } from '@/shared/api/generated/worker-profiles/worker-profiles';
 import { toast } from 'sonner';
 import { WorkerProfile } from '@/shared/api/generated/model';
@@ -15,6 +15,8 @@ const profileSchema = z.object({
   bio: z.string().max(1000).optional().or(z.literal('')),
   country: z.string().min(1, 'Country is required'),
   city: z.string().min(1, 'City is required'),
+  educationLevel: z.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).optional(),
+  educationDetails: z.string().max(200).optional().or(z.literal('')),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -44,6 +46,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
       bio: initialData?.bio || '',
       country: initialData?.country || '',
       city: initialData?.city || '',
+      // @ts-ignore
+      educationLevel: initialData?.educationLevel || undefined,
+      educationDetails: initialData?.educationDetails || '',
     },
   });
 
@@ -56,6 +61,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
         bio: initialData.bio || '',
         country: initialData.country || '',
         city: initialData.city || '',
+        educationLevel: initialData.educationLevel || undefined,
+        educationDetails: initialData.educationDetails || '',
       });
     }
   }, [initialData, reset]);
@@ -71,6 +78,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
         city: data.city,
         ...(data.lastCompany ? { lastCompany: data.lastCompany } : {}),
         ...(data.bio ? { bio: data.bio } : {}),
+        ...(data.educationLevel ? { educationLevel: data.educationLevel } : {}),
+        ...(data.educationDetails ? { educationDetails: data.educationDetails } : {}),
       };
 
       if (initialData) {
@@ -128,6 +137,28 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
             onCityChange={(val) => setValue('city', val, { shouldValidate: true })}
             countryError={errors.country?.message}
             cityError={errors.city?.message}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Education Level"
+            {...register('educationLevel')}
+            error={errors.educationLevel?.message}
+            options={[
+              { value: '', label: 'Select education level...' },
+              { value: 'HIGH_SCHOOL', label: 'High School' },
+              { value: 'VOCATIONAL', label: 'Vocational / Technical Institute' },
+              { value: 'ASSOCIATE', label: 'Associate Degree' },
+              { value: 'BACHELOR', label: 'Bachelor\'s Degree' },
+              { value: 'OTHER', label: 'Other' },
+            ]}
+          />
+          <Input
+            label="Education Details (Optional)"
+            placeholder="e.g. Don Bosco Institute, Alexandria"
+            {...register('educationDetails')}
+            error={errors.educationDetails?.message}
           />
         </div>
 

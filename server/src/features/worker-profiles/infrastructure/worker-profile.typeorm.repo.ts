@@ -66,6 +66,8 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
         'user.avatarURL',
         'user.dob',
         'user.gender',
+        'user.phoneNumber',
+        'user.email',
       ])
       .leftJoinAndSelect('profile.skills', 'skills')
       .leftJoinAndSelect('skills.machine', 'machine')
@@ -85,6 +87,8 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
         'user.avatarURL',
         'user.dob',
         'user.gender',
+        'user.phoneNumber',
+        'user.email',
       ])
       .leftJoinAndSelect('profile.skills', 'skills')
       .leftJoinAndSelect('skills.machine', 'machine')
@@ -126,6 +130,8 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
       profile.avatarURL = orm.user.avatarURL;
       profile.dob = orm.user.dob;
       profile.gender = orm.user.gender;
+      profile.phone = orm.user.phoneNumber;
+      profile.email = orm.user.email;
     }
 
     if (orm.skills) {

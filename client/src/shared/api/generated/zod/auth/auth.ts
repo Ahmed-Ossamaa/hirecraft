@@ -37,7 +37,7 @@ export const signupBody = zod.object({
   "firstName": zod.string().min(signupBodyFirstNameMin).max(signupBodyFirstNameMax),
   "lastName": zod.string().min(signupBodyLastNameMin).max(signupBodyLastNameMax),
   "phoneNumber": zod.string().min(signupBodyPhoneNumberMin).max(signupBodyPhoneNumberMax),
-  "userType": zod.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']),
+  "userType": zod.enum(['CANDIDATE', 'EMPLOYER']),
   "companyData": zod.object({
   "name": zod.string().max(signupBodyCompanyDataNameMax),
   "logoUrl": zod.string().optional(),

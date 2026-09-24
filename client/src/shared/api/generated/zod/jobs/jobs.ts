@@ -72,6 +72,9 @@ export const createJobResponse = zod.object({
 /**
  * @summary Get all published jobs for all companies with filter
  */
+export const findAllQueryYearsOfExperienceMin = 0;
+export const findAllQueryYearsOfExperienceMax = 30;
+
 export const findAllQueryOrderDefault = "DESC";export const findAllQueryPageDefault = 1;
 
 export const findAllQueryLimitDefault = 10;
@@ -82,6 +85,7 @@ export const findAllQueryLimitMax = 100;
 export const findAllQueryParams = zod.object({
   "search": zod.string().optional(),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional(),
+  "yearsOfExperience": zod.number().min(findAllQueryYearsOfExperienceMin).max(findAllQueryYearsOfExperienceMax).optional().describe('Minimum years of experience'),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "country": zod.string().optional(),
   "city": zod.string().optional(),

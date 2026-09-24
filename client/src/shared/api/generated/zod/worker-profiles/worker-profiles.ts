@@ -17,6 +17,8 @@ export const createProfileBodyLastCompanyMax = 100;
 
 export const createProfileBodyBioMax = 1000;
 
+export const createProfileBodyEducationDetailsMax = 200;
+
 
 
 export const createProfileBody = zod.object({
@@ -24,7 +26,9 @@ export const createProfileBody = zod.object({
   "lastCompany": zod.string().max(createProfileBodyLastCompanyMax).optional(),
   "bio": zod.string().max(createProfileBodyBioMax).optional(),
   "country": zod.string(),
-  "city": zod.string()
+  "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).optional(),
+  "educationDetails": zod.string().max(createProfileBodyEducationDetailsMax).optional()
 })
 
 export const createProfileResponse = zod.object({
@@ -41,11 +45,15 @@ export const createProfileResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),
@@ -70,6 +78,8 @@ export const updateWorkerProfileBodyLastCompanyMax = 100;
 
 export const updateWorkerProfileBodyBioMax = 1000;
 
+export const updateWorkerProfileBodyEducationDetailsMax = 200;
+
 
 
 export const updateWorkerProfileBody = zod.object({
@@ -77,7 +87,9 @@ export const updateWorkerProfileBody = zod.object({
   "lastCompany": zod.string().max(updateWorkerProfileBodyLastCompanyMax).optional(),
   "bio": zod.string().max(updateWorkerProfileBodyBioMax).optional(),
   "country": zod.string().optional(),
-  "city": zod.string().optional()
+  "city": zod.string().optional(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).optional(),
+  "educationDetails": zod.string().max(updateWorkerProfileBodyEducationDetailsMax).optional()
 })
 
 export const updateWorkerProfileResponse = zod.object({
@@ -94,11 +106,15 @@ export const updateWorkerProfileResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),
@@ -162,11 +178,15 @@ export const getMyProfileResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),
@@ -203,11 +223,15 @@ export const getProfileByIdResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),
@@ -253,11 +277,15 @@ export const updateSkillResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),
@@ -294,11 +322,15 @@ export const deleteSkillResponse = zod.object({
   "bio": zod.string().nullable(),
   "country": zod.string(),
   "city": zod.string(),
+  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
+  "educationDetails": zod.string().nullable(),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "avatarURL": zod.string().nullish(),
   "dob": zod.string().datetime({}).optional(),
   "gender": zod.enum(['male', 'female']).optional(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().optional(),
   "skills": zod.array(zod.object({
   "id": zod.string(),
   "machineId": zod.string(),

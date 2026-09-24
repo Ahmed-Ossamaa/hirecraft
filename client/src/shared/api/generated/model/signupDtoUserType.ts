@@ -13,5 +13,4 @@ export type SignupDtoUserType = typeof SignupDtoUserType[keyof typeof SignupDtoU
 export const SignupDtoUserType = {
   CANDIDATE: 'CANDIDATE',
   EMPLOYER: 'EMPLOYER',
-  PLATFORM_ADMIN: 'PLATFORM_ADMIN',
 } as const;

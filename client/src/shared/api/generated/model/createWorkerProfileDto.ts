@@ -5,6 +5,7 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { CreateWorkerProfileDtoEducationLevel } from './createWorkerProfileDtoEducationLevel';
 
 export interface CreateWorkerProfileDto {
   /** @maxLength 100 */
@@ -15,4 +16,7 @@ export interface CreateWorkerProfileDto {
   bio?: string;
   country: string;
   city: string;
+  educationLevel?: CreateWorkerProfileDtoEducationLevel;
+  /** @maxLength 200 */
+  educationDetails?: string;
 }

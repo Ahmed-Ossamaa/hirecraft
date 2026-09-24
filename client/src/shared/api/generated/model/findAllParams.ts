@@ -12,11 +12,16 @@ import type { FindAllOrder } from './findAllOrder';
 export type FindAllParams = {
 search?: string;
 experienceLevel?: FindAllExperienceLevel;
+/**
+ * Minimum years of experience
+ * @minimum 0
+ * @maximum 30
+ */
+yearsOfExperience?: number;
 jobType?: FindAllJobType;
 country?: string;
 city?: string;
 companyId?: string;
-yearsOfExperience?: number;
 order?: FindAllOrder;
 /**
  * @minimum 1

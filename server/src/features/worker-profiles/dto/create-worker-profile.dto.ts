@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsEnum,
+} from 'class-validator';
+import { EducationLevel } from '../domain/educational-lvl.enum';
 
 export class CreateWorkerProfileDto {
   @ApiProperty({ example: 'Printing Technician' })
@@ -29,4 +36,18 @@ export class CreateWorkerProfileDto {
   @IsString()
   @IsNotEmpty()
   city!: string;
+
+  @ApiPropertyOptional({
+    enum: EducationLevel,
+    example: EducationLevel.VOCATIONAL,
+  })
+  @IsEnum(EducationLevel)
+  @IsOptional()
+  educationLevel?: EducationLevel;
+
+  @ApiPropertyOptional({ example: 'Alexandria Advanced Technical Institute' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  educationDetails?: string;
 }

@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { UserOrmEntity } from '../../users/infrastructure/user.orm-entity';
 import { WorkerMachineSkillOrmEntity } from './worker-machine-skill.orm-entity';
+import { EducationLevel } from '../domain/educational-lvl.enum';
 
 @Entity('worker_profiles')
 export class WorkerProfileOrmEntity {
@@ -39,6 +40,16 @@ export class WorkerProfileOrmEntity {
   @Index('worker_profile_city_idx')
   @Column({ type: 'varchar', length: 100 })
   city!: string;
+
+  @Column({
+    type: 'enum',
+    enum: EducationLevel,
+    nullable: true,
+  })
+  educationLevel?: EducationLevel;
+
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  educationDetails?: string;
 
   @CreateDateColumn()
   createdAt!: Date;
