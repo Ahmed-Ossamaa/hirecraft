@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { User, UserGender } from '@/shared/api/generated/model';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { AvatarUpload } from './AvatarUpload';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const basicInfoSchema = z.object({
   firstName: z.string().min(2, 'First name is required').max(50),
@@ -36,6 +38,7 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isDirty },
   } = useForm<BasicInfoFormData>({
     resolver: zodResolver(basicInfoSchema),
@@ -82,9 +85,9 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
       }
       
       reset(data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update basic info:', error);
-      toast.error(error.response?.data?.message || 'Failed to update basic info. Please try again.');
+      setError('root', { type: 'manual', message: getApiError(error, 'Failed to update basic info. Please try again.') });
     }
   };
 
@@ -102,17 +105,18 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
       <AvatarUpload />
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        <FormError message={errors.root?.message} className="mb-4" />
         <div className="space-y-4 max-w-2xl">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="First Name"
-              placeholder="e.g. John"
+              placeholder="e.g. Ahmed"
               {...register('firstName')}
               error={errors.firstName?.message}
             />
             <Input
               label="Last Name"
-              placeholder="e.g. Doe"
+              placeholder="e.g. Ossama"
               {...register('lastName')}
               error={errors.lastName?.message}
             />

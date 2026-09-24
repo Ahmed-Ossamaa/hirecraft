@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { Input, Button } from '@/shared/components/ui';
 import { useResetPassword } from '@/shared/api/generated/auth/auth';
 import { MdClose } from 'react-icons/md';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -39,11 +41,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
         data: { email: data.email },
       });
       setSuccess(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Reset password request failed:', error);
       setError('root', {
         type: 'manual',
-        message: error.response?.data?.message || 'Failed to send reset link. Please try again.',
+        message: getApiError(error, 'Failed to send reset link. Please try again.'),
       });
     }
   };
@@ -92,11 +94,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                   error={errors.email?.message}
                 />
 
-                {errors.root && (
-                  <div className="p-2.5 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-mono mb-2">
-                    {errors.root.message}
-                  </div>
-                )}
+                <FormError message={errors.root?.message} className="mb-2" />
 
                 <Button 
                   type="submit" 

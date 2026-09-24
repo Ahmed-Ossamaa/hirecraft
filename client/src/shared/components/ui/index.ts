@@ -6,3 +6,4 @@ export * from './Checkbox';
 export * from './Pagination';
 export * from './Textarea';
 export * from './Modal';
+export * from './FormError';

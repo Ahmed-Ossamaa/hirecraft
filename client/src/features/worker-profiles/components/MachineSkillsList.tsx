@@ -10,6 +10,7 @@ import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/
 import { AddSkillModal } from './AddSkillModal';
 import { EditSkillModal } from './EditSkillModal';
 import { toast } from 'sonner';
+import { getApiError } from '@/shared/utils/error';
 
 interface MachineSkillsListProps {
   skills?: WorkerMachineSkill[];
@@ -32,7 +33,7 @@ export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [
       toast.success("Skill removed successfully");
     } catch (error) {
       console.error('Failed to delete skill:', error);
-      toast.error('Failed to delete skill. Please try again.');
+      toast.error(getApiError(error, 'Failed to delete skill. Please try again.'));
     }
   };
 

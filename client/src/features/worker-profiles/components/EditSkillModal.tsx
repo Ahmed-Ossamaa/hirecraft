@@ -10,6 +10,8 @@ import { useUpdateSkill } from '@/shared/api/generated/worker-profiles/worker-pr
 import { useQueryClient } from '@tanstack/react-query';
 import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/worker-profiles';
 import { WorkerMachineSkill } from '@/shared/api/generated/model';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const editSkillSchema = z.object({
   experienceLevel: z.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
@@ -32,6 +34,7 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<EditSkillFormData>({
     resolver: zodResolver(editSkillSchema),
@@ -69,7 +72,7 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
       onClose();
     } catch (error) {
       console.error('Failed to update skill:', error);
-      toast.error("Failed to update skill");
+      setError('root', { type: 'manual', message: getApiError(error, 'Failed to update skill') });
     }
   };
 
@@ -85,6 +88,8 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormError message={errors.root?.message} className="mb-2" />
+        
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Experience Level"
@@ -107,13 +112,6 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
             error={errors.yearsOfExperience?.message}
           />
         </div>
-
-        {updateSkillMutation.isError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-xs font-mono">
-            {/* @ts-ignore */}
-            {updateSkillMutation.error?.response?.data?.message || 'An error occurred while updating the skill.'}
-          </div>
-        )}
 
         <div className="pt-4 flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={onClose}>

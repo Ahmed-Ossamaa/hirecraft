@@ -8,6 +8,8 @@ import { Input, Button, Textarea, CountryCitySelect, Select } from '@/shared/com
 import { useCreateProfile, useUpdateWorkerProfile } from '@/shared/api/generated/worker-profiles/worker-profiles';
 import { toast } from 'sonner';
 import { WorkerProfile } from '@/shared/api/generated/model';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
 
 const profileSchema = z.object({
   title: z.string().min(2, 'Job title is required').max(100),
@@ -36,6 +38,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
     setValue,
     watch,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -93,7 +96,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Failed to save profile:', error);
-      toast.error("Failed to save profile");
+      setError('root', { type: 'manual', message: getApiError(error, 'Failed to save profile. Please try again.') });
     }
   };
 
@@ -109,6 +112,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormError message={errors.root?.message} className="mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Professional Title"
@@ -169,13 +173,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
           error={errors.bio?.message}
           rows={4}
         />
-
-        {(createProfileMutation.isError || updateProfileMutation.isError) && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-xs font-mono">
-            {/* @ts-ignore */}
-            {createProfileMutation.error?.response?.data?.message || updateProfileMutation.error?.response?.data?.message || 'An error occurred while saving.'}
-          </div>
-        )}
 
         <div className="pt-2 flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
