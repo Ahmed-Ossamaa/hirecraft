@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MdLocationOn,
   MdPrecisionManufacturing,
@@ -10,12 +10,14 @@ import {
 } from "react-icons/md";
 import { Button } from "@/shared/components/ui";
 import { Job } from "@/shared/api/generated/model";
+import { ApplyModal } from "@/features/applications/components/ApplyModal";
 
 interface JobDetailProps {
   job: Job | null;
 }
 
 export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   if (!job) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-card rounded-2xl border border-border">
@@ -77,6 +79,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
               size="lg"
               fullWidth
               rightIcon={<MdArrowForward />}
+              onClick={() => setIsApplyModalOpen(true)}
             >
               Apply Now
             </Button>
@@ -147,6 +150,14 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
           </section>
         </div>
       </div>
+      
+      <ApplyModal 
+        isOpen={isApplyModalOpen}
+        onClose={() => setIsApplyModalOpen(false)}
+        jobId={job.id}
+        jobTitle={job.title}
+        companyName={job.companyName || ''}
+      />
     </div>
   );
 };

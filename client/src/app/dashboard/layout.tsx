@@ -36,11 +36,14 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background ">
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <div className={`${collapsed ? "ml-17" : "ml-60"} transition-[margin] duration-300 flex flex-col min-h-screen`}>
+    <div className="min-h-screen bg-background">
+      <Sidebar 
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+      />
+      <div className={`${collapsed ? "ml-17" : "ml-17 md:ml-60"} transition-all duration-300 flex flex-col min-h-screen`}>
         <DashboardTopBar />
-        <main className="flex-1 p-2 ">{children}</main>
+        <main className="flex-1 p-2 md:p-6">{children}</main>
       </div>
     </div>
   );

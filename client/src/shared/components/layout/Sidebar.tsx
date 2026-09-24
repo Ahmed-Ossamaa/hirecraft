@@ -61,14 +61,23 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   };
 
   return (
-    <aside
-      className={`
-        fixed top-0 left-0 z-40 h-screen flex flex-col
-        bg-card border-r border-border/60
-        transition-[width] duration-300 ease-in-out
-        ${collapsed ? "w-17" : "w-60"}
-      `}
-    >
+    <>
+      {/* Mobile backdrop when expanded */}
+      {!collapsed && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden" 
+          onClick={() => setCollapsed(true)}
+        />
+      )}
+      
+      <aside
+        className={`
+          fixed top-0 left-0 z-40 h-screen flex flex-col
+          bg-card border-r border-border/60
+          transition-all duration-300 ease-in-out
+          ${collapsed ? "w-17" : "w-60"}
+        `}
+      >
       {/* Logo */}
       <div className="h-16 flex items-center gap-space-xs px-4 border-b border-border/60 shrink-0">
         <Link href="/" className="flex items-center gap-space-xs group">
@@ -127,5 +136,6 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   );
 }

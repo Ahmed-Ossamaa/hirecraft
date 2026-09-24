@@ -5,7 +5,7 @@ import { useGetMyProfile } from '@/shared/api/generated/worker-profiles/worker-p
 import { ProfileForm } from '@/features/worker-profiles/components/ProfileForm';
 import { MachineSkillsList } from '@/features/worker-profiles/components/MachineSkillsList';
 import { BasicInfoForm } from '@/features/users/components/BasicInfoForm';
-import { MdPerson, MdManageAccounts, MdBadge } from 'react-icons/md';
+import { MdManageAccounts, MdBadge } from 'react-icons/md';
 import { useAuthStore } from '@/shared/stores/auth-store';
 
 export default function WorkerProfilePage() {
@@ -25,19 +25,14 @@ export default function WorkerProfilePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col p-2 sm:p-4 lg:p-6 w-full max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center gap-3 pb-2">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-          <MdPerson className="text-xl" />
-        </div>
+    <div className="flex-1 flex flex-col py-2 w-full max-w-4xl mx-auto space-y-6 mb-5!">
         <div>
           <h1 className="text-2xl font-headline font-semibold text-foreground tracking-tight">
             My Profile
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Manage your personal information and technical machinery skills.
           </p>
-        </div>
       </div>
 
       {/* Tabs */}
