@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useGetMyApplications } from "@/shared/api/generated/job-applications/job-applications";
 import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
-import { Button } from "@/shared/components/ui";
+import { Button, Pagination } from "@/shared/components/ui";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
@@ -38,8 +38,7 @@ export const ApplicationsList: React.FC = () => {
   }
 
   const applications: JobApplication[] = data?.data?.data || [];
-  const meta = data?.data?.meta as any;
-  const totalPages = meta?.totalPages || 1;
+  const totalPages = data?.data?.totalPages || 1;
 
   if (applications.length === 0) {
     return (
@@ -117,27 +116,13 @@ export const ApplicationsList: React.FC = () => {
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            Next
-          </Button>
+      {totalPages > 0 && (
+        <div className="flex justify-center items-center pt-4">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
       )}
     </div>
