@@ -37,8 +37,8 @@ export class PlansService {
 
     // Free Tier
     definePlan(PlanId.FREE_MONTHLY, 'Free', 'month', null, {
-      maxJobPostings: 1,
-      maxUsers: 1,
+      maxJobPostings: 50, // for testing
+      maxUsers: 50,
     });
     definePlan(PlanId.FREE_YEARLY, 'Free', 'year', null, {
       maxJobPostings: 1,

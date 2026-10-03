@@ -8,6 +8,7 @@
 import type { GetMachinesOrder } from './getMachinesOrder';
 
 export type GetMachinesParams = {
+sortBy?: string;
 order?: GetMachinesOrder;
 /**
  * @minimum 1

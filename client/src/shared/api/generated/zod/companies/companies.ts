@@ -35,7 +35,7 @@ export const getMyCompanyResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -65,7 +65,7 @@ export const getMyCompanyResponse = zod.object({
 }))
 
 /**
- * @summary Update my company details (Admin only)
+ * @summary Update my company details (Admin)
  */
 export const updateCompanyProfileBody = zod.object({
   "name": zod.string().optional(),
@@ -101,7 +101,7 @@ export const updateCompanyProfileResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -131,7 +131,67 @@ export const updateCompanyProfileResponse = zod.object({
 }))
 
 /**
- * @summary Upload or update company logo (Admin/Hiring Manager only)
+ * @summary Get a specific company profile by its ID (Public)
+ */
+export const getCompanyByIdParams = zod.object({
+  "id": zod.string()
+})
+
+export const getCompanyByIdResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "logoPublicId": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "coverPublicId": zod.string().nullish(),
+  "description": zod.string().optional(),
+  "location": zod.string().optional(),
+  "size": zod.string().optional(),
+  "industry": zod.string().optional(),
+  "paymentCustomerId": zod.string().nullish(),
+  "members": zod.array(zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "companyId": zod.string(),
+  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
+  "joinedAt": zod.string().datetime({}),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
+  "firstName": zod.string().optional(),
+  "lastName": zod.string().optional(),
+  "email": zod.string().optional(),
+  "user": zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "userType": zod.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']),
+  "phoneNumber": zod.string(),
+  "gender": zod.enum(['male', 'female']).optional(),
+  "dob": zod.string().datetime({}).optional(),
+  "avatarURL": zod.string().nullish(),
+  "avatarPublicId": zod.string().nullish(),
+  "isBanned": zod.boolean(),
+  "isEmailVerified": zod.boolean(),
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({})
+}).optional(),
+  "company": zod.unknown().optional(),
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({})
+})).optional(),
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({})
+}).optional()
+}))
+
+/**
+ * @summary Upload or update company logo (Admin)
  */
 export const uploadLogoBody = zod.object({
   "image": zod.instanceof(File).optional().describe('Image file to upload')
@@ -161,7 +221,7 @@ export const uploadLogoResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -191,7 +251,7 @@ export const uploadLogoResponse = zod.object({
 }))
 
 /**
- * @summary Remove company logo (Admin/Hiring Manager only)
+ * @summary Remove company logo (Admin)
  */
 export const removeLogoResponse = zod.object({
   "message": zod.string(),
@@ -217,7 +277,7 @@ export const removeLogoResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -247,7 +307,7 @@ export const removeLogoResponse = zod.object({
 }))
 
 /**
- * @summary Upload or update company cover (Admin/Hiring Manager only)
+ * @summary Upload or update company cover (Admin)
  */
 export const uploadCoverBody = zod.object({
   "image": zod.instanceof(File).optional().describe('Image file to upload')
@@ -277,7 +337,7 @@ export const uploadCoverResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -307,7 +367,7 @@ export const uploadCoverResponse = zod.object({
 }))
 
 /**
- * @summary Remove company cover (Admin/Hiring Manager only)
+ * @summary Remove company cover (Admin)
  */
 export const removeCoverResponse = zod.object({
   "message": zod.string(),
@@ -333,7 +393,7 @@ export const removeCoverResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),

@@ -329,7 +329,7 @@ export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>
 
 
 /**
- * @summary Get a specific worker profile by its ID (For employers)
+ * @summary Get a specific worker profile by its ID (For employers and the worker)
  */
 export const getProfileById = (
     id: string,
@@ -400,7 +400,7 @@ export function useGetProfileById<TData = Awaited<ReturnType<typeof getProfileBy
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get a specific worker profile by its ID (For employers)
+ * @summary Get a specific worker profile by its ID (For employers and the worker)
  */
 
 export function useGetProfileById<TData = Awaited<ReturnType<typeof getProfileById>>, TError = void>(

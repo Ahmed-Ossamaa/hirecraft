@@ -321,4 +321,128 @@ export const useRemoveMember = <TError = unknown,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * @summary Suspend a member from the company
+ */
+export const suspendMember = (
+    userId: string,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/v1/company-members/${userId}/suspend`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getSuspendMemberMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendMember>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendMember>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['suspendMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendMember>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  suspendMember(userId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendMemberMutationResult = NonNullable<Awaited<ReturnType<typeof suspendMember>>>
+    
+    export type SuspendMemberMutationError = unknown
+
+    /**
+ * @summary Suspend a member from the company
+ */
+export const useSuspendMember = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendMember>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof suspendMember>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSuspendMemberMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Activate/Restore a member in the company
+ */
+export const activateMember = (
+    userId: string,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/v1/company-members/${userId}/activate`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getActivateMemberMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateMember>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateMember>>, TError,{userId: string}, TContext> => {
+
+const mutationKey = ['activateMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateMember>>, {userId: string}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  activateMember(userId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActivateMemberMutationResult = NonNullable<Awaited<ReturnType<typeof activateMember>>>
+    
+    export type ActivateMemberMutationError = unknown
+
+    /**
+ * @summary Activate/Restore a member in the company
+ */
+export const useActivateMember = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateMember>>, TError,{userId: string}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof activateMember>>,
+        TError,
+        {userId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getActivateMemberMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
     

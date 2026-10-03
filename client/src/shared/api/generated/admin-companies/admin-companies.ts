@@ -21,9 +21,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminGetCompanyById200,
   GetCompanies200,
-  GetCompaniesParams,
-  GetCompanyById200
+  GetCompaniesParams
 } from '.././model';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -129,13 +129,13 @@ export function useGetCompanies<TData = Awaited<ReturnType<typeof getCompanies>>
 /**
  * @summary Get details of a specific company by ID (Admin only)
  */
-export const getCompanyById = (
+export const adminGetCompanyById = (
     id: string,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customAxiosInstance<GetCompanyById200>(
+      return customAxiosInstance<AdminGetCompanyById200>(
       {url: `/api/v1/admin/companies/${id}`, method: 'GET', signal
     },
       options);
@@ -144,69 +144,69 @@ export const getCompanyById = (
 
 
 
-export const getGetCompanyByIdQueryKey = (id?: string,) => {
+export const getAdminGetCompanyByIdQueryKey = (id?: string,) => {
     return [
     `/api/v1/admin/companies/${id}`
     ] as const;
     }
 
     
-export const getGetCompanyByIdQueryOptions = <TData = Awaited<ReturnType<typeof getCompanyById>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export const getAdminGetCompanyByIdQueryOptions = <TData = Awaited<ReturnType<typeof adminGetCompanyById>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetCompanyByIdQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getAdminGetCompanyByIdQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompanyById>>> = ({ signal }) => getCompanyById(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminGetCompanyById>>> = ({ signal }) => adminGetCompanyById(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetCompanyByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getCompanyById>>>
-export type GetCompanyByIdQueryError = void
+export type AdminGetCompanyByIdQueryResult = NonNullable<Awaited<ReturnType<typeof adminGetCompanyById>>>
+export type AdminGetCompanyByIdQueryError = void
 
 
-export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = void>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>> & Pick<
+export function useAdminGetCompanyById<TData = Awaited<ReturnType<typeof adminGetCompanyById>>, TError = void>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCompanyById>>,
+          Awaited<ReturnType<typeof adminGetCompanyById>>,
           TError,
-          Awaited<ReturnType<typeof getCompanyById>>
+          Awaited<ReturnType<typeof adminGetCompanyById>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = void>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>> & Pick<
+export function useAdminGetCompanyById<TData = Awaited<ReturnType<typeof adminGetCompanyById>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCompanyById>>,
+          Awaited<ReturnType<typeof adminGetCompanyById>>,
           TError,
-          Awaited<ReturnType<typeof getCompanyById>>
+          Awaited<ReturnType<typeof adminGetCompanyById>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = void>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export function useAdminGetCompanyById<TData = Awaited<ReturnType<typeof adminGetCompanyById>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Get details of a specific company by ID (Admin only)
  */
 
-export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = void>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export function useAdminGetCompanyById<TData = Awaited<ReturnType<typeof adminGetCompanyById>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminGetCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetCompanyByIdQueryOptions(id,options)
+  const queryOptions = getAdminGetCompanyByIdQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

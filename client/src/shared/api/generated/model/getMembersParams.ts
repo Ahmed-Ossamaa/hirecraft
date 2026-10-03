@@ -5,9 +5,12 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { GetMembersStatus } from './getMembersStatus';
 import type { GetMembersOrder } from './getMembersOrder';
 
 export type GetMembersParams = {
+status?: GetMembersStatus;
+sortBy?: string;
 order?: GetMembersOrder;
 /**
  * @minimum 1

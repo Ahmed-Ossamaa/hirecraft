@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetCompanyById200,
   GetMyCompany200,
   RemoveCover200,
   RemoveLogo200,
@@ -136,7 +137,7 @@ export function useGetMyCompany<TData = Awaited<ReturnType<typeof getMyCompany>>
 
 
 /**
- * @summary Update my company details (Admin only)
+ * @summary Update my company details (Admin)
  */
 export const updateCompanyProfile = (
     updateCompanyDto: UpdateCompanyDto,
@@ -183,7 +184,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateCompanyProfileMutationError = unknown
 
     /**
- * @summary Update my company details (Admin only)
+ * @summary Update my company details (Admin)
  */
 export const useUpdateCompanyProfile = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCompanyProfile>>, TError,{data: UpdateCompanyDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -199,7 +200,99 @@ export const useUpdateCompanyProfile = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Upload or update company logo (Admin/Hiring Manager only)
+ * @summary Get a specific company profile by its ID (Public)
+ */
+export const getCompanyById = (
+    id: string,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<GetCompanyById200>(
+      {url: `/api/v1/companies/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetCompanyByIdQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/companies/${id}`
+    ] as const;
+    }
+
+    
+export const getGetCompanyByIdQueryOptions = <TData = Awaited<ReturnType<typeof getCompanyById>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCompanyByIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompanyById>>> = ({ signal }) => getCompanyById(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCompanyByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getCompanyById>>>
+export type GetCompanyByIdQueryError = unknown
+
+
+export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompanyById>>,
+          TError,
+          Awaited<ReturnType<typeof getCompanyById>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompanyById>>,
+          TError,
+          Awaited<ReturnType<typeof getCompanyById>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get a specific company profile by its ID (Public)
+ */
+
+export function useGetCompanyById<TData = Awaited<ReturnType<typeof getCompanyById>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCompanyByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Upload or update company logo (Admin)
  */
 export const uploadLogo = (
     uploadLogoBody: UploadLogoBody,
@@ -250,7 +343,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UploadLogoMutationError = unknown
 
     /**
- * @summary Upload or update company logo (Admin/Hiring Manager only)
+ * @summary Upload or update company logo (Admin)
  */
 export const useUploadLogo = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadLogo>>, TError,{data: UploadLogoBody}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -266,7 +359,7 @@ export const useUploadLogo = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Remove company logo (Admin/Hiring Manager only)
+ * @summary Remove company logo (Admin)
  */
 export const removeLogo = (
     
@@ -311,7 +404,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RemoveLogoMutationError = unknown
 
     /**
- * @summary Remove company logo (Admin/Hiring Manager only)
+ * @summary Remove company logo (Admin)
  */
 export const useRemoveLogo = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeLogo>>, TError,void, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -327,7 +420,7 @@ export const useRemoveLogo = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Upload or update company cover (Admin/Hiring Manager only)
+ * @summary Upload or update company cover (Admin)
  */
 export const uploadCover = (
     uploadCoverBody: UploadCoverBody,
@@ -378,7 +471,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UploadCoverMutationError = unknown
 
     /**
- * @summary Upload or update company cover (Admin/Hiring Manager only)
+ * @summary Upload or update company cover (Admin)
  */
 export const useUploadCover = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCover>>, TError,{data: UploadCoverBody}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -394,7 +487,7 @@ export const useUploadCover = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Remove company cover (Admin/Hiring Manager only)
+ * @summary Remove company cover (Admin)
  */
 export const removeCover = (
     
@@ -439,7 +532,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RemoveCoverMutationError = unknown
 
     /**
- * @summary Remove company cover (Admin/Hiring Manager only)
+ * @summary Remove company cover (Admin)
  */
 export const useRemoveCover = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCover>>, TError,void, TContext>, request?: SecondParameter<typeof customAxiosInstance>}

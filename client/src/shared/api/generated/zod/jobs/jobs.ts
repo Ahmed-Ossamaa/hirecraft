@@ -84,12 +84,14 @@ export const findAllQueryLimitMax = 100;
 
 export const findAllQueryParams = zod.object({
   "search": zod.string().optional(),
+  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).optional(),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional(),
   "yearsOfExperience": zod.number().min(findAllQueryYearsOfExperienceMin).max(findAllQueryYearsOfExperienceMax).optional().describe('Minimum years of experience'),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "country": zod.string().optional(),
   "city": zod.string().optional(),
   "companyId": zod.string().optional(),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(findAllQueryOrderDefault),
   "page": zod.number().min(1).default(findAllQueryPageDefault),
   "limit": zod.number().min(1).max(findAllQueryLimitMax).default(findAllQueryLimitDefault)
@@ -139,6 +141,9 @@ export const findAllResponse = zod.object({
 /**
  * @summary Get all jobs for a specific company -My company- (paginated)
  */
+export const getCompanyJobsQueryYearsOfExperienceMin = 0;
+export const getCompanyJobsQueryYearsOfExperienceMax = 30;
+
 export const getCompanyJobsQueryOrderDefault = "DESC";export const getCompanyJobsQueryPageDefault = 1;
 
 export const getCompanyJobsQueryLimitDefault = 10;
@@ -147,6 +152,15 @@ export const getCompanyJobsQueryLimitMax = 100;
 
 
 export const getCompanyJobsQueryParams = zod.object({
+  "search": zod.string().optional(),
+  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).optional(),
+  "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional(),
+  "yearsOfExperience": zod.number().min(getCompanyJobsQueryYearsOfExperienceMin).max(getCompanyJobsQueryYearsOfExperienceMax).optional().describe('Minimum years of experience'),
+  "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
+  "country": zod.string().optional(),
+  "city": zod.string().optional(),
+  "companyId": zod.string().optional(),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getCompanyJobsQueryOrderDefault),
   "page": zod.number().min(1).default(getCompanyJobsQueryPageDefault),
   "limit": zod.number().min(1).max(getCompanyJobsQueryLimitMax).default(getCompanyJobsQueryLimitDefault)
@@ -168,6 +182,7 @@ export const getCompanyJobsResponse = zod.object({
   "totalPages": zod.number()
 }).and(zod.object({
   "data": zod.array(zod.object({
+  "applicationCount": zod.number().describe('Number of applications submitted for this job'),
   "id": zod.string(),
   "companyId": zod.string(),
   "authorId": zod.string(),

@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/shared/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   fullWidth?: boolean;
   leftIcon?: React.ReactNode;
@@ -15,7 +15,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button 
         ref={ref} 
         className={cn(
-          "font-medium transition duration-150 flex items-center justify-center gap-2 cursor-pointer",
+          "font-medium transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
           // Sizes
           {
             "py-1.5 px-3 rounded-lg text-xs": size === 'sm' && variant !== 'ghost' && variant !== 'link',
@@ -25,11 +25,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           },
           // Variants
           {
-            "bg-primary hover:bg-primary-hover text-background shadow-lg shadow-primary/30": variant === 'primary',
-            "bg-card-hover hover:bg-border text-muted-foreground hover:text-foreground border border-border shadow-sm": variant === 'secondary',
-            "bg-transparent border border-primary text-primary hover:bg-primary/10 shadow-sm": variant === 'outline',
-            "text-muted-foreground hover:text-foreground hover:bg-card-hover py-2 px-3 gap-1.5 text-xs rounded-lg": variant === 'ghost',
-            "text-primary hover:text-primary-hover gap-1 text-xs": variant === 'link',
+            "bg-primary hover:bg-primary-hover disabled:hover:bg-primary text-background shadow-lg shadow-primary/30": variant === 'primary',
+            "bg-card-hover hover:bg-border disabled:hover:bg-card-hover text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground border border-border shadow-sm": variant === 'secondary',
+            "bg-transparent border border-primary text-primary hover:bg-primary/10 disabled:hover:bg-transparent shadow-sm": variant === 'outline',
+            "text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground hover:bg-card-hover disabled:hover:bg-transparent py-2 px-3 gap-1.5 text-xs rounded-lg": variant === 'ghost',
+            "text-primary hover:text-primary-hover disabled:hover:text-primary gap-1 text-xs": variant === 'link',
+            "bg-red-500 hover:bg-red-600 disabled:hover:bg-red-500 text-white": variant === 'danger',
           },
           // Full width
           fullWidth && "w-full",

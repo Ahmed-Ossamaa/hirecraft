@@ -31,6 +31,7 @@ jobType?: GetAdminJobsJobType;
  * Filter by experience level
  */
 experienceLevel?: GetAdminJobsExperienceLevel;
+sortBy?: string;
 order?: GetAdminJobsOrder;
 /**
  * @minimum 1

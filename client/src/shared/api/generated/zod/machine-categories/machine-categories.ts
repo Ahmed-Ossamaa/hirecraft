@@ -19,6 +19,7 @@ export const getMachineCategoriesQueryLimitMax = 100;
 
 
 export const getMachineCategoriesQueryParams = zod.object({
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getMachineCategoriesQueryOrderDefault),
   "page": zod.number().min(1).default(getMachineCategoriesQueryPageDefault),
   "limit": zod.number().min(1).max(getMachineCategoriesQueryLimitMax).default(getMachineCategoriesQueryLimitDefault),

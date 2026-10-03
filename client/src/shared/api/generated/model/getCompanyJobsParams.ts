@@ -5,9 +5,26 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { GetCompanyJobsStatus } from './getCompanyJobsStatus';
+import type { GetCompanyJobsExperienceLevel } from './getCompanyJobsExperienceLevel';
+import type { GetCompanyJobsJobType } from './getCompanyJobsJobType';
 import type { GetCompanyJobsOrder } from './getCompanyJobsOrder';
 
 export type GetCompanyJobsParams = {
+search?: string;
+status?: GetCompanyJobsStatus;
+experienceLevel?: GetCompanyJobsExperienceLevel;
+/**
+ * Minimum years of experience
+ * @minimum 0
+ * @maximum 30
+ */
+yearsOfExperience?: number;
+jobType?: GetCompanyJobsJobType;
+country?: string;
+city?: string;
+companyId?: string;
+sortBy?: string;
 order?: GetCompanyJobsOrder;
 /**
  * @minimum 1

@@ -18,6 +18,7 @@ status?: GetSubscriptionsStatus;
  * Filter by plan ID
  */
 planId?: GetSubscriptionsPlanId;
+sortBy?: string;
 order?: GetSubscriptionsOrder;
 /**
  * @minimum 1

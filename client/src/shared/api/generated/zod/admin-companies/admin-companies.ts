@@ -20,6 +20,7 @@ export const getCompaniesQueryLimitMax = 100;
 
 export const getCompaniesQueryParams = zod.object({
   "search": zod.string().optional().describe('Search term for company name'),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getCompaniesQueryOrderDefault),
   "page": zod.number().min(1).default(getCompaniesQueryPageDefault),
   "limit": zod.number().min(1).max(getCompaniesQueryLimitMax).default(getCompaniesQueryLimitDefault)
@@ -58,7 +59,7 @@ export const getCompaniesResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -91,11 +92,11 @@ export const getCompaniesResponse = zod.object({
 /**
  * @summary Get details of a specific company by ID (Admin only)
  */
-export const getCompanyByIdParams = zod.object({
+export const adminGetCompanyByIdParams = zod.object({
   "id": zod.string()
 })
 
-export const getCompanyByIdResponse = zod.object({
+export const adminGetCompanyByIdResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
 
@@ -119,7 +120,7 @@ export const getCompanyByIdResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),

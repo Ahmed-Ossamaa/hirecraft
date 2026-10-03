@@ -19,6 +19,8 @@ export const getMembersQueryLimitMax = 100;
 
 
 export const getMembersQueryParams = zod.object({
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']).optional(),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getMembersQueryOrderDefault),
   "page": zod.number().min(1).default(getMembersQueryPageDefault),
   "limit": zod.number().min(1).max(getMembersQueryLimitMax).default(getMembersQueryLimitDefault)
@@ -45,7 +47,7 @@ export const getMembersResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -120,7 +122,7 @@ export const updateMemberRoleResponse = zod.object({
   "companyId": zod.string(),
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
   "joinedAt": zod.string().datetime({}),
-  "isActive": zod.boolean(),
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
   "firstName": zod.string().optional(),
   "lastName": zod.string().optional(),
   "email": zod.string().optional(),
@@ -165,6 +167,20 @@ export const updateMemberRoleResponse = zod.object({
  * @summary Remove a member from the company
  */
 export const removeMemberParams = zod.object({
+  "userId": zod.string()
+})
+
+/**
+ * @summary Suspend a member from the company
+ */
+export const suspendMemberParams = zod.object({
+  "userId": zod.string()
+})
+
+/**
+ * @summary Activate/Restore a member in the company
+ */
+export const activateMemberParams = zod.object({
   "userId": zod.string()
 })
 
