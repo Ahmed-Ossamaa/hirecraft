@@ -32,6 +32,14 @@ export class CompanyTypeormRepository implements ICompanyRepository {
     return company ? this.mapToDomain(company) : null;
   }
 
+  async findByIdWithMembers(id: string): Promise<Company | null> {
+    const company = await this.repository.findOne({
+      where: { id },
+      relations: { members: true },
+    });
+    return company ? this.mapToDomain(company) : null;
+  }
+
   async findAll(
     options?: FindCompaniesOptions,
   ): Promise<PaginatedResult<Company>> {

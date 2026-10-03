@@ -57,7 +57,7 @@ export class AdminCompaniesController {
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getCompanyById(@Param('id', ParseUUIDPipe) id: string) {
+  async adminGetCompanyById(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminService.getCompanyById(id);
   }
 }

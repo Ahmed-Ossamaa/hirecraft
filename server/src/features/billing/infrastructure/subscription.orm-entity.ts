@@ -44,18 +44,18 @@ export class SubscriptionOrmEntity {
   })
   status!: SubscriptionStatus;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   currentPeriodStart!: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamptz' })
   currentPeriodEnd!: Date;
 
   @Column({ type: 'boolean', default: false })
   cancelAtPeriodEnd!: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

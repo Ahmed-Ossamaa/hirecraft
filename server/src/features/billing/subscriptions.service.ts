@@ -16,6 +16,7 @@ import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.or
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import { SubscriptionStatus } from './domain/subscription-status.enum';
 import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
+import { CompanyMemberStatus } from '@/features/company-members/domain/company-member-status.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 import { Plan } from '@/features/plans/domain/plan.entity';
@@ -617,7 +618,10 @@ export class SubscriptionsService {
     });
 
     const adminMember = company?.members?.find(
-      (m) => m.role === CompanyRole.ADMIN && m.isActive && m.user?.email,
+      (m) =>
+        m.role === CompanyRole.ADMIN &&
+        m.status === CompanyMemberStatus.ACTIVE &&
+        m.user?.email,
     );
 
     if (company && adminMember?.user?.email) {
