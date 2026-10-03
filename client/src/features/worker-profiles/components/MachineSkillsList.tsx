@@ -14,7 +14,7 @@ import { getApiError } from '@/shared/utils/error';
 
 interface MachineSkillsListProps {
   skills?: WorkerMachineSkill[];
-  profileId?: string; // If we need to know if profile exists to disable add
+  profileId?: string;
 }
 
 export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [], profileId }) => {
