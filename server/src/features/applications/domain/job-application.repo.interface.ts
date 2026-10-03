@@ -51,5 +51,13 @@ export interface JobApplicationRepositoryInterface {
    */
   exists(jobId: string, workerProfileId: string): Promise<boolean>;
 
+  /**
+   * Check if Employer has right to interact with this application
+   */
   isEmployerOwner(applicationId: string, companyId: string): Promise<boolean>;
+
+  /**
+   * Get the number of applications for multiple jobs in a single batched query
+   */
+  getCountsByJobIds(jobIds: string[]): Promise<Map<string, number>>;
 }

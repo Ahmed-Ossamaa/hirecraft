@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { ApplicationsController } from './applications.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,7 +12,7 @@ import { JobsModule } from '../jobs/jobs.module';
   imports: [
     TypeOrmModule.forFeature([JobApplicationOrmEntity]),
     WorkerProfilesModule,
-    JobsModule,
+    forwardRef(() => JobsModule),
   ],
   controllers: [ApplicationsController],
   providers: [

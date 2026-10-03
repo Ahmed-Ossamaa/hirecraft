@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Max, Min, IsString } from 'class-validator';
 
 export enum Order {
   ASC = 'ASC',
@@ -7,6 +7,10 @@ export enum Order {
 }
 
 export class PageOptionsDto {
+  @IsString()
+  @IsOptional()
+  sortBy?: string;
+
   @IsEnum(Order)
   @IsOptional()
   order?: Order = Order.DESC;
