@@ -10,6 +10,7 @@ import { CompanyMemberOrmEntity } from './company-member.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { CompanyRole } from '../domain/company-role.enum';
+import { CompanyMemberStatus } from '../domain/company-member-status.enum';
 
 @Injectable()
 export class CompanyMemberTypeormRepository implements ICompanyMemberRepository {
@@ -74,7 +75,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     const member = await manager
       .createQueryBuilder(CompanyMemberOrmEntity, 'member')
       .where('member.userId = :userId', { userId })
-      .andWhere('member.isActive = true')
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
       .leftJoin('member.user', 'user')
       .addSelect(['user.firstName', 'user.lastName', 'user.email'])
       .getOne();
@@ -93,11 +96,38 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     const manager = tx || this.repository.manager;
     await manager.update(
       CompanyMemberOrmEntity,
-      { userId, isActive: true },
+      { userId, status: CompanyMemberStatus.ACTIVE },
       { role },
     );
 
     return this.findActiveByUserId(userId, tx);
+  }
+
+  /**
+   * Updates the status of a user's company membership.
+   */
+  async updateStatus(
+    userId: string,
+    status: CompanyMemberStatus,
+    tx?: EntityManager,
+  ): Promise<boolean> {
+    const manager = tx || this.repository.manager;
+    const result = await manager.update(
+      CompanyMemberOrmEntity,
+      { userId },
+      { status },
+    );
+    return (result.affected ?? 0) > 0;
+  }
+
+  async acceptInvite(userId: string, tx?: EntityManager): Promise<boolean> {
+    const manager = tx || this.repository.manager;
+    const result = await manager.update(
+      CompanyMemberOrmEntity,
+      { userId },
+      { status: CompanyMemberStatus.ACTIVE, joinedAt: new Date() },
+    );
+    return (result.affected ?? 0) > 0;
   }
 
   /**
@@ -112,7 +142,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
       .setLock('pessimistic_write')
       .where('member.companyId = :companyId', { companyId })
       .andWhere('member.role = :role', { role: CompanyRole.ADMIN })
-      .andWhere('member.isActive = true')
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
       .getMany();
 
     return activeAdmins.length;
@@ -129,7 +161,7 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     return manager.count(CompanyMemberOrmEntity, {
       where: {
         companyId,
-        isActive: true,
+        status: CompanyMemberStatus.ACTIVE,
       },
     });
   }
@@ -140,22 +172,28 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   async findAllByCompanyId(
     companyId: string,
     options: PageOptionsDto,
+    status?: CompanyMemberStatus,
   ): Promise<PaginatedResult<CompanyMember>> {
     const qb = this.repository
       .createQueryBuilder('member')
       .leftJoin('member.user', 'user')
-      .where('member.companyId = :companyId', { companyId })
-      .select([
-        'member.id',
-        'member.userId',
-        'member.companyId',
-        'member.role',
-        'member.joinedAt',
-        'member.isActive',
-        'user.firstName',
-        'user.lastName',
-        'user.email',
-      ])
+      .where('member.companyId = :companyId', { companyId });
+
+    if (status) {
+      qb.andWhere('member.status = :status', { status });
+    }
+
+    qb.select([
+      'member.id',
+      'member.userId',
+      'member.companyId',
+      'member.role',
+      'member.joinedAt',
+      'member.status',
+      'user.firstName',
+      'user.lastName',
+      'user.email',
+    ])
       .orderBy('member.joinedAt', options.order)
       .skip(options.skip)
       .take(options.limit);

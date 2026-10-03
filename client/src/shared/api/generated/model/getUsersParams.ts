@@ -25,6 +25,7 @@ isBanned?: boolean;
  * Filter by email verification status
  */
 isEmailVerified?: boolean;
+sortBy?: string;
 order?: GetUsersOrder;
 /**
  * @minimum 1

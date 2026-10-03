@@ -48,6 +48,7 @@ export const getMyApplicationsQueryLimitMax = 100;
 
 
 export const getMyApplicationsQueryParams = zod.object({
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getMyApplicationsQueryOrderDefault),
   "page": zod.number().min(1).default(getMyApplicationsQueryPageDefault),
   "limit": zod.number().min(1).max(getMyApplicationsQueryLimitMax).default(getMyApplicationsQueryLimitDefault)
@@ -131,6 +132,7 @@ export const getApplicationsForJobQueryLimitMax = 100;
 
 
 export const getApplicationsForJobQueryParams = zod.object({
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getApplicationsForJobQueryOrderDefault),
   "page": zod.number().min(1).default(getApplicationsForJobQueryPageDefault),
   "limit": zod.number().min(1).max(getApplicationsForJobQueryLimitMax).default(getApplicationsForJobQueryLimitDefault)

@@ -31,6 +31,7 @@ export const getAdminJobsQueryParams = zod.object({
   "companyId": zod.string().optional().describe('Filter by specific company ID'),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional().describe('Filter by job type'),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional().describe('Filter by experience level'),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getAdminJobsQueryOrderDefault),
   "page": zod.number().min(1).default(getAdminJobsQueryPageDefault),
   "limit": zod.number().min(1).max(getAdminJobsQueryLimitMax).default(getAdminJobsQueryLimitDefault)

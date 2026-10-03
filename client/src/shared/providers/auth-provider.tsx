@@ -15,25 +15,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (hasSession && !isAuthenticated) {
         try {
-          const refreshResponse = await customAxiosInstance<{ data: { accessToken: string } }>({
-            url: "/api/v1/auth/refresh",
+          const refreshRes = await fetch("/api/auth/refresh", {
             method: "POST",
           });
 
-          const accessToken = refreshResponse.data?.accessToken;
-          
-          if (accessToken) {
-            const userResponse = await customAxiosInstance<{ data: User }>({
-              url: "/api/v1/users/me",
-              method: "GET",
-              headers: { Authorization: `Bearer ${accessToken}` },
-            });
+          if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            const accessToken = data.accessToken;
             
-            const user = userResponse.data;
-            if (user) {
-              setAuth(accessToken, user, user.userType === 'EMPLOYER' ? user.id : null);
-              setIsInitializing(false);
-              return;
+            if (accessToken) {
+              const userResponse = await customAxiosInstance<{ data: User }>({
+                url: "/api/v1/users/me",
+                method: "GET",
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              
+              const user = userResponse.data;
+              if (user) {
+                let companyId = null;
+                let role = null;
+                try {
+                  const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                  companyId = payload.companyId || null;
+                  role = payload.role || null;
+                } catch (e) {
+                  console.error('Failed to parse token payload', e);
+                }
+
+                setAuth(user, companyId, role);
+                setIsInitializing(false);
+                return;
+              }
             }
           }
           clearAuth();

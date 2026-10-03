@@ -23,6 +23,7 @@ export const getUsersQueryParams = zod.object({
   "userType": zod.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']).optional().describe('Filter by user type'),
   "isBanned": zod.boolean().optional().describe('Filter by banned status'),
   "isEmailVerified": zod.boolean().optional().describe('Filter by email verification status'),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getUsersQueryOrderDefault),
   "page": zod.number().min(1).default(getUsersQueryPageDefault),
   "limit": zod.number().min(1).max(getUsersQueryLimitMax).default(getUsersQueryLimitDefault)

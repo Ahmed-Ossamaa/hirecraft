@@ -18,11 +18,12 @@ import { MachineOrmEntity } from '@/features/machines/infrastructure/machine.orm
 
 @Entity('jobs')
 @Index('job_location_idx', ['country', 'city'])
+@Index('job_status_created_at_idx', ['status', 'createdAt'])
+@Index('job_company_created_at_idx', ['companyId', 'createdAt'])
 export class JobOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Index('job_company_id_idx')
   @Column({ type: 'uuid' })
   companyId!: string;
 
@@ -35,7 +36,6 @@ export class JobOrmEntity {
   @Column({ type: 'text' })
   description!: string;
 
-  @Index('job_status_idx')
   @Column({ type: 'enum', enum: JobStatus, default: JobStatus.DRAFT })
   status!: JobStatus;
 
@@ -70,10 +70,10 @@ export class JobOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   salaryRange?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 
   // --- Relations

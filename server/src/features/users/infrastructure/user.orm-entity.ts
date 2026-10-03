@@ -65,24 +65,24 @@ export class UserOrmEntity {
   @Column({ type: 'varchar', select: false, nullable: true })
   hashedVerifyEmailToken?: string | null;
 
-  @Column({ type: 'timestamp', select: false, nullable: true })
+  @Column({ type: 'timestamptz', select: false, nullable: true })
   verifyEmailTokenExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
   hashedResetPasswordToken?: string | null;
 
-  @Column({ type: 'timestamp', select: false, nullable: true })
+  @Column({ type: 'timestamptz', select: false, nullable: true })
   resetPasswordExpiresAt?: Date | null;
 
   @Column({ type: 'varchar', select: false, nullable: true })
   hashedInviteToken?: string | null;
 
-  @Column({ type: 'timestamp', select: false, nullable: true })
+  @Column({ type: 'timestamptz', select: false, nullable: true })
   inviteTokenExpiresAt?: Date | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

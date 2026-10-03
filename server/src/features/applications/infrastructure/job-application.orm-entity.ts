@@ -34,10 +34,10 @@ export class JobApplicationOrmEntity {
   @Column({ type: 'text', nullable: true })
   coverLetter?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 
   // --- Relations ---

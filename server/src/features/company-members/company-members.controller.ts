@@ -27,7 +27,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '../users/domain/user-type.enum';
 import { CompanyRole } from './domain/company-role.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { PageOptionsDto } from '@/common/pagination/page-options.dto';
+import { GetCompanyMembersDto } from './dto/get-company-members.dto';
 import { CompanyMember } from './domain/company-member.entity';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
@@ -47,12 +47,16 @@ export class CompanyMembersController {
   @ApiPaginatedResponse(CompanyMember)
   async getMembers(
     @CurrentUser('companyId') companyId: string,
-    @Query() pageOptionsDto: PageOptionsDto,
+    @Query() queryDto: GetCompanyMembersDto,
   ) {
     if (!companyId) {
       throw new ForbiddenException('You are not associated with any company.');
     }
-    return this.companyMembersService.getMembers(companyId, pageOptionsDto);
+    return this.companyMembersService.getMembers(
+      companyId,
+      queryDto,
+      queryDto.status,
+    );
   }
 
   @Post('invite')
@@ -140,5 +144,49 @@ export class CompanyMembersController {
     }
 
     await this.companyMembersService.removeMember(targetUserId, companyId);
+  }
+
+  @Post(':userId/suspend')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Suspend a member from the company' })
+  @ApiResponse({ status: 200, description: 'Member suspended' })
+  async suspendMember(
+    @Param('userId', ParseUUIDPipe) targetUserId: string,
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+  ) {
+    if (!companyId) {
+      throw new ForbiddenException('You are not associated with any company.');
+    }
+    if (role !== CompanyRole.ADMIN) {
+      throw new ForbiddenException(
+        'Only company administrators can suspend members.',
+      );
+    }
+
+    await this.companyMembersService.suspendMember(targetUserId);
+  }
+
+  @Post(':userId/activate')
+  @HttpCode(HttpStatus.OK)
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({ summary: 'Activate/Restore a member in the company' })
+  @ApiResponse({ status: 200, description: 'Member activated' })
+  async activateMember(
+    @Param('userId', ParseUUIDPipe) targetUserId: string,
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+  ) {
+    if (!companyId) {
+      throw new ForbiddenException('You are not associated with any company.');
+    }
+    if (role !== CompanyRole.ADMIN) {
+      throw new ForbiddenException(
+        'Only company administrators can activate members.',
+      );
+    }
+
+    await this.companyMembersService.activateMember(targetUserId);
   }
 }

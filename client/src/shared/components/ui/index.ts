@@ -7,3 +7,5 @@ export * from './Pagination';
 export * from './Textarea';
 export * from './Modal';
 export * from './FormError';
+export * from './SlideOver';
+export * from './ConfirmDialog';

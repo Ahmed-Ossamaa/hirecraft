@@ -51,10 +51,10 @@ export class WorkerProfileOrmEntity {
   @Column({ type: 'varchar', length: 200, nullable: true })
   educationDetails?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 
   // --- Relations ---

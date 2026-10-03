@@ -12,6 +12,7 @@ import { CompanyRole } from './domain/company-role.enum';
 import { UserType } from '../users/domain/user-type.enum';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CompanyMember } from './domain/company-member.entity';
+import { CompanyMemberStatus } from './domain/company-member-status.enum';
 
 describe('CompanyMembersService', () => {
   let service: CompanyMembersService;
@@ -28,7 +29,7 @@ describe('CompanyMembersService', () => {
     m.userId = userId;
     m.companyId = companyId;
     m.role = role;
-    m.isActive = true;
+    m.status = CompanyMemberStatus.ACTIVE;
     m.joinedAt = new Date();
     return m;
   };

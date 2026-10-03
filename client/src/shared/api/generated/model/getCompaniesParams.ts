@@ -12,6 +12,7 @@ export type GetCompaniesParams = {
  * Search term for company name
  */
 search?: string;
+sortBy?: string;
 order?: GetCompaniesOrder;
 /**
  * @minimum 1

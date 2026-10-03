@@ -1,6 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { CompanyMember } from './company-member.entity';
 import { CompanyRole } from './company-role.enum';
+import { CompanyMemberStatus } from './company-member-status.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 
@@ -10,6 +11,7 @@ export type CreateCompanyMemberParams = {
   userId: string;
   companyId: string;
   role: CompanyRole;
+  status?: CompanyMemberStatus;
 };
 
 export interface ICompanyMemberRepository {
@@ -31,6 +33,7 @@ export interface ICompanyMemberRepository {
   findAllByCompanyId(
     companyId: string,
     options: PageOptionsDto,
+    status?: CompanyMemberStatus,
   ): Promise<PaginatedResult<CompanyMember>>;
 
   updateRole(
@@ -38,6 +41,14 @@ export interface ICompanyMemberRepository {
     role: CompanyRole,
     tx?: EntityManager,
   ): Promise<CompanyMember | null>;
+
+  updateStatus(
+    userId: string,
+    status: CompanyMemberStatus,
+    tx?: EntityManager,
+  ): Promise<boolean>;
+
+  acceptInvite(userId: string, tx?: EntityManager): Promise<boolean>;
 
   countActiveAdminsInCompany(
     companyId: string,

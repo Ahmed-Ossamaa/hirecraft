@@ -18,6 +18,7 @@ import { AcceptInviteDto } from './dto/accept-invite.dto';
 import { ChangePasswordDto } from '../users/dto/change-password.dto';
 import * as bcrypt from 'bcrypt';
 import { CompanyRole } from '../company-members/domain/company-role.enum';
+import { CompanyMemberStatus } from '../company-members/domain/company-member-status.enum';
 import { SignupDto } from './dto/signup.dto';
 import { UserType } from '../users/domain/user-type.enum';
 import { UsersService } from '../users/users.service';
@@ -228,6 +229,7 @@ export class AuthService {
 
     await this.usersService.updatePassword(user.id, hash);
     await this.usersService.verifyEmail(user.id);
+    await this.companyMembersService.acceptInvite(user.id);
     await this.usersService.clearInviteToken(user.id);
   }
 
@@ -332,7 +334,7 @@ export class AuthService {
         user.id,
       );
 
-      if (membership && membership.isActive) {
+      if (membership && membership.status === CompanyMemberStatus.ACTIVE) {
         companyId = membership.companyId;
         role = membership.role;
       }

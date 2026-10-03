@@ -8,6 +8,7 @@
 import type { GetMyApplicationsOrder } from './getMyApplicationsOrder';
 
 export type GetMyApplicationsParams = {
+sortBy?: string;
 order?: GetMyApplicationsOrder;
 /**
  * @minimum 1

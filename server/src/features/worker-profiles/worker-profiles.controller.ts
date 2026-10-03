@@ -92,9 +92,9 @@ export class WorkerProfilesController {
   }
 
   @Get(':id')
-  @Roles(UserType.EMPLOYER)
   @ApiOperation({
-    summary: 'Get a specific worker profile by its ID (For employers)',
+    summary:
+      'Get a specific worker profile by its ID (For employers and the worker)',
   })
   @ApiStandardResponse(WorkerProfile)
   @ApiResponse({

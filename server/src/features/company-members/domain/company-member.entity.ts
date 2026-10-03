@@ -1,5 +1,6 @@
 import { User } from '@/features/users/domain/user.entity';
 import { CompanyRole } from './company-role.enum';
+import { CompanyMemberStatus } from './company-member-status.enum';
 import { Company } from '@/features/companies/domain/company.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -19,8 +20,8 @@ export class CompanyMember {
   @ApiProperty()
   joinedAt!: Date;
 
-  @ApiProperty()
-  isActive!: boolean;
+  @ApiProperty({ enum: CompanyMemberStatus })
+  status!: CompanyMemberStatus;
 
   @ApiPropertyOptional()
   firstName?: string;

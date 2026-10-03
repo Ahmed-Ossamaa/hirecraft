@@ -28,6 +28,6 @@ export class ProcessedWebhookOrmEntity {
   @Column({ type: 'varchar' })
   type!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 }

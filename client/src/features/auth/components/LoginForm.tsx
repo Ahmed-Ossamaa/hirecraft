@@ -42,15 +42,35 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await loginMutation.mutateAsync({
-        data: {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email: data.email,
           password: data.password,
-        },
+        }),
       });
 
-      const { accessToken, user } = response.data;
-      setAuth(accessToken, user);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw errorData;
+      }
+
+      const { user, accessToken } = await response.json();
+      
+      let companyId = null;
+      let role = null;
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          companyId = payload.companyId || null;
+          role = payload.role || null;
+        } catch (e) {
+          console.error('Failed to parse token payload', e);
+        }
+      }
+
+      setAuth(user, companyId, role);
 
       if (user.userType === 'EMPLOYER') {
         router.push('/dashboard/company');

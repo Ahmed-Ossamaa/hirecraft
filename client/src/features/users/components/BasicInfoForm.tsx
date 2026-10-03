@@ -31,8 +31,8 @@ interface BasicInfoFormProps {
 export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
   const updateProfileMutation = useUpdateProfile();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const organizationId = useAuthStore((s) => s.organizationId);
+  const companyRole = useAuthStore((s) => s.companyRole);
 
   const {
     register,
@@ -79,9 +79,9 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
       
       toast.success('Basic info updated successfully');
       
-      // Update the user in the global store so the UI reflects the changes instantly
-      if (accessToken && response) {
-        setAuth(accessToken, response as any, organizationId);
+      // Update the user in the global store
+      if (response && response.data) {
+        setAuth(response.data, organizationId, companyRole);
       }
       
       reset(data);

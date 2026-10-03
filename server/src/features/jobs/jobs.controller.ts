@@ -22,12 +22,12 @@ import { UserType } from '../users/domain/user-type.enum';
 import { CompanyRole } from '../company-members/domain/company-role.enum';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
-import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Job } from './domain/job.entity';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { JobWithStatsDto } from './dto/job-with-stats.dto';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -88,11 +88,11 @@ export class JobsController {
   @ApiOperation({
     summary: 'Get all jobs for a specific company -My company- (paginated)',
   })
-  @ApiPaginatedResponse(Job)
+  @ApiPaginatedResponse(JobWithStatsDto)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
   async getCompanyJobs(
-    @Query() query: PageOptionsDto,
+    @Query() query: FindJobsQueryDto,
     @CurrentUser('companyId') companyId?: string,
   ) {
     if (!companyId) {

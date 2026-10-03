@@ -11,6 +11,7 @@ import { JobStatus } from '../domain/job-status.enum';
 import { JobOrmEntity } from './job.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { JobApplicationOrmEntity } from '../../applications/infrastructure/job-application.orm-entity';
 
 @Injectable()
 export class JobTypeormRepository implements IJobRepository {
@@ -67,9 +68,30 @@ export class JobTypeormRepository implements IJobRepository {
     if (filters?.city)
       qb.andWhere('TRIM(job.city) = :city', { city: filters.city.trim() });
 
+    let sortColumn = 'job.createdAt';
+    if (options.sortBy) {
+      switch (options.sortBy) {
+        case 'status':
+          sortColumn = 'job.status';
+          break;
+        case 'date':
+          sortColumn = 'job.createdAt';
+          break;
+        case 'applicants':
+          sortColumn = 'appCount';
+          qb.addSelect((subQuery) => {
+            return subQuery
+              .select('COUNT(app.id)', 'appCount')
+              .from(JobApplicationOrmEntity, 'app')
+              .where('app.jobId = job.id');
+          }, 'appCount');
+          break;
+      }
+    }
+
     qb.skip(options.skip)
       .take(options.limit)
-      .orderBy('job.createdAt', options.order);
+      .orderBy(sortColumn, options.order);
 
     const [jobs, total] = await qb.getManyAndCount();
 

@@ -203,7 +203,7 @@ export const getMyProfileResponse = zod.object({
 }))
 
 /**
- * @summary Get a specific worker profile by its ID (For employers)
+ * @summary Get a specific worker profile by its ID (For employers and the worker)
  */
 export const getProfileByIdParams = zod.object({
   "id": zod.string()

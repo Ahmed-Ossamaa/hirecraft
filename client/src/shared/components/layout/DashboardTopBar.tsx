@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import {
@@ -18,7 +17,7 @@ export function DashboardTopBar() {
   }, []);
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border/60 shrink-0">
+    <header className="h-16 flex items-center justify-between px-6 bg-card border-b border-border/60 shrink-0 w-full">
       {/* Left: page context */}
       <div>
         <h2 className="font-headline-sm text-headline-sm text-foreground font-semibold">

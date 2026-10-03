@@ -13,7 +13,7 @@ export const JobsFilter: React.FC = () => {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // Local state
+  // states
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [countryCode, setCountryCode] = useState(searchParams.get("country") || "");
   const [cityName, setCityName] = useState(searchParams.get("city") || "");
@@ -21,7 +21,7 @@ export const JobsFilter: React.FC = () => {
   const [yearsOfExp, setYearsOfExp] = useState(searchParams.get("yearsOfExperience") || "");
   const [jobType, setJobType] = useState(searchParams.get("jobType") || "");
 
-  // Debounced search (500ms)
+  // Debounced search
   const [debouncedSearch] = useDebounce(search, 500);
 
   const updateQueryParams = useCallback(

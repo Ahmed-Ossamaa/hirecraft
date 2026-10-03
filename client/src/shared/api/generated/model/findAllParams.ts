@@ -5,12 +5,14 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { FindAllStatus } from './findAllStatus';
 import type { FindAllExperienceLevel } from './findAllExperienceLevel';
 import type { FindAllJobType } from './findAllJobType';
 import type { FindAllOrder } from './findAllOrder';
 
 export type FindAllParams = {
 search?: string;
+status?: FindAllStatus;
 experienceLevel?: FindAllExperienceLevel;
 /**
  * Minimum years of experience
@@ -22,6 +24,7 @@ jobType?: FindAllJobType;
 country?: string;
 city?: string;
 companyId?: string;
+sortBy?: string;
 order?: FindAllOrder;
 /**
  * @minimum 1

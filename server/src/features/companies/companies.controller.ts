@@ -7,6 +7,7 @@ import {
   ForbiddenException,
   Delete,
   UploadedFile,
+  Param,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -49,9 +50,22 @@ export class CompaniesController {
     return this.companiesService.getMyCompany(companyId);
   }
 
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get a specific company profile by its ID (Public)',
+  })
+  @ApiStandardResponse(Company)
+  @ApiResponse({
+    status: 200,
+    description: 'Returns company details',
+  })
+  async getCompanyById(@Param('id') id: string) {
+    return this.companiesService.getCompanyById(id);
+  }
+
   @Patch('me')
   @Roles(UserType.EMPLOYER)
-  @ApiOperation({ summary: 'Update my company details (Admin only)' })
+  @ApiOperation({ summary: 'Update my company details (Admin)' })
   @ApiStandardResponse(Company)
   @ApiResponse({ status: 200, description: 'Company updated' })
   async updateCompanyProfile(
@@ -74,7 +88,7 @@ export class CompaniesController {
   @Roles(UserType.EMPLOYER)
   @ApiImageUpload('image')
   @ApiOperation({
-    summary: 'Upload or update company logo (Admin/Hiring Manager only)',
+    summary: 'Upload or update company logo (Admin)',
   })
   @ApiStandardResponse(Company)
   @ApiResponse({
@@ -88,7 +102,7 @@ export class CompaniesController {
   ) {
     if (!companyId)
       throw new ForbiddenException('You are not associated with any company.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+    if (role !== CompanyRole.ADMIN) {
       throw new ForbiddenException('Insufficient permissions.');
     }
     return this.companiesService.uploadLogo(companyId, file);
@@ -96,7 +110,7 @@ export class CompaniesController {
 
   @Delete('me/logo')
   @Roles(UserType.EMPLOYER)
-  @ApiOperation({ summary: 'Remove company logo (Admin/Hiring Manager only)' })
+  @ApiOperation({ summary: 'Remove company logo (Admin)' })
   @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
@@ -108,7 +122,7 @@ export class CompaniesController {
   ) {
     if (!companyId)
       throw new ForbiddenException('You are not associated with any company.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+    if (role !== CompanyRole.ADMIN) {
       throw new ForbiddenException('Insufficient permissions.');
     }
     return this.companiesService.removeLogo(companyId);
@@ -118,7 +132,7 @@ export class CompaniesController {
   @Roles(UserType.EMPLOYER)
   @ApiImageUpload('image')
   @ApiOperation({
-    summary: 'Upload or update company cover (Admin/Hiring Manager only)',
+    summary: 'Upload or update company cover (Admin)',
   })
   @ApiStandardResponse(Company)
   @ApiResponse({
@@ -132,7 +146,7 @@ export class CompaniesController {
   ) {
     if (!companyId)
       throw new ForbiddenException('You are not associated with any company.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+    if (role !== CompanyRole.ADMIN) {
       throw new ForbiddenException('Insufficient permissions.');
     }
     return this.companiesService.uploadCover(companyId, file);
@@ -140,7 +154,7 @@ export class CompaniesController {
 
   @Delete('me/cover')
   @Roles(UserType.EMPLOYER)
-  @ApiOperation({ summary: 'Remove company cover (Admin/Hiring Manager only)' })
+  @ApiOperation({ summary: 'Remove company cover (Admin)' })
   @ApiStandardResponse(Company)
   @ApiResponse({
     status: 200,
@@ -152,7 +166,7 @@ export class CompaniesController {
   ) {
     if (!companyId)
       throw new ForbiddenException('You are not associated with any company.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+    if (role !== CompanyRole.ADMIN) {
       throw new ForbiddenException('Insufficient permissions.');
     }
     return this.companiesService.removeCover(companyId);

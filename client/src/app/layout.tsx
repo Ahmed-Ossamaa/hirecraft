@@ -3,7 +3,9 @@ import "./globals.css";
 import { QueryProvider } from "@/shared/providers/query-provider";
 import { ThemeProvider } from "@/shared/providers/theme-provider";
 import { AuthProvider } from "@/shared/providers/auth-provider";
+import { ConfirmProvider } from "@/shared/providers/confirm-provider";
 import { Toaster } from "sonner";
+
 export const metadata: Metadata = {
   title: "Technically | Hiring Platform",
   description: "Specialized hiring platform connecting industrial, technical, and skilled machine operators with employers.",
@@ -24,8 +26,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <QueryProvider>{children}</QueryProvider>
-            <Toaster richColors position="top-right" />
+            <ConfirmProvider>
+              <QueryProvider>{children}</QueryProvider>
+              <Toaster richColors position="top-right" />
+            </ConfirmProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

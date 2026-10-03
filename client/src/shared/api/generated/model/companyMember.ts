@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { CompanyMemberRole } from './companyMemberRole';
+import type { CompanyMemberStatus } from './companyMemberStatus';
 import type { User } from './user';
 import type { Company } from './company';
 
@@ -15,7 +16,7 @@ export interface CompanyMember {
   companyId: string;
   role: CompanyMemberRole;
   joinedAt: string;
-  isActive: boolean;
+  status: CompanyMemberStatus;
   firstName?: string;
   lastName?: string;
   email?: string;

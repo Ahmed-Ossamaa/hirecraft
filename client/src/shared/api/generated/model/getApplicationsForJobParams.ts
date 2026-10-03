@@ -8,6 +8,7 @@
 import type { GetApplicationsForJobOrder } from './getApplicationsForJobOrder';
 
 export type GetApplicationsForJobParams = {
+sortBy?: string;
 order?: GetApplicationsForJobOrder;
 /**
  * @minimum 1

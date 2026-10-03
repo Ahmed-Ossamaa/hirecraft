@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -26,6 +27,7 @@ import {
 } from '@/integrations/mail/mail.events';
 import appConfig from '@/config/app.config';
 import { CompanyRole } from './domain/company-role.enum';
+import { CompanyMemberStatus } from './domain/company-member-status.enum';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
 @Injectable()
@@ -49,6 +51,17 @@ export class CompanyMembersService {
     return this.companyMemberRepository.create(params, tx);
   }
 
+  async activateMember(userId: string): Promise<void> {
+    await this.companyMemberRepository.updateStatus(
+      userId,
+      CompanyMemberStatus.ACTIVE,
+    );
+  }
+
+  async acceptInvite(userId: string): Promise<void> {
+    await this.companyMemberRepository.acceptInvite(userId);
+  }
+
   async getMembershipByUserId(userId: string): Promise<CompanyMember | null> {
     return this.companyMemberRepository.findByUserId(userId);
   }
@@ -62,8 +75,16 @@ export class CompanyMembersService {
     );
   }
 
-  async getMembers(companyId: string, options: PageOptionsDto) {
-    return this.companyMemberRepository.findAllByCompanyId(companyId, options);
+  async getMembers(
+    companyId: string,
+    options: PageOptionsDto,
+    status?: CompanyMemberStatus,
+  ) {
+    return this.companyMemberRepository.findAllByCompanyId(
+      companyId,
+      options,
+      status,
+    );
   }
 
   async removeMember(userId: string, companyId: string): Promise<void> {
@@ -73,6 +94,16 @@ export class CompanyMembersService {
     );
     if (!success) {
       throw new NotFoundException('Member not found in this company.');
+    }
+  }
+
+  async suspendMember(userId: string): Promise<void> {
+    const success = await this.companyMemberRepository.updateStatus(
+      userId,
+      CompanyMemberStatus.SUSPENDED,
+    );
+    if (!success) {
+      throw new NotFoundException('Member not found.');
     }
   }
 
@@ -186,6 +217,24 @@ export class CompanyMembersService {
           );
           txUser = result.user;
           txInviteToken = result.inviteToken;
+        } else {
+          // Check if existing user is already a member of any company
+          const existingMembership =
+            await this.companyMemberRepository.findActiveByUserId(
+              txUser.id,
+              tx,
+            );
+          if (existingMembership) {
+            if (existingMembership.companyId === companyId) {
+              throw new ConflictException(
+                'This user is already a member of your company.',
+              );
+            } else {
+              throw new ConflictException(
+                'This user is already a member of another company.',
+              );
+            }
+          }
         }
 
         // Add them to the company
@@ -194,6 +243,7 @@ export class CompanyMembersService {
             userId: txUser.id,
             companyId,
             role: dto.role,
+            status: CompanyMemberStatus.PENDING,
           },
           tx,
         );

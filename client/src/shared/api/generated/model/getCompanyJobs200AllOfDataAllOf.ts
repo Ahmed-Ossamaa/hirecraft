@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { Job } from './job';
+import type { JobWithStatsDto } from './jobWithStatsDto';
 
 export type GetCompanyJobs200AllOfDataAllOf = {
-  data?: Job[];
+  data?: JobWithStatsDto[];
 };

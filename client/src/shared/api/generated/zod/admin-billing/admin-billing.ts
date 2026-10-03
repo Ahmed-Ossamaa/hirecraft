@@ -21,6 +21,7 @@ export const getSubscriptionsQueryLimitMax = 100;
 export const getSubscriptionsQueryParams = zod.object({
   "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']).optional().describe('Filter by subscription status'),
   "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).optional().describe('Filter by plan ID'),
+  "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getSubscriptionsQueryOrderDefault),
   "page": zod.number().min(1).default(getSubscriptionsQueryPageDefault),
   "limit": zod.number().min(1).max(getSubscriptionsQueryLimitMax).default(getSubscriptionsQueryLimitDefault)

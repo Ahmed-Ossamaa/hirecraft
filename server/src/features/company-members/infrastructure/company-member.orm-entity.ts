@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { CompanyRole } from '../domain/company-role.enum';
+import { CompanyMemberStatus } from '../domain/company-member-status.enum';
 import { UserOrmEntity } from '@/features/users/infrastructure/user.orm-entity';
 import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.orm-entity';
 
@@ -16,7 +17,7 @@ import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.or
 @Index(['userId', 'companyId'], { unique: true })
 @Index('IDX_one_active_company_per_user', ['userId'], {
   unique: true,
-  where: '"isActive" = true',
+  where: '"status" = \'ACTIVE\'',
 })
 export class CompanyMemberOrmEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -31,11 +32,15 @@ export class CompanyMemberOrmEntity {
   @Column({ type: 'enum', enum: CompanyRole, default: CompanyRole.STAFF })
   role!: CompanyRole;
 
-  @CreateDateColumn()
+  @Column({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   joinedAt!: Date;
 
-  @Column({ type: 'boolean', default: true })
-  isActive!: boolean;
+  @Column({
+    type: 'enum',
+    enum: CompanyMemberStatus,
+    default: CompanyMemberStatus.ACTIVE,
+  })
+  status!: CompanyMemberStatus;
 
   @ManyToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
@@ -47,9 +52,9 @@ export class CompanyMemberOrmEntity {
   @JoinColumn({ name: 'companyId' })
   company?: CompanyOrmEntity;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

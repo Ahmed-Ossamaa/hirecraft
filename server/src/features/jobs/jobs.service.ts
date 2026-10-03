@@ -18,6 +18,10 @@ import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
 import { DataSource } from 'typeorm';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
+import { ApplicationsService } from '../applications/applications.service';
+import { JobWithStatsDto } from './dto/job-with-stats.dto';
+import { forwardRef } from '@nestjs/common';
+
 @Injectable()
 export class JobsService {
   constructor(
@@ -25,7 +29,29 @@ export class JobsService {
     private readonly jobRepository: IJobRepository,
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
     private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => ApplicationsService))
+    private readonly applicationsService: ApplicationsService,
   ) {}
+
+  private async attachStats(
+    result: PaginatedResult<Job>,
+  ): Promise<PaginatedResult<JobWithStatsDto>> {
+    if (result.data.length === 0) {
+      return result as unknown as PaginatedResult<JobWithStatsDto>;
+    }
+
+    const jobIds = result.data.map((job) => job.id);
+    const counts = await this.applicationsService.getCountsForJobs(jobIds);
+
+    const dataWithStats = result.data.map((job) => {
+      const dto = new JobWithStatsDto();
+      Object.assign(dto, job);
+      dto.applicationCount = counts.get(job.id) || 0;
+      return dto;
+    });
+
+    return { ...result, data: dataWithStats };
+  }
 
   async createJob(params: CreateJobParams): Promise<Job> {
     return this.dataSource.transaction(async (tx) => {
@@ -46,8 +72,9 @@ export class JobsService {
   async findAllJobs(
     options: PageOptionsDto,
     filters?: FindJobsFilters,
-  ): Promise<PaginatedResult<Job>> {
-    return this.jobRepository.findAll(options, filters);
+  ): Promise<PaginatedResult<JobWithStatsDto>> {
+    const result = await this.jobRepository.findAll(options, filters);
+    return this.attachStats(result);
   }
 
   async findAllPublishedJobs(
@@ -73,10 +100,21 @@ export class JobsService {
     return job;
   }
 
-  async getJobsByCompany(companyId: string, options: PageOptionsDto) {
-    return this.jobRepository.findAll(options, {
+  async getJobsByCompany(
+    companyId: string,
+    query: FindJobsQueryDto,
+  ): Promise<PaginatedResult<JobWithStatsDto>> {
+    const result = await this.jobRepository.findAll(query, {
       companyId: companyId,
+      search: query.search,
+      status: query.status,
+      experienceLevel: query.experienceLevel,
+      yearsOfExperience: query.yearsOfExperience,
+      jobType: query.jobType,
+      country: query.country,
+      city: query.city,
     });
+    return this.attachStats(result);
   }
 
   async updateJob(

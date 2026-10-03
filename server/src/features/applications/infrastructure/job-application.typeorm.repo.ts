@@ -119,6 +119,21 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       },
     });
   }
+
+  async getCountsByJobIds(jobIds: string[]): Promise<Map<string, number>> {
+    if (jobIds.length === 0) return new Map();
+
+    const counts = await this.repository.manager
+      .createQueryBuilder(JobApplicationOrmEntity, 'app')
+      .select('app.jobId', 'jobId')
+      .addSelect('COUNT(app.id)', 'count')
+      .where('app.jobId IN (:...jobIds)', { jobIds })
+      .groupBy('app.jobId')
+      .getRawMany<{ jobId: string; count: string }>();
+
+    return new Map(counts.map((c) => [c.jobId, Number(c.count)]));
+  }
+
   // ---  Mapper ---
   private mapToDomain(orm: JobApplicationOrmEntity): JobApplication {
     const application = new JobApplication();

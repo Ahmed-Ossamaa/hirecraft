@@ -46,17 +46,18 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
     { query: { initialData } }
   );
 
-  const jobs = data?.data?.data || [];
-  const currentPage = data?.data?.page || 1;
-  const totalPages = data?.data?.totalPages || 1;
-  const totalJobs = data?.data?.total ?? jobs.length;
+  const res= data?.data
+  const jobs = res?.data || [];
+  const currentPage = res?.page || 1;
+  const totalPages = res?.totalPages || 1;
+  const totalJobs = res?.total ?? jobs.length;
   
   // Find the currently selected job
   const selectedJob = React.useMemo(() => {
     if (jobIdParam) {
       return jobs.find((j: Job) => j.id === jobIdParam) || null;
     }
-    // Default to the first job if none selected (doesn't push to URL)
+    // Default to the first job if none selected
     return jobs.length > 0 ? jobs[0] : null;
   }, [jobIdParam, jobs]);
 
@@ -113,7 +114,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
           )}
         </div>
 
-        {totalPages > 1 && (
+        {totalPages > 0 && (
           <div className="p-3 border-t border-border bg-card-hover/50 shrink-0">
             <Pagination
               currentPage={currentPage}

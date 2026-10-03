@@ -3,6 +3,7 @@ import {
   Inject,
   ConflictException,
   ForbiddenException,
+  forwardRef,
 } from '@nestjs/common';
 import {
   JOB_APPLICATION_REPOSITORY,
@@ -22,6 +23,7 @@ export class ApplicationsService {
     @Inject(JOB_APPLICATION_REPOSITORY)
     private readonly applicationRepo: JobApplicationRepositoryInterface,
     private readonly workerProfilesService: WorkerProfilesService,
+    @Inject(forwardRef(() => JobsService))
     private readonly jobsService: JobsService,
   ) {}
 
@@ -94,5 +96,9 @@ export class ApplicationsService {
     }
 
     return this.applicationRepo.findByJobId(jobId, options);
+  }
+
+  async getCountsForJobs(jobIds: string[]): Promise<Map<string, number>> {
+    return this.applicationRepo.getCountsByJobIds(jobIds);
   }
 }
