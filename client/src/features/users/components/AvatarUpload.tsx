@@ -16,9 +16,9 @@ export const AvatarUpload: React.FC = () => {
   
   const user = useAuthStore((s) => s.user);
   const setAuth = useAuthStore((s) => s.setAuth);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const organizationId = useAuthStore((s) => s.organizationId);
-  const { refetch } = useGetProfile();
+  const companyRole = useAuthStore((s) => s.companyRole);
+  const { refetch } = useGetProfile({ query: { enabled: false } });
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,8 +42,8 @@ export const AvatarUpload: React.FC = () => {
       
       // Refetch profile to get the new avatar URL
       const res = await refetch();
-      if (res.data?.data && accessToken) {
-        setAuth(accessToken, res.data.data as any, organizationId);
+      if (res.data?.data) {
+        setAuth(res.data.data as any, organizationId, companyRole);
       }
     } catch (error) {
       console.error('Failed to upload avatar:', error);
@@ -57,8 +57,8 @@ export const AvatarUpload: React.FC = () => {
       toast.success('Avatar removed successfully');
       
       const res = await refetch();
-      if (res.data?.data && accessToken) {
-        setAuth(accessToken, res.data.data as any, organizationId);
+      if (res.data?.data) {
+        setAuth(res.data.data as any, organizationId, companyRole);
       }
     } catch (error) {
       console.error('Failed to remove avatar:', error);

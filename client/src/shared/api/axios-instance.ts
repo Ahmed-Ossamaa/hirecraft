@@ -28,14 +28,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Request Interceptor: Attach Access Token & Organization Context
+// Request Interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const { accessToken, organizationId } = useAuthStore.getState();
-
-    if (accessToken && config.headers) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
+    const { organizationId } = useAuthStore.getState();
 
     if (organizationId && config.headers) {
       config.headers["x-organization-id"] = organizationId;
@@ -84,25 +80,21 @@ apiClient.interceptors.response.use(
 
       try {
         const refreshResponse = await axios.post(
-          `${API_BASE_URL}/api/v1/auth/refresh`,
+          `/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
-        const newAccessToken: string =
-          refreshResponse.data?.data?.accessToken ||
-          refreshResponse.data?.accessToken;
+
+        const newAccessToken: string = refreshResponse.data?.accessToken;
 
         if (!newAccessToken) {
-          throw new Error("Failed to extract new access token from refresh response");
+          throw new Error("Failed to get token from BFF");
         }
-
-        useAuthStore.getState().setAccessToken(newAccessToken);
 
         if (originalRequest.headers) {
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
-
         processQueue(null, newAccessToken);
         return apiClient(originalRequest);
       } catch (refreshError) {
