@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui";
 import {
   MdAdd,
   MdWorkOutline,
-  MdMoreVert,
   MdSearch,
   MdPeopleOutline,
   MdClose,
@@ -14,12 +13,9 @@ import {
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUpdateJob } from "@/shared/api/generated/jobs/jobs";
-import { useMutation } from "@tanstack/react-query";
-import { customAxiosInstance } from "@/shared/api/axios-instance";
-import { toast } from "sonner";
 import { JobDetailsModal } from "./JobDetailsModal";
-import { useConfirm } from "@/shared/providers/confirm-provider";
+import { JobActionMenu } from "./JobActionMenu";
+import { EmptyState, Tabs } from "@/shared/components/ui";
 
 interface EmployerJobsListProps {
   initialJobs: JobWithStatsDto[];
@@ -30,151 +26,6 @@ interface EmployerJobsListProps {
   };
 }
 
-function ActionMenu({ job }: { job: JobWithStatsDto }) {
-
-  const [open, setOpen] = useState(false);
-  const [openUpwards, setOpenUpwards] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const { confirm } = useConfirm();
-
-  const updateMutation = useUpdateJob();
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      customAxiosInstance({
-        url: `/api/v1/jobs/${id}`,
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      toast.success("Job deleted successfully");
-      router.refresh();
-    },
-    onError: () => {
-      toast.error("Failed to delete job");
-    },
-  });
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!open && ref.current) {
-      const rect = ref.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      if (spaceBelow < 280 && rect.top > 280) {
-        setOpenUpwards(true);
-      } else {
-        setOpenUpwards(false);
-      }
-    }
-    setOpen(!open);
-  };
-
-  const handleStatusChange = async (status: string) => {
-    try {
-      await updateMutation.mutateAsync({
-        id: job.id,
-        data: { status: status as any },
-      });
-      toast.success(`Job marked as ${status}`);
-      setOpen(false);
-      router.refresh();
-    } catch (error) {
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleDelete = async () => {
-    const isConfirmed = await confirm({
-      title: "Delete Job",
-      message: "Are you sure you want to delete this job? This action cannot be undone.",
-      confirmText: "Delete",
-      variant: "danger",
-    });
-    if (isConfirmed) {
-      deleteMutation.mutate(job.id);
-      setOpen(false);
-    }
-  };
-
-  return (
-    <div className="relative inline-block text-left" ref={ref}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-        onClick={handleToggle}
-      >
-        <MdMoreVert className="text-xl" />
-      </Button>
-      {open && (
-        <div
-          className={`absolute right-0 z-50 w-48 rounded-lg bg-card shadow-lg ring-1 ring-slate-300 dark:ring-slate-700  border border-border/60 focus:outline-none py-1 overflow-hidden ${openUpwards ? "bottom-full mb-2" : "top-full mt-2"}`}
-        >
-          <Link
-            href={`/dashboard/company/jobs/${job.id}/edit`}
-            className="block px-4 py-2.5 text-sm text-foreground hover:bg-card-hover transition-colors"
-          >
-            Edit Job
-          </Link>
-          <Link
-            href={`/jobs?jobId=${job.id}`}
-            className="block px-4 py-2.5 text-sm text-foreground hover:bg-card-hover transition-colors"
-          >
-            View Public Job
-          </Link>
-          <div className="border-t border-border/40 my-1"></div>
-          <div className="px-4 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            Change Status
-          </div>
-          {job.status !== "PUBLISHED" && (
-            <button
-              onClick={() => handleStatusChange("PUBLISHED")}
-              disabled={updateMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
-            >
-              Publish
-            </button>
-          )}
-          {job.status !== "CLOSED" && (
-            <button
-              onClick={() => handleStatusChange("CLOSED")}
-              disabled={updateMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-card-hover transition-colors disabled:opacity-50"
-            >
-              Close
-            </button>
-          )}
-          {job.status !== "DRAFT" && (
-            <button
-              onClick={() => handleStatusChange("DRAFT")}
-              disabled={updateMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-card-hover transition-colors disabled:opacity-50"
-            >
-              Move to Draft
-            </button>
-          )}
-          <div className="border-t border-border/40 my-1"></div>
-          <button
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-          >
-            Delete Job
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
   initialJobs,
@@ -283,23 +134,16 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
       {/* Header & Status Tabs */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
-            {["ALL", "PUBLISHED", "DRAFT", "CLOSED"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => updateFilters({ status: tab })}
-                className={`pb-2 px-1 border-b-2 text-sm font-medium transition-colors ${
-                  currentStatus === tab
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab === "ALL"
-                  ? "All Jobs"
-                  : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            tabs={[
+              { id: "ALL", label: "All Jobs" },
+              { id: "PUBLISHED", label: "Published" },
+              { id: "DRAFT", label: "Draft" },
+              { id: "CLOSED", label: "Closed" },
+            ]}
+            activeTab={currentStatus}
+            onTabChange={(id) => updateFilters({ status: id })}
+          />
           <Link
             href="/dashboard/company/jobs/create"
             className="shrink-0 mb-2 ml-4"
@@ -420,7 +264,7 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
                           Applicants
                         </Button>
                       </Link>
-                      <ActionMenu job={job} />
+                      <JobActionMenu job={job} />
                     </div>
                   </td>
                 </tr>
@@ -431,21 +275,14 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
 
         {/* Empty State */}
         {initialJobs.length === 0 && (
-          <div className="p-16 text-center flex flex-col items-center">
-            <div className="w-16 h-16 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mb-4">
-              <MdWorkOutline className="text-3xl" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2 text-foreground">
-              No jobs found
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
-              Create your first job posting to start receiving applications, or
-              adjust your filters to see more results.
-            </p>
-            <Link href="/dashboard/jobs/create">
-              <Button>Post a Job</Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={<MdWorkOutline className="text-3xl" />}
+            title="No jobs found"
+            description="Create your first job posting to start receiving applications, or adjust your filters to see more results."
+            actionText="Post a Job"
+            actionHref="/dashboard/company/jobs/create"
+            className="p-16 text-center flex flex-col items-center"
+          />
         )}
 
         {/* Pagination controls */}

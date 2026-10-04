@@ -1,20 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
 import { Company, Job } from "@/shared/api/generated/model";
 import {
   MdLocationOn,
   MdBusiness,
   MdPeople,
-  MdWork,
   MdEmail,
   MdPhone,
   MdLanguage,
   MdDateRange,
   MdStars,
 } from "react-icons/md";
-import Link from "next/link";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { CollapsibleText } from "@/shared/components/ui";
+import { PublicJobCard } from "@/features/jobs/components/PublicJobCard";
 import Image from "next/image";
 
 interface CompanyProfilePreviewProps {
@@ -23,13 +21,11 @@ interface CompanyProfilePreviewProps {
   hideTopMargin?: boolean;
 }
 
-export const CompanyProfilePreview: React.FC<CompanyProfilePreviewProps> = ({
+export const CompanyProfilePreview = ({
   company,
   jobs = [],
   hideTopMargin = false,
-}) => {
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-
+}: CompanyProfilePreviewProps) => {
   return (
     <div
       className={`bg-background pb-20 ${hideTopMargin ? "" : "min-h-screen"}`}
@@ -109,21 +105,7 @@ export const CompanyProfilePreview: React.FC<CompanyProfilePreviewProps> = ({
             <div className="mt-8 pt-8 border-t border-border">
               <h3 className="font-semibold text-lg mb-2">About Us</h3>
               <div className="bg-primary/5 border-l-4 border-primary rounded-r-2xl p-5">
-                <p className="text-muted-foreground whitespace-pre-line leading-relaxed">
-                  {company.description.length > 400 && !isDescriptionExpanded
-                    ? `${company.description.slice(0, 400)}...`
-                    : company.description}
-                </p>
-                {company.description.length > 400 && (
-                  <button
-                    onClick={() =>
-                      setIsDescriptionExpanded(!isDescriptionExpanded)
-                    }
-                    className="mt-3 text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    {isDescriptionExpanded ? "View Less" : "View More"}
-                  </button>
-                )}
+                <CollapsibleText text={company.description} />
               </div>
             </div>
           )}
@@ -244,36 +226,7 @@ export const CompanyProfilePreview: React.FC<CompanyProfilePreviewProps> = ({
 
             <div className="space-y-4">
               {jobs.map((job) => (
-                <Link
-                  key={job.id}
-                  href={`/jobs?${job.id}`}
-                  className="block bg-card rounded-2xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all p-5"
-                >
-                  <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                        {job.title}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <MdWork className="text-base" />
-                          <span className="capitalize">
-                            {job.jobType?.toLowerCase().replace("_", " ")}
-                          </span>
-                        </div>
-                        {job.country && (
-                          <div className="flex items-center gap-1.5">
-                            <MdLocationOn className="text-base" />
-                            <span>{job.country}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Posted {formatTimeAgo(job.createdAt)}
-                    </div>
-                  </div>
-                </Link>
+                <PublicJobCard key={job.id} job={job} />
               ))}
             </div>
           </div>

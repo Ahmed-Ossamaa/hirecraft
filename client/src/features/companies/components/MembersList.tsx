@@ -3,15 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button, Pagination } from "@/shared/components/ui";
+import { Button, Pagination, Tabs } from "@/shared/components/ui";
 import {
   MdPersonAdd,
-  MdDeleteOutline,
-  MdAdminPanelSettings,
-  MdWorkOutline,
-  MdPerson,
 } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
 import {
   useRemoveMember,
   useUpdateMemberRole,
@@ -22,6 +17,7 @@ import { toast } from "sonner";
 import { InviteMemberModal } from "./InviteMemberModal";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { useConfirm } from "@/shared/providers/confirm-provider";
+import { MemberTableRow } from "./MemberTableRow";
 
 interface MembersListProps {
   initialMembers: CompanyMember[];
@@ -143,44 +139,29 @@ export const MembersList: React.FC<MembersListProps> = ({
     }
   };
 
-  const getRoleIcon = (role: CompanyMemberRole) => {
-    switch (role) {
-      case "ADMIN":
-        return <MdAdminPanelSettings className="text-primary" />;
-      case "HIRING_MANAGER":
-        return <MdWorkOutline className="text-secondary" />;
-      default:
-        return <MdPerson className="text-muted-foreground" />;
-    }
-  };
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
+          <div className="flex w-full">
             {!canInviteMembers ? (
-              <button className="pb-2 px-1 border-b-2 text-sm font-medium transition-colors border-primary text-foreground">
-                Current Members
-              </button>
-            ) : (
-              ["ACTIVE", "PENDING", "SUSPENDED"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabChange(tab)}
-                  className={`pb-2 px-1 border-b-2 text-sm font-medium transition-colors ${
-                    currentStatus === tab
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab === "ACTIVE"
-                    ? "Active"
-                    : tab === "PENDING"
-                      ? "Pending"
-                      : "Suspended"}
+              <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
+                <button className="pb-2 px-1 border-b-2 text-sm font-medium transition-colors border-primary text-foreground">
+                  Current Members
                 </button>
-              ))
+              </div>
+            ) : (
+              <Tabs
+                tabs={[
+                  { id: "ACTIVE", label: "Active" },
+                  { id: "PENDING", label: "Pending" },
+                  { id: "SUSPENDED", label: "Suspended" },
+                ]}
+                activeTab={currentStatus}
+                onTabChange={handleTabChange}
+              />
             )}
           </div>
           {canInviteMembers && (
@@ -213,119 +194,17 @@ export const MembersList: React.FC<MembersListProps> = ({
             </thead>
             <tbody className="divide-y divide-border/40">
               {members.map((member) => (
-                <tr
+                <MemberTableRow
                   key={member.id}
-                  className="hover:bg-card-hover/20 transition-colors"
-                >
-                  <td className="px-5 py-3.5">
-                    <div className="font-medium text-foreground flex items-center gap-2">
-                      {member.firstName} {member.lastName}
-                      {member.userId === user?.id && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold bg-primary/10 text-primary rounded-full uppercase tracking-wider">
-                          You
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {member.email}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground">
-                    {formatTimeAgo(member.joinedAt)}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-xs">
-                      {getRoleIcon(member.role)}
-                      <select
-                        value={member.role}
-                        onChange={(e) =>
-                          handleRoleChange(
-                            member.userId,
-                            e.target.value as CompanyMemberRole,
-                          )
-                        }
-                        disabled={
-                          member.userId === user?.id || !isCurrentUserAdmin
-                        }
-                        className="bg-transparent border-none outline-none cursor-pointer text-foreground font-medium disabled:cursor-not-allowed"
-                      >
-                        <option
-                          value="ADMIN"
-                          className="bg-card text-foreground "
-                        >
-                          Admin
-                        </option>
-                        <option
-                          value="HIRING_MANAGER"
-                          className="bg-card text-foreground"
-                        >
-                          Hiring Manager
-                        </option>
-                        <option
-                          value="STAFF"
-                          className="bg-card text-foreground"
-                        >
-                          Staff
-                        </option>
-                      </select>
-                    </div>
-                  </td>
-                  {isCurrentUserAdmin && (
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-2">
-                        {member.userId !== user?.id &&
-                          currentStatus === "ACTIVE" && (
-                            <Button
-                              variant="ghost"
-                              onClick={() =>
-                                handleSuspend(
-                                  member.userId,
-                                  `${member.firstName} ${member.lastName}`,
-                                )
-                              }
-                              className="text-xs px-2 py-1 h-8 rounded-lg"
-                            >
-                              Suspend
-                            </Button>
-                          )}
-                        {member.userId !== user?.id &&
-                          currentStatus === "SUSPENDED" && (
-                            <Button
-                              variant="ghost"
-                              onClick={() =>
-                                handleActivate(
-                                  member.userId,
-                                  `${member.firstName} ${member.lastName}`,
-                                )
-                              }
-                              className="text-xs px-2 py-1 h-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            >
-                              Unsuspend
-                            </Button>
-                          )}
-                        {member.userId !== user?.id && (
-                          <Button
-                            variant="ghost"
-                            onClick={() =>
-                              handleRemove(
-                                member.userId,
-                                `${member.firstName} ${member.lastName}`,
-                              )
-                            }
-                            className="w-8 h-8 p-0 text-red-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg inline-flex items-center justify-center shrink-0"
-                            title={
-                              currentStatus === "PENDING"
-                                ? "Cancel Invite"
-                                : "Remove Permanently"
-                            }
-                          >
-                            <MdDeleteOutline className="text-lg" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                  member={member}
+                  currentUserId={user?.id}
+                  isCurrentUserAdmin={isCurrentUserAdmin}
+                  currentStatus={currentStatus as "ACTIVE" | "PENDING" | "SUSPENDED"}
+                  onRoleChange={handleRoleChange}
+                  onSuspend={handleSuspend}
+                  onActivate={handleActivate}
+                  onRemove={handleRemove}
+                />
               ))}
               {members.length === 0 && (
                 <tr>
