@@ -54,12 +54,15 @@ export default async function WorkerPublicProfilePage(props: PageProps) {
 
   return (
     <div className="relative">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      {/* Floating Back Button */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-background/80 hover:bg-background backdrop-blur-md text-foreground rounded-full border border-border shadow-sm transition-all"
+          title="Dashboard"
         >
-          <MdArrowBack /> Back
+          <MdArrowBack className="text-xl" />
+          <span className="font-medium text-sm hidden sm:inline">Dashboard</span>
         </Link>
       </div>
       <WorkerProfilePreview profile={profile} hideTopMargin={true} />
