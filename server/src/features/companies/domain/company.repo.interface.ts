@@ -10,7 +10,14 @@ export type CreateCompanyParams = {
   coverUrl?: string | null;
   coverPublicId?: string | null;
   description?: string;
-  location?: string;
+  country?: string | null;
+  city?: string | null;
+  address?: string | null;
+  email?: string | null;
+  specialties?: string[] | null;
+  website?: string | null;
+  foundedYear?: number | null;
+  phone?: string | null;
   size?: string;
   industry?: string;
 };

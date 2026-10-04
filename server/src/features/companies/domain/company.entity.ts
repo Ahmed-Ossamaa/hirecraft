@@ -15,7 +15,14 @@ export class Company {
   coverPublicId?: string | null;
 
   description?: string;
-  location?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  email?: string | null;
+  phone?: string | null;
+  specialties?: string[] | null;
+  website?: string | null;
+  foundedYear?: number | null;
   size?: string;
   industry?: string;
 
