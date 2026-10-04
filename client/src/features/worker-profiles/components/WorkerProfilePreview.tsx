@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { WorkerProfile, WorkerMachineSkill } from "@/shared/api/generated/model";
 import {
   MdLocationOn,
@@ -66,7 +67,7 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-primary/20 via-primary/5 to-transparent"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 relative z-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 md:-mt-20 relative z-10">
         {/* Profile Card */}
         <div className="bg-card rounded-2xl border border-border shadow-sm p-6 md:p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-6 items-start justify-between">
@@ -75,10 +76,14 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
               {/* Avatar */}
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-input border-4 border-card shrink-0 flex items-center justify-center overflow-hidden shadow-sm relative z-10">
                 {profile.avatarURL ? (
-                  <img
+                  <Image
                     src={profile.avatarURL}
                     alt={name}
                     className="w-full h-full object-cover"
+                    width={128}
+                    height={128}
+                    priority
+                    sizes="(max-width: 768px) 96px, 128px"
                   />
                 ) : (
                   <MdPerson className="text-5xl text-muted-foreground" />

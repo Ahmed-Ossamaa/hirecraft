@@ -64,7 +64,7 @@ export const CompanyDashboardClient: React.FC<CompanyDashboardClientProps> = ({ 
         </div>
       ) : (
         <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in duration-300">
-          <CompanyProfilePreview company={company} hideTopMargin={true} />
+          <CompanyProfilePreview company={company} hideTopMargin={false} />
         </div>
       )}
     </div>

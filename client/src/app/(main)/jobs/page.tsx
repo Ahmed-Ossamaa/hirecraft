@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import  { Suspense } from "react";
 import { JobsView } from "@/features/jobs/components/JobsView";
 import { getJobs } from "@/features/jobs/api/getJobs";
 

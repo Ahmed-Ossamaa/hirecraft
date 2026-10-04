@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsArray,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCompanyDto {
@@ -24,10 +31,46 @@ export class CreateCompanyDto {
   @MaxLength(200)
   description?: string;
 
-  @ApiPropertyOptional({ example: 'San Francisco, CA' })
+  @ApiPropertyOptional({ example: 'Egypt' })
   @IsOptional()
   @IsString()
-  location?: string;
+  country?: string;
+
+  @ApiPropertyOptional({ example: 'Cairo' })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional({ example: 'Borg El-Araba 2nd industrial zone' })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional({ example: 'contact@example.com' })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional({ example: ['Corrugated Carton', 'Printing'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  specialties?: string[];
+
+  @ApiPropertyOptional({ example: 'https://example.com' })
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiPropertyOptional({ example: 2020 })
+  @IsOptional()
+  @IsNumber()
+  foundedYear?: number;
+
+  @ApiPropertyOptional({ example: '+2-555-0123' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
   @ApiPropertyOptional({ example: '50-100' })
   @IsOptional()

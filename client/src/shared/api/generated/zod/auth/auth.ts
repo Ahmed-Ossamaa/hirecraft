@@ -43,7 +43,14 @@ export const signupBody = zod.object({
   "logoUrl": zod.string().optional(),
   "coverUrl": zod.string().optional(),
   "description": zod.string().max(signupBodyCompanyDataDescriptionMax).optional(),
-  "location": zod.string().optional(),
+  "country": zod.string().optional(),
+  "city": zod.string().optional(),
+  "address": zod.string().optional(),
+  "email": zod.string().optional(),
+  "specialties": zod.array(zod.string()).optional(),
+  "website": zod.string().optional(),
+  "foundedYear": zod.number().optional(),
+  "phone": zod.string().optional(),
   "size": zod.string().optional(),
   "industry": zod.string().optional()
 }).optional()

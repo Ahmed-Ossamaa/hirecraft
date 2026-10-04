@@ -31,8 +31,29 @@ export class CompanyOrmEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ nullable: true })
-  location?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  country?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  city?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  address?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  email?: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  phone?: string | null;
+
+  @Column({ type: 'varchar', array: true, nullable: true })
+  specialties?: string[] | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  website?: string | null;
+
+  @Column({ nullable: true, type: 'int' })
+  foundedYear?: number | null;
 
   @Column({ nullable: true })
   size?: string;

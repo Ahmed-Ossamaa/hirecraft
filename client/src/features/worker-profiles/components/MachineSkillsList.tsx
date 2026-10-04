@@ -107,10 +107,10 @@ export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [
                 </div>
               </div>
               
-              <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center justify-end gap-2 mt-4 pt-2 border-t border-border/50 ">
                 <button 
                   onClick={() => setSkillToEdit(skill)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-input hover:bg-border text-foreground transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg  hover:bg-border text-foreground transition-colors cursor-pointer"
                   title="Edit skill"
                 >
                   <MdEdit className="text-sm" />
@@ -118,7 +118,7 @@ export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [
                 <button 
                   onClick={() => handleDelete(skill.id)}
                   disabled={deleteSkillMutation.isPending}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/20 text-red-500 transition-colors cursor-pointer"
                   title="Remove skill"
                 >
                   <MdDelete className="text-sm" />

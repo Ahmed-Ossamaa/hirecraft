@@ -13,7 +13,14 @@ export interface CreateCompanyDto {
   coverUrl?: string;
   /** @maxLength 200 */
   description?: string;
-  location?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  email?: string;
+  specialties?: string[];
+  website?: string;
+  foundedYear?: number;
+  phone?: string;
   size?: string;
   industry?: string;
 }

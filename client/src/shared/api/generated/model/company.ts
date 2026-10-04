@@ -19,7 +19,19 @@ export interface Company {
   /** @nullable */
   coverPublicId?: string | null;
   description?: string;
-  location?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  specialties?: string[] | null;
+  /** @nullable */
+  website?: string | null;
+  /** @nullable */
+  foundedYear?: number | null;
   size?: string;
   industry?: string;
   /** @nullable */

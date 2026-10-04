@@ -1,33 +1,45 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { MdPerson, MdDashboard, MdLogout, MdSettings, MdKeyboardArrowDown } from 'react-icons/md';
-import { useAuthStore } from '@/shared/stores/auth-store';
-import { useLogout } from '@/shared/api/generated/auth/auth';
-import { toast } from 'sonner';
+import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  MdPerson,
+  MdDashboard,
+  MdLogout,
+  MdSettings,
+  MdKeyboardArrowDown,
+} from "react-icons/md";
+import { useAuthStore } from "@/shared/stores/auth-store";
+import { useLogout } from "@/shared/api/generated/auth/auth";
+import { toast } from "sonner";
 
 interface UserDropdownProps {
   showName?: boolean;
 }
 
-export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) => {
+export const UserDropdown: React.FC<UserDropdownProps> = ({
+  showName = false,
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  
+
   const { user, clearAuth } = useAuthStore();
   const logoutMutation = useLogout();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -35,11 +47,11 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
       await logoutMutation.mutateAsync();
       clearAuth();
       setIsDropdownOpen(false);
-      router.push('/');
-      toast.success('Logged out successfully');
+      router.push("/");
+      toast.success("Logged out successfully");
     } catch (error) {
-      console.error('Logout failed:', error);
-      toast.error('Failed to logout');
+      console.error("Logout failed:", error);
+      toast.error("Failed to logout");
     }
   };
 
@@ -47,48 +59,52 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
     : "?";
 
-  const fullName = user
-    ? `${user.firstName} ${user.lastName}`
-    : "User";
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "User";
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className={`flex items-center gap-2 rounded-full cursor-pointer transition-colors ${
-          showName 
-            ? 'px-3 py-1.5 hover:bg-card-hover rounded-lg' 
-            : 'justify-center w-10 h-10 bg-input border-2 border-border overflow-hidden hover:border-primary'
+          showName
+            ? "px-3 py-1.5 hover:bg-card-hover rounded-lg"
+            : "justify-center w-10 h-10 bg-input border-2 border-border overflow-hidden hover:border-primary"
         }`}
       >
         {showName ? (
-           <>
-             {user?.avatarURL ? (
-                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
-                  <img src={user.avatarURL} alt="Profile" className="w-full h-full object-cover" />
-                </div>
-             ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                  {initials}
-                </div>
-             )}
-             <span className="text-sm text-foreground font-medium hidden sm:inline">
-               {fullName}
-             </span>
-             <MdKeyboardArrowDown
-               className={`text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
-             />
-           </>
-        ) : (
-          user?.avatarURL ? (
-            <img 
-              alt="Profile" 
-              src={user.avatarURL} 
-              className="w-full h-full object-cover"
+          <>
+            {user?.avatarURL ? (
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                <Image
+                  src={user.avatarURL}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  width={32}
+                  height={32}
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                {initials}
+              </div>
+            )}
+            <span className="text-sm text-foreground font-medium hidden sm:inline">
+              {fullName}
+            </span>
+            <MdKeyboardArrowDown
+              className={`text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
             />
-          ) : (
-            <MdPerson className="text-xl text-muted-foreground" />
-          )
+          </>
+        ) : user?.avatarURL ? (
+          <Image
+            alt="Profile"
+            src={user.avatarURL}
+            className="w-full h-full object-cover"
+            width={40}
+            height={40}
+          />
+        ) : (
+          <MdPerson className="text-xl text-muted-foreground" />
         )}
       </button>
 
@@ -102,9 +118,9 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
               {user?.email}
             </p>
           </div>
-          
+
           <div className="py-1">
-            <Link 
+            <Link
               href="/dashboard"
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors"
@@ -112,7 +128,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
               <MdDashboard className="text-[16px]" />
               Dashboard
             </Link>
-            <Link 
+            <Link
               href="/dashboard/profile"
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors"
@@ -120,7 +136,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
               <MdPerson className="text-[16px]" />
               My Profile
             </Link>
-            <Link 
+            <Link
               href="/dashboard/account-settings"
               onClick={() => setIsDropdownOpen(false)}
               className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-card-hover transition-colors"
@@ -129,7 +145,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({ showName = false }) 
               Account Settings
             </Link>
           </div>
-          
+
           <div className="border-t border-border/50 py-1">
             <button
               onClick={handleLogout}

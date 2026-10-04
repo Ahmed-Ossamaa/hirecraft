@@ -1,4 +1,3 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { AcceptInviteForm } from '@/features/auth/components/AcceptInviteForm';
 import { MdSquareFoot } from 'react-icons/md';
@@ -14,7 +13,7 @@ export default function AcceptInvitePage() {
     <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
       
       {/* Dynamic Background */}
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background"></div>
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-primary/10 via-background to-background"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         {/* Logo Section */}
