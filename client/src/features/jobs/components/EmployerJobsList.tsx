@@ -15,7 +15,7 @@ import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDetailsModal } from "./JobDetailsModal";
 import { JobActionMenu } from "./JobActionMenu";
-import { EmptyState } from "@/shared/components/ui";
+import { EmptyState, Tabs } from "@/shared/components/ui";
 
 interface EmployerJobsListProps {
   initialJobs: JobWithStatsDto[];
@@ -134,23 +134,16 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
       {/* Header & Status Tabs */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
-            {["ALL", "PUBLISHED", "DRAFT", "CLOSED"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => updateFilters({ status: tab })}
-                className={`pb-2 px-1 border-b-2 text-sm font-medium transition-colors cursor-pointer ${
-                  currentStatus === tab
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab === "ALL"
-                  ? "All Jobs"
-                  : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            tabs={[
+              { id: "ALL", label: "All Jobs" },
+              { id: "PUBLISHED", label: "Published" },
+              { id: "DRAFT", label: "Draft" },
+              { id: "CLOSED", label: "Closed" },
+            ]}
+            activeTab={currentStatus}
+            onTabChange={(id) => updateFilters({ status: id })}
+          />
           <Link
             href="/dashboard/company/jobs/create"
             className="shrink-0 mb-2 ml-4"

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button, Pagination } from "@/shared/components/ui";
+import { Button, Pagination, Tabs } from "@/shared/components/ui";
 import {
   MdPersonAdd,
 } from "react-icons/md";
@@ -145,29 +145,23 @@ export const MembersList: React.FC<MembersListProps> = ({
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
+          <div className="flex w-full">
             {!canInviteMembers ? (
-              <button className="pb-2 px-1 border-b-2 text-sm font-medium transition-colors border-primary text-foreground">
-                Current Members
-              </button>
-            ) : (
-              ["ACTIVE", "PENDING", "SUSPENDED"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => handleTabChange(tab)}
-                  className={`pb-2 px-1 border-b-2 text-sm font-medium transition-colors cursor-pointer ${
-                    currentStatus === tab
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab === "ACTIVE"
-                    ? "Active"
-                    : tab === "PENDING"
-                      ? "Pending"
-                      : "Suspended"}
+              <div className="flex gap-4 border-b border-border/40 w-full mb-2 h-10">
+                <button className="pb-2 px-1 border-b-2 text-sm font-medium transition-colors border-primary text-foreground">
+                  Current Members
                 </button>
-              ))
+              </div>
+            ) : (
+              <Tabs
+                tabs={[
+                  { id: "ACTIVE", label: "Active" },
+                  { id: "PENDING", label: "Pending" },
+                  { id: "SUSPENDED", label: "Suspended" },
+                ]}
+                activeTab={currentStatus}
+                onTabChange={handleTabChange}
+              />
             )}
           </div>
           {canInviteMembers && (

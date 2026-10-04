@@ -7,7 +7,7 @@ import { MachineSkillsList } from '@/features/worker-profiles/components/Machine
 import { BasicInfoForm } from '@/features/users/components/BasicInfoForm';
 import { MdManageAccounts, MdBadge, MdVisibility } from 'react-icons/md';
 import { useAuthStore } from '@/shared/stores/auth-store';
-import { Button } from '@/shared/components/ui';
+import { Button, Tabs } from '@/shared/components/ui';
 import Link from 'next/link';
 
 export default function WorkerProfilePage() {
@@ -46,33 +46,35 @@ export default function WorkerProfilePage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border/60">
-        <button
-          onClick={() => setActiveTab('basic')}
-          className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium cursor-pointer ${
-            activeTab === 'basic'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-          }`}
-        >
-          <MdManageAccounts className="text-lg" />
-          Basic Info
-        </button>
-        {user?.userType === 'CANDIDATE' && (
-          <button
-            onClick={() => setActiveTab('professional')}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors text-sm font-medium cursor-pointer ${
-              activeTab === 'professional'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
-            }`}
-          >
-            <MdBadge className="text-lg" />
-            Professional Profile
-          </button>
-        )}
-      </div>
+      <Tabs
+        tabs={[
+          {
+            id: 'basic',
+            label: (
+              <div className="flex items-center gap-2">
+                <MdManageAccounts className="text-lg" />
+                Basic Info
+              </div>
+            ),
+          },
+          ...(user?.userType === 'CANDIDATE'
+            ? [
+                {
+                  id: 'professional',
+                  label: (
+                    <div className="flex items-center gap-2">
+                      <MdBadge className="text-lg" />
+                      Professional Profile
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as 'basic' | 'professional')}
+        className="px-2"
+      />
 
       <div className="pt-2">
         {activeTab === 'basic' && (

@@ -12,3 +12,4 @@ export * from './ConfirmDialog';
 export * from './FloatingBackButton';
 export * from './EmptyState';
 export * from './CollapsibleText';
+export * from './Tabs';
