@@ -246,7 +246,7 @@ export const CompanyProfilePreview: React.FC<CompanyProfilePreviewProps> = ({
               {jobs.map((job) => (
                 <Link
                   key={job.id}
-                  href={`/jobs/${job.id}`}
+                  href={`/jobs?${job.id}`}
                   className="block bg-card rounded-2xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all p-5"
                 >
                   <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
