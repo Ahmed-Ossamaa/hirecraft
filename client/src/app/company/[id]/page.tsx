@@ -1,10 +1,9 @@
-import React from 'react';
 import { Metadata } from 'next';
 import { fetchServer } from '@/shared/lib/ssr-fetch';
 import { Company, Job } from '@/shared/api/generated/model';
-import { MdArrowBack } from 'react-icons/md';
 import Link from 'next/link';
 import { CompanyProfilePreview } from '@/features/companies/components/CompanyProfilePreview';
+import { FloatingBackButton } from '@/shared/components/ui';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -49,16 +48,7 @@ export default async function CompanyPublicProfilePage(props: PageProps) {
   return (
     <div className="relative">
       {/* Floating Back Button */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-        <Link 
-          href="/dashboard" 
-          className="flex items-center gap-2 px-4 py-2 bg-background/80 hover:bg-background backdrop-blur-md text-foreground rounded-full border border-border shadow-sm transition-all"
-          title="Dashboard "
-        >
-          <MdArrowBack className="text-xl" />
-          <span className="font-medium text-sm hidden sm:inline">Dashboard</span>
-        </Link>
-      </div>
+      <FloatingBackButton />
 
       <CompanyProfilePreview company={company} jobs={jobs} hideTopMargin={true} />
     </div>

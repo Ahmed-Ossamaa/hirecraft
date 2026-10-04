@@ -1,10 +1,9 @@
-import React from "react";
 import { Metadata } from "next";
 import { fetchServer } from "@/shared/lib/ssr-fetch";
 import { WorkerProfile } from "@/shared/api/generated/model";
-import { MdArrowBack } from "react-icons/md";
 import Link from "next/link";
 import { WorkerProfilePreview } from "@/features/worker-profiles/components/WorkerProfilePreview";
+import { FloatingBackButton } from "@/shared/components/ui";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -55,16 +54,7 @@ export default async function WorkerPublicProfilePage(props: PageProps) {
   return (
     <div className="relative">
       {/* Floating Back Button */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 px-4 py-2 bg-background/80 hover:bg-background backdrop-blur-md text-foreground rounded-full border border-border shadow-sm transition-all"
-          title="Dashboard"
-        >
-          <MdArrowBack className="text-xl" />
-          <span className="font-medium text-sm hidden sm:inline">Dashboard</span>
-        </Link>
-      </div>
+      <FloatingBackButton />
       <WorkerProfilePreview profile={profile} hideTopMargin={true} />
     </div>
   );

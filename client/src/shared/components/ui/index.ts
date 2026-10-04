@@ -9,3 +9,4 @@ export * from './Modal';
 export * from './FormError';
 export * from './SlideOver';
 export * from './ConfirmDialog';
+export * from './FloatingBackButton';
