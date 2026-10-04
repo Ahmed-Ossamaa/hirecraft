@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button, Pagination, Tabs } from "@/shared/components/ui";
+import { Button, Pagination, Tabs, TableSkeleton } from "@/shared/components/ui";
 import {
   MdPersonAdd,
 } from "react-icons/md";
@@ -12,27 +12,17 @@ import {
   useUpdateMemberRole,
   useSuspendMember,
   useActivateMember,
+  useGetMembers,
+  getGetMembersQueryKey,
 } from "@/shared/api/generated/company-members/company-members";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { InviteMemberModal } from "./InviteMemberModal";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { useConfirm } from "@/shared/providers/confirm-provider";
 import { MemberTableRow } from "./MemberTableRow";
 
-interface MembersListProps {
-  initialMembers: CompanyMember[];
-  currentPage?: number;
-  totalPages?: number;
-  currentStatus?: "ACTIVE" | "PENDING" | "SUSPENDED";
-}
-
-export const MembersList: React.FC<MembersListProps> = ({
-  initialMembers,
-  currentPage = 1,
-  totalPages = 1,
-  currentStatus = "ACTIVE",
-}) => {
-  const [members, setMembers] = useState<CompanyMember[]>(initialMembers);
+export const MembersList: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const organizationId = useAuthStore((s) => s.organizationId);
@@ -44,16 +34,25 @@ export const MembersList: React.FC<MembersListProps> = ({
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pageParam = Number(searchParams.get("page")) || 1;
+  const currentStatus = searchParams.get("status") || "ACTIVE";
   const { confirm } = useConfirm();
+  const queryClient = useQueryClient();
+
+  const { data: membersRes, isLoading } = useGetMembers({
+    page: pageParam,
+    limit: 10,
+    status: currentStatus as any,
+  });
+  
+  const members = (membersRes?.data?.data || []) as CompanyMember[];
+  const currentPage = membersRes?.data?.page || 1;
+  const totalPages = membersRes?.data?.totalPages || 1;
 
   const removeMutation = useRemoveMember();
   const suspendMutation = useSuspendMember();
   const activateMutation = useActivateMember();
   const updateRoleMutation = useUpdateMemberRole();
-
-  useEffect(() => {
-    setMembers(initialMembers);
-  }, [initialMembers]);
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -78,7 +77,7 @@ export const MembersList: React.FC<MembersListProps> = ({
     if (!isConfirmed) return;
     try {
       await removeMutation.mutateAsync({ userId: memberId });
-      setMembers(members.filter((m) => m.userId !== memberId));
+      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member removed successfully");
     } catch (error) {
       toast.error("Failed to remove member");
@@ -95,7 +94,7 @@ export const MembersList: React.FC<MembersListProps> = ({
     if (!isConfirmed) return;
     try {
       await suspendMutation.mutateAsync({ userId: memberId });
-      setMembers(members.filter((m) => m.userId !== memberId));
+      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member suspended successfully");
     } catch (error) {
       toast.error("Failed to suspend member");
@@ -112,7 +111,7 @@ export const MembersList: React.FC<MembersListProps> = ({
     if (!isConfirmed) return;
     try {
       await activateMutation.mutateAsync({ userId: memberId });
-      setMembers(members.filter((m) => m.userId !== memberId));
+      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member unsuspended successfully");
     } catch (error) {
       toast.error("Failed to unsuspend member");
@@ -128,11 +127,7 @@ export const MembersList: React.FC<MembersListProps> = ({
         userId: memberId,
         data: { role: newRole },
       });
-      setMembers(
-        members.map((m) =>
-          m.userId === memberId ? { ...m, role: newRole } : m,
-        ),
-      );
+      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Role updated successfully");
     } catch (error) {
       toast.error("Failed to update role");
@@ -177,8 +172,11 @@ export const MembersList: React.FC<MembersListProps> = ({
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100">
-        <div className="overflow-x-auto pb-24 lg:pb-0 lg:overflow-visible">
+      {isLoading ? (
+        <TableSkeleton rows={5} />
+      ) : (
+        <div className="bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100">
+          <div className="overflow-x-auto pb-24 lg:pb-0 lg:overflow-visible">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
               <tr>
@@ -230,11 +228,12 @@ export const MembersList: React.FC<MembersListProps> = ({
           </div>
         )}
       </div>
+      )}
 
       <InviteMemberModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSuccess={() => window.location.reload()}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() })}
       />
     </div>
   );

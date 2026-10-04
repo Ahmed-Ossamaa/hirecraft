@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
+import { useGetCompanyJobs } from "@/shared/api/generated/jobs/jobs";
 import { Button } from "@/shared/components/ui";
 import {
   MdAdd,
@@ -15,30 +16,34 @@ import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDetailsModal } from "./JobDetailsModal";
 import { JobActionMenu } from "./JobActionMenu";
-import { EmptyState, Tabs } from "@/shared/components/ui";
+import { EmptyState, Tabs, TableSkeleton } from "@/shared/components/ui";
 
-interface EmployerJobsListProps {
-  initialJobs: JobWithStatsDto[];
-  meta: {
-    total: number;
-    page: number;
-    lastPage: number;
-  };
-}
-
-
-export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
-  initialJobs,
-  meta,
-}) => {
+export const EmployerJobsList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
   const currentStatus = searchParams.get("status") || "ALL";
   const currentSearch = searchParams.get("search") || "";
   const currentSortBy = searchParams.get("sortBy") || "";
   const currentSortOrder = searchParams.get("order") || "";
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  const { data: jobsRes, isLoading } = useGetCompanyJobs({
+    page: currentPage,
+    limit: 10,
+    status: currentStatus !== "ALL" ? (currentStatus as any) : undefined,
+    search: currentSearch || undefined,
+    sortBy: currentSortBy || undefined,
+    order: currentSortOrder as any || undefined,
+  });
+
+  const jobs = (jobsRes?.data?.data || []) as JobWithStatsDto[];
+  const meta = {
+    total: jobsRes?.data?.total || 0,
+    page: jobsRes?.data?.page || 1,
+    lastPage: jobsRes?.data?.totalPages || 1,
+  };
 
   const [searchValue, setSearchValue] = useState(currentSearch);
   const [selectedJob, setSelectedJob] = useState<JobWithStatsDto | null>(null);
@@ -104,9 +109,9 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
       }
     }
 
-    startTransition(() => {
-      router.push(`?${params.toString()}`);
-    });
+    
+
+    router.push(`?${params.toString()}`);
   };
 
   const handleSort = (field: string) => {
@@ -178,10 +183,42 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
       </div>
 
       {/* Data Table */}
-      <div
-        className={`bg-card rounded-xl border border-border/40 shadow-sm transition-opacity ${isPending ? "opacity-50" : "opacity-100"}`}
-      >
-        <div className="overflow-x-auto pb-48 lg:pb-0 lg:overflow-visible">
+      {isLoading ? (
+        <TableSkeleton rows={5} />
+      ) : jobs.length === 0 ? (
+        <div className="bg-card rounded-xl border border-border/40 p-10 shadow-sm">
+          <EmptyState
+            icon={<MdWorkOutline className="text-3xl" />}
+            title={
+              currentSearch
+                ? "No matching jobs found"
+                : "No jobs found"
+            }
+            description={
+              currentSearch
+                ? `No jobs match "${currentSearch}". Try adjusting your search or filters.`
+                : currentStatus === "ALL"
+                  ? "You haven't posted any jobs yet."
+                  : `You don't have any ${currentStatus.toLowerCase()} jobs.`
+            }
+            actionText={
+              currentStatus === "ALL" && !currentSearch
+                ? "Post your first job"
+                : "Clear filters"
+            }
+            onAction={
+              currentStatus === "ALL" && !currentSearch
+                ? () => router.push("/dashboard/company/jobs/create")
+                : () => {
+                    setSearchValue("");
+                    updateFilters({ search: "", status: "ALL" });
+                  }
+            }
+          />
+        </div>
+      ) : (
+        <div className={`bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100`}>
+          <div className="overflow-x-auto pb-48 lg:pb-0 lg:overflow-visible">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
               <tr>
@@ -204,7 +241,7 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
-              {initialJobs.map((job) => (
+              {jobs.map((job) => (
                 <tr
                   key={job.id}
                   className="hover:bg-muted/20 transition-colors group"
@@ -273,20 +310,8 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
           </table>
         </div>
 
-        {/* Empty State */}
-        {initialJobs.length === 0 && (
-          <EmptyState
-            icon={<MdWorkOutline className="text-3xl" />}
-            title="No jobs found"
-            description="Create your first job posting to start receiving applications, or adjust your filters to see more results."
-            actionText="Post a Job"
-            actionHref="/dashboard/company/jobs/create"
-            className="p-16 text-center flex flex-col items-center"
-          />
-        )}
-
         {/* Pagination controls */}
-        {meta && initialJobs.length > 0 && (
+        {meta && jobs.length > 0 && (
           <div className="px-5 py-4 border-t border-border/40 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Showing page{" "}
@@ -300,7 +325,7 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                disabled={meta.page <= 1 || isPending}
+                disabled={meta.page <= 1}
                 onClick={() => updateFilters({ page: meta.page - 1 })}
               >
                 Prev
@@ -308,7 +333,7 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                disabled={meta.page >= meta.lastPage || isPending}
+                disabled={meta.page >= meta.lastPage}
                 onClick={() => updateFilters({ page: meta.page + 1 })}
               >
                 Next
@@ -317,6 +342,7 @@ export const EmployerJobsList: React.FC<EmployerJobsListProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {selectedJob && (
         <JobDetailsModal

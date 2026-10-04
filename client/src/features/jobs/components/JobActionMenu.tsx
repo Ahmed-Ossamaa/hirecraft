@@ -4,8 +4,8 @@ import { Button } from "@/shared/components/ui";
 import { MdMoreVert } from "react-icons/md";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUpdateJob } from "@/shared/api/generated/jobs/jobs";
-import { useMutation } from "@tanstack/react-query";
+import { useUpdateJob, getGetCompanyJobsQueryKey } from "@/shared/api/generated/jobs/jobs";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { customAxiosInstance } from "@/shared/api/axios-instance";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/providers/confirm-provider";
@@ -20,6 +20,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { confirm } = useConfirm();
+  const queryClient = useQueryClient();
 
   const updateMutation = useUpdateJob();
   const deleteMutation = useMutation({
@@ -30,7 +31,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       }),
     onSuccess: () => {
       toast.success("Job deleted successfully");
-      router.refresh();
+      queryClient.invalidateQueries({ queryKey: getGetCompanyJobsQueryKey() });
     },
     onError: () => {
       toast.error("Failed to delete job");
@@ -69,7 +70,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       });
       toast.success(`Job marked as ${status}`);
       setOpen(false);
-      router.refresh();
+      queryClient.invalidateQueries({ queryKey: getGetCompanyJobsQueryKey() });
     } catch (error) {
       toast.error("Failed to update status");
     }
