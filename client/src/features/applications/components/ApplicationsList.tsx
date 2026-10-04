@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useGetMyApplications } from "@/shared/api/generated/job-applications/job-applications";
 import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
-import { Button, Pagination } from "@/shared/components/ui";
+import { Button, Pagination, EmptyState } from "@/shared/components/ui";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
@@ -42,21 +42,14 @@ export const ApplicationsList: React.FC = () => {
 
   if (applications.length === 0) {
     return (
-      <div className="bg-card p-12 rounded-2xl border border-border shadow-sm flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <MdWorkOutline className="text-3xl text-primary" />
-        </div>
-        <h3 className="text-xl font-headline font-semibold text-foreground mb-2">
-          No Applications Yet
-        </h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-md">
-          You haven't applied to any jobs yet. Browse available jobs and start
-          your industrial career journey.
-        </p>
-        <Link href="/jobs">
-          <Button>Browse Jobs</Button>
-        </Link>
-      </div>
+      <EmptyState
+        icon={<MdWorkOutline className="text-3xl text-primary" />}
+        iconWrapperClassName="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4"
+        title="No Applications Yet"
+        description="You haven't applied to any jobs yet. Browse available jobs and start your industrial career journey."
+        actionText="Browse Jobs"
+        actionHref="/jobs"
+      />
     );
   }
 
