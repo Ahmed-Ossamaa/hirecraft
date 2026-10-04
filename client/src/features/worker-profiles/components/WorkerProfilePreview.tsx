@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { WorkerProfile, WorkerMachineSkill } from "@/shared/api/generated/model";
 import {
   MdLocationOn,
@@ -75,10 +76,14 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
               {/* Avatar */}
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-input border-4 border-card shrink-0 flex items-center justify-center overflow-hidden shadow-sm relative z-10">
                 {profile.avatarURL ? (
-                  <img
+                  <Image
                     src={profile.avatarURL}
                     alt={name}
                     className="w-full h-full object-cover"
+                    width={128}
+                    height={128}
+                    priority
+                    sizes="(max-width: 768px) 96px, 128px"
                   />
                 ) : (
                   <MdPerson className="text-5xl text-muted-foreground" />
