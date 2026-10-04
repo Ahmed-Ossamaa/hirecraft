@@ -11,6 +11,7 @@ import {
 import { Button } from "@/shared/components/ui";
 import { Job } from "@/shared/api/generated/model";
 import { ApplyModal } from "@/features/applications/components/ApplyModal";
+import Link from "next/link";
 
 interface JobDetailProps {
   job: Job | null;
@@ -43,7 +44,9 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
               {job.title}
             </h2>
             <div className="flex items-center text-muted-foreground font-medium mb-4">
-              <span className="text-primary">{job.companyName}</span>
+              <Link href={`/company/${job.companyId}`}>
+                <span className="text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors ">{job.companyName}</span>
+              </Link>
               <span className="mx-2">•</span>
               <span className="flex items-center gap-1">
                 <MdLocationOn />
@@ -76,7 +79,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
           <div className="shrink-0 flex flex-col gap-3 min-w-50">
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               fullWidth
               rightIcon={<MdArrowForward />}
               onClick={() => setIsApplyModalOpen(true)}
@@ -150,13 +153,13 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
           </section>
         </div>
       </div>
-      
-      <ApplyModal 
+
+      <ApplyModal
         isOpen={isApplyModalOpen}
         onClose={() => setIsApplyModalOpen(false)}
         jobId={job.id}
         jobTitle={job.title}
-        companyName={job.companyName || ''}
+        companyName={job.companyName || ""}
       />
     </div>
   );
