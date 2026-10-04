@@ -176,7 +176,7 @@ export const MembersList: React.FC = () => {
         <TableSkeleton rows={5} />
       ) : (
         <div className="bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100">
-          <div className="overflow-x-auto pb-24 lg:pb-0 lg:overflow-visible">
+          <div className="overflow-x-auto pb-24">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
               <tr>
