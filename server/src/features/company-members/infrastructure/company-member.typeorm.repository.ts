@@ -51,6 +51,28 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   }
 
   /**
+   * Finds an active admin member for a company (used by  billing notifications for now ).
+   */
+  async findActiveAdminByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null> {
+    const manager = tx || this.repository.manager;
+    const member = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .where('member.companyId = :companyId', { companyId })
+      .andWhere('member.role = :role', { role: CompanyRole.ADMIN })
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
+      .leftJoin('member.user', 'user')
+      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
+      .getOne();
+
+    return member ? this.mapToDomain(member) : null;
+  }
+
+  /**
    * Finds a company member by user ID.
    */
   async findByUserId(userId: string): Promise<CompanyMember | null> {
@@ -94,13 +116,20 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     tx?: EntityManager,
   ): Promise<CompanyMember | null> {
     const manager = tx || this.repository.manager;
-    await manager.update(
-      CompanyMemberOrmEntity,
-      { userId, status: CompanyMemberStatus.ACTIVE },
-      { role },
-    );
+    const result = await manager
+      .createQueryBuilder()
+      .update(CompanyMemberOrmEntity)
+      .set({ role })
+      .where('userId = :userId AND status = :status', {
+        userId,
+        status: CompanyMemberStatus.ACTIVE,
+      })
+      .returning('*')
+      .execute();
 
-    return this.findActiveByUserId(userId, tx);
+    const rawRows = result.raw as Record<string, any>[];
+    if (!rawRows || !rawRows[0]) return null;
+    return this.mapToDomain(rawRows[0] as CompanyMemberOrmEntity);
   }
 
   /**
@@ -137,7 +166,7 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     companyId: string,
     tx: EntityManager,
   ): Promise<number> {
-    const activeAdmins = await tx
+    const count = await tx
       .createQueryBuilder(CompanyMemberOrmEntity, 'member')
       .setLock('pessimistic_write')
       .where('member.companyId = :companyId', { companyId })
@@ -145,9 +174,9 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
       .andWhere('member.status = :status', {
         status: CompanyMemberStatus.ACTIVE,
       })
-      .getMany();
+      .getCount();
 
-    return activeAdmins.length;
+    return count;
   }
 
   /**

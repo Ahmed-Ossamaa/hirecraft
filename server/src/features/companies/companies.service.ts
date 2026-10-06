@@ -53,11 +53,17 @@ export class CompaniesService {
     companyId: string,
     params: Partial<CreateCompanyParams>,
   ): Promise<Company> {
-    const updated = await this.companyRepository.update(companyId, params);
-    if (!updated) {
+    const company = await this.companyRepository.findById(companyId);
+    if (!company) {
       throw new NotFoundException('Company not found');
     }
-    return updated;
+
+    await this.companyRepository.update(companyId, params);
+
+    // Merge changes in memory instead of re-fetching
+    Object.assign(company, params);
+
+    return company;
   }
 
   async uploadLogo(
@@ -77,11 +83,15 @@ export class CompaniesService {
       overwrite: true,
     });
 
-    const updated = await this.companyRepository.update(companyId, {
+    await this.companyRepository.update(companyId, {
       logoUrl: result.url,
       logoPublicId: result.publicId,
     });
-    return updated!;
+
+    company.logoUrl = result.url;
+    company.logoPublicId = result.publicId;
+
+    return company;
   }
 
   async removeLogo(companyId: string): Promise<Company> {
@@ -94,11 +104,15 @@ export class CompaniesService {
       await this.storageService.deleteFile(company.logoPublicId);
     }
 
-    const updated = await this.companyRepository.update(companyId, {
+    await this.companyRepository.update(companyId, {
       logoUrl: null,
       logoPublicId: null,
     });
-    return updated!;
+
+    company.logoUrl = null;
+    company.logoPublicId = null;
+
+    return company;
   }
 
   async uploadCover(
@@ -118,11 +132,15 @@ export class CompaniesService {
       overwrite: true,
     });
 
-    const updated = await this.companyRepository.update(companyId, {
+    await this.companyRepository.update(companyId, {
       coverUrl: result.url,
       coverPublicId: result.publicId,
     });
-    return updated!;
+
+    company.coverUrl = result.url;
+    company.coverPublicId = result.publicId;
+
+    return company;
   }
 
   async removeCover(companyId: string): Promise<Company> {
@@ -135,10 +153,14 @@ export class CompaniesService {
       await this.storageService.deleteFile(company.coverPublicId);
     }
 
-    const updated = await this.companyRepository.update(companyId, {
+    await this.companyRepository.update(companyId, {
       coverUrl: null,
       coverPublicId: null,
     });
-    return updated!;
+
+    company.coverUrl = null;
+    company.coverPublicId = null;
+
+    return company;
   }
 }

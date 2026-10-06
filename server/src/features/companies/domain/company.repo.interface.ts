@@ -34,8 +34,9 @@ export interface ICompanyRepository {
   findById(id: string): Promise<Company | null>;
   findByIdWithMembers(id: string): Promise<Company | null>;
   findAll(options?: FindCompaniesOptions): Promise<PaginatedResult<Company>>;
-  update(
-    id: string,
-    params: Partial<CreateCompanyParams>,
-  ): Promise<Company | null>;
+  update(id: string, params: Partial<CreateCompanyParams>): Promise<void>;
+  updatePaymentCustomerIdIfNull(
+    companyId: string,
+    customerId: string,
+  ): Promise<boolean>;
 }
