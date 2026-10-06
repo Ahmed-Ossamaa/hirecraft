@@ -41,18 +41,23 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
 
     const savedSkill = await this.skillRepository.save(skillOrm);
 
-    const domainSkill = new WorkerMachineSkill();
-    Object.assign(domainSkill, savedSkill);
-
-    return domainSkill;
+    return savedSkill;
   }
   async update(
     userId: string,
     params: UpdateWorkerProfileParams,
   ): Promise<WorkerProfile | null> {
-    const updateResult = await this.repository.update({ userId }, params);
-    if (updateResult.affected === 0) return null;
-    return this.findByUserId(userId);
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(WorkerProfileOrmEntity)
+      .set(params)
+      .where('userId = :userId', { userId })
+      .returning('*')
+      .execute();
+
+    const rawRows = result.raw as Record<string, any>[];
+    if (!rawRows || !rawRows[0]) return null;
+    return this.mapToDomain(rawRows[0] as WorkerProfileOrmEntity);
   }
 
   async findByUserId(userId: string): Promise<WorkerProfile | null> {
@@ -107,11 +112,30 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     return profile ? profile.id : null;
   }
 
+  async existsByUserId(userId: string): Promise<boolean> {
+    return this.repository.exists({ where: { userId } });
+  }
+
   async updateSkill(
     skillId: string,
     params: UpdateMachineSkillParams,
-  ): Promise<void> {
-    await this.skillRepository.update(skillId, params);
+    profileId: string,
+  ): Promise<WorkerMachineSkill | null> {
+    const result = await this.skillRepository
+      .createQueryBuilder()
+      .update(WorkerMachineSkillOrmEntity)
+      .set(params)
+      .where('id = :skillId AND workerProfileId = :profileId', {
+        skillId,
+        profileId,
+      })
+      .returning('*')
+      .execute();
+
+    const rawRows = result.raw as Record<string, any>[];
+    if (!rawRows || !rawRows[0]) return null;
+
+    return rawRows[0] as WorkerMachineSkill;
   }
 
   async deleteSkill(skillId: string): Promise<void> {
