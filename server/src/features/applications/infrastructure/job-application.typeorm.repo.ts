@@ -76,6 +76,8 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       .where('app.workerProfileId = :workerProfileId', { workerProfileId })
       .leftJoin('app.job', 'job')
       .addSelect(['job.title'])
+      .leftJoin('job.company', 'company')
+      .addSelect(['company.id', 'company.name'])
       .orderBy('app.createdAt', options.order || 'DESC')
       .skip(options.skip)
       .take(options.limit);
@@ -142,6 +144,11 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
 
     application.jobTitle = orm.job?.title;
     application.workerTitle = orm.workerProfile?.title;
+
+    if (orm.job?.company) {
+      application.companyId = orm.job.company.id;
+      application.companyName = orm.job.company.name;
+    }
 
     if (orm.workerProfile?.user) {
       application.applicantName =

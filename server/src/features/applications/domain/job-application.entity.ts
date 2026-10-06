@@ -10,6 +10,8 @@ export class JobApplication {
   // populated by the Mapper later
   jobTitle?: string;
   workerTitle?: string;
+  companyId?: string;
+  companyName?: string;
 
   createdAt!: Date;
   updatedAt!: Date;

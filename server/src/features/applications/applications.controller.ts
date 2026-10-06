@@ -28,6 +28,7 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { JobApplication } from './domain/job-application.entity';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
+import { CandidateApplicationResponseDto } from './dto/candidate-application-response.dto';
 
 @ApiTags('Job Applications')
 @ApiBearerAuth()
@@ -61,7 +62,7 @@ export class ApplicationsController {
   @ApiOperation({
     summary: 'Get all my job applications with pagination (Worker only)',
   })
-  @ApiPaginatedResponse(JobApplication)
+  @ApiPaginatedResponse(CandidateApplicationResponseDto)
   async getMyApplications(
     @CurrentUser('id') userId: string,
     @Query() pageOptionsDto: PageOptionsDto,
