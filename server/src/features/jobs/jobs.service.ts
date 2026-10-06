@@ -122,15 +122,15 @@ export class JobsService {
     companyId: string,
     params: Partial<CreateJobParams>,
   ): Promise<Job> {
-    const job = await this.getJobById(id);
-    if (job.companyId !== companyId) {
-      throw new ForbiddenException(
-        'You do not have permission to update this job',
-      );
-    }
-    const updated = await this.jobRepository.update(id, params);
+    const updated = await this.jobRepository.updateReturning(
+      id,
+      params,
+      companyId,
+    );
     if (!updated) {
-      throw new NotFoundException(`Job with ID ${id} not found`);
+      throw new NotFoundException(
+        `Job with ID ${id} not found or you don't have permission`,
+      );
     }
     return updated;
   }
@@ -144,8 +144,7 @@ export class JobsService {
   }
 
   async adminUpdateJobStatus(id: string, status: JobStatus): Promise<Job> {
-    await this.getJobById(id);
-    const updated = await this.jobRepository.update(id, { status });
+    const updated = await this.jobRepository.updateReturning(id, { status });
     if (!updated) {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }
@@ -153,8 +152,8 @@ export class JobsService {
   }
 
   async deleteJob(id: string, companyId: string): Promise<void> {
-    const job = await this.getJobById(id);
-    if (job.companyId !== companyId) {
+    const isOwner = await this.jobRepository.exists(id, companyId);
+    if (!isOwner) {
       throw new ForbiddenException(
         'You do not have permission to delete this job',
       );
@@ -166,10 +165,15 @@ export class JobsService {
   }
 
   async adminDeleteJob(id: string): Promise<void> {
-    await this.getJobById(id);
+    const exists = await this.jobRepository.exists(id);
+    if (!exists) throw new NotFoundException(`Job with ID ${id} not found`);
     const success = await this.jobRepository.delete(id);
     if (!success) {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }
+  }
+
+  async checkJobOwnership(id: string, companyId: string): Promise<boolean> {
+    return this.jobRepository.exists(id, companyId);
   }
 }

@@ -117,18 +117,10 @@ export class JobTypeormRepository implements IJobRepository {
     return job ? this.mapToDomain(job) : null;
   }
 
-  async findByCompanyId(companyId: string): Promise<Job[]> {
-    const jobs = await this.repository
-      .createQueryBuilder('job')
-      .where('job.companyId = :companyId', { companyId })
-      .leftJoin('job.company', 'company')
-      .addSelect(['company.name', 'company.logoUrl'])
-      .leftJoin('job.machine', 'machine')
-      .addSelect(['machine.nameEn', 'machine.nameAr'])
-      .orderBy('job.createdAt', 'DESC')
-      .getMany();
-
-    return jobs.map((job) => this.mapToDomain(job));
+  async exists(id: string, companyId?: string): Promise<boolean> {
+    const where: { id: string; companyId?: string } = { id };
+    if (companyId) where.companyId = companyId;
+    return this.repository.exists({ where });
   }
 
   async countActiveByCompanyId(
@@ -144,12 +136,30 @@ export class JobTypeormRepository implements IJobRepository {
     });
   }
 
-  async update(
+  async update(id: string, params: Partial<CreateJobParams>): Promise<void> {
+    await this.repository.update(id, params);
+  }
+
+  async updateReturning(
     id: string,
     params: Partial<CreateJobParams>,
+    companyId?: string,
   ): Promise<Job | null> {
-    await this.repository.update(id, params);
-    return this.findById(id);
+    const qb = this.repository
+      .createQueryBuilder()
+      .update(JobOrmEntity)
+      .set(params)
+      .where('id = :id', { id });
+
+    if (companyId) {
+      qb.andWhere('companyId = :companyId', { companyId });
+    }
+
+    const result = await qb.returning('*').execute();
+
+    const rawRows = result.raw as Record<string, any>[];
+    if (!rawRows || !rawRows[0]) return null;
+    return this.mapToDomain(rawRows[0] as JobOrmEntity);
   }
 
   async delete(id: string): Promise<boolean> {
