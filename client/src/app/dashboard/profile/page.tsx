@@ -11,8 +11,12 @@ import { Button, Tabs } from '@/shared/components/ui';
 import Link from 'next/link';
 
 export default function WorkerProfilePage() {
-  const { data: profileResponse, isLoading } = useGetMyProfile();
   const user = useAuthStore((s) => s.user);
+  const { data: profileResponse, isLoading } = useGetMyProfile({
+    query: {
+      enabled: user?.userType === 'CANDIDATE',
+    }
+  });
   const [activeTab, setActiveTab] = useState<'basic' | 'professional'>('basic');
 
   const profile = profileResponse?.data || null;
