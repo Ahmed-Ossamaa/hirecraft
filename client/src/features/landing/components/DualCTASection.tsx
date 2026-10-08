@@ -1,5 +1,6 @@
 import { MdCheckCircle, MdArrowForward, MdTaskAlt, MdEngineering } from 'react-icons/md';
 import { Button } from '@/shared/components/ui/Button';
+import Link from 'next/link';
 
 export function DualCTASection() {
   return (
@@ -29,24 +30,26 @@ export function DualCTASection() {
                 </li>
                 <li className="flex items-center gap-space-xs">
                   <MdCheckCircle className="text-primary text-[20px]" />
-                  <span className="font-body-md text-body-md text-foreground">Keep your profile hidden from your current employer</span>
+                  <span className="font-body-md text-body-md text-foreground">Track your applications status</span>
                 </li>
               </ul>
             </div>
             <div className="pt-space-xl">
-              <Button 
-                className="px-space-xl py-space-md shadow-lg shadow-sky-950/40 active:translate-y-0.5"
-                rightIcon={<MdArrowForward className="text-[18px]" />}
-              >
-                <span className="font-label-technical text-label-technical uppercase tracking-wider font-semibold">Build Operator Profile</span>
-              </Button>
+              <Link href="/auth/signup">
+                <Button 
+                  className="px-space-xl py-space-md shadow-lg shadow-sky-950/40 active:translate-y-0.5"
+                  rightIcon={<MdArrowForward className="text-[18px]" />}
+                >
+                  <span className="font-label-technical text-label-technical uppercase tracking-wider font-semibold">Build Operator Profile</span>
+                </Button>
+              </Link>
             </div>
           </div>
           
           <div className="relative flex flex-col justify-between overflow-hidden rounded-xl bg-card-hover p-space-2xl text-foreground border border-border-light shadow-2xl">
             <div className="flex flex-col gap-space-md">
-              <span className="w-fit rounded-full bg-sky-950/60 border border-sky-800/60 px-space-md py-space-2xs font-label-spec text-label-spec text-primary uppercase tracking-wider font-semibold">
-                For Industrial Plants &amp; Machine Shops
+              <span className="w-fit rounded-full bg-primary/10 dark:bg-sky-950/60 border border-primary/20 dark:border-sky-800/60 px-space-md py-space-2xs font-label-spec text-label-spec text-primary uppercase tracking-wider font-semibold">
+                For Industrial Plants
               </span>
               <h3 className="font-headline-lg text-headline-lg text-foreground font-medium">
                 Find skilled operators fast
@@ -70,13 +73,15 @@ export function DualCTASection() {
               </ul>
             </div>
             <div className="pt-space-xl">
-              <Button 
-                variant="secondary"
-                className="px-space-xl py-space-md active:translate-y-0.5 hover:border-primary/60"
-                rightIcon={<MdEngineering className="text-[18px]" />}
-              >
-                <span className="font-label-technical text-label-technical uppercase tracking-wider font-semibold">Hire Machine Operators</span>
-              </Button>
+              <Link href="/auth/signup">
+                <Button 
+                  variant="secondary"
+                  className="px-space-xl py-space-md active:translate-y-0.5 hover:border-primary/60"
+                  rightIcon={<MdEngineering className="text-[18px]" />}
+                >
+                  <span className="font-label-technical text-label-technical uppercase tracking-wider font-semibold">Hire Machine Operators</span>
+                </Button>
+              </Link>
             </div>
           </div>
           
