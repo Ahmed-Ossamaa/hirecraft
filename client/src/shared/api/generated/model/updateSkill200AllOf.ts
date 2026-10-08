@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { WorkerProfile } from './workerProfile';
+import type { WorkerMachineSkill } from './workerMachineSkill';
 
 export type UpdateSkill200AllOf = {
-  data?: WorkerProfile;
+  data?: WorkerMachineSkill;
 };

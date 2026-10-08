@@ -26,10 +26,12 @@ export const applyToJobResponse = zod.object({
   "id": zod.string(),
   "jobId": zod.string(),
   "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED', 'ARCHIVED']),
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
   "coverLetter": zod.string().optional(),
   "jobTitle": zod.string().optional(),
   "workerTitle": zod.string().optional(),
+  "companyId": zod.string().optional(),
+  "companyName": zod.string().optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({}),
   "applicantName": zod.string().optional(),
@@ -70,17 +72,15 @@ export const getMyApplicationsResponse = zod.object({
   "totalPages": zod.number()
 }).and(zod.object({
   "data": zod.array(zod.object({
-  "id": zod.string(),
-  "jobId": zod.string(),
-  "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED', 'ARCHIVED']),
-  "coverLetter": zod.string().optional(),
-  "jobTitle": zod.string().optional(),
-  "workerTitle": zod.string().optional(),
+  "id": zod.string().describe('The unique identifier of the application'),
+  "jobId": zod.string().describe('The ID of the job applied for'),
+  "jobTitle": zod.string().optional().describe('The title of the job applied for'),
+  "companyName": zod.string().optional().describe('The name of the company that owns the job'),
+  "companyId": zod.string().optional().describe('The ID of the company that owns the job'),
+  "status": zod.enum(['PENDING', 'REVIEWED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN']).describe('The status of the application'),
+  "coverLetter": zod.string().optional().describe('The cover letter provided by the candidate'),
   "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({}),
-  "applicantName": zod.string().optional(),
-  "applicantEmail": zod.string().optional()
+  "updatedAt": zod.string().datetime({})
 })).optional()
 })).optional()
 }))
@@ -93,7 +93,7 @@ export const updateStatusParams = zod.object({
 })
 
 export const updateStatusBody = zod.object({
-  "status": zod.enum(['PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED', 'ARCHIVED'])
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED'])
 })
 
 export const updateStatusResponse = zod.object({
@@ -106,10 +106,12 @@ export const updateStatusResponse = zod.object({
   "id": zod.string(),
   "jobId": zod.string(),
   "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED', 'ARCHIVED']),
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
   "coverLetter": zod.string().optional(),
   "jobTitle": zod.string().optional(),
   "workerTitle": zod.string().optional(),
+  "companyId": zod.string().optional(),
+  "companyName": zod.string().optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({}),
   "applicantName": zod.string().optional(),
@@ -157,10 +159,12 @@ export const getApplicationsForJobResponse = zod.object({
   "id": zod.string(),
   "jobId": zod.string(),
   "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'REVIEWING', 'ACCEPTED', 'REJECTED', 'ARCHIVED']),
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
   "coverLetter": zod.string().optional(),
   "jobTitle": zod.string().optional(),
   "workerTitle": zod.string().optional(),
+  "companyId": zod.string().optional(),
+  "companyName": zod.string().optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({}),
   "applicantName": zod.string().optional(),
