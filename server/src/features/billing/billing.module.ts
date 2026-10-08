@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionOrmEntity } from './infrastructure/subscription.orm-entity';
 import { ProcessedWebhookOrmEntity } from './infrastructure/processed-webhook.orm-entity';
@@ -21,7 +21,7 @@ import { CompanyMembersModule } from '@/features/company-members/company-members
     PlansModule,
     PaymentModule,
     CompaniesModule,
-    CompanyMembersModule,
+    forwardRef(() => CompanyMembersModule),
   ],
   controllers: [BillingController, PaymentWebhooksController],
   providers: [

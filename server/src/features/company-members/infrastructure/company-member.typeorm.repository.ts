@@ -166,17 +166,18 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     companyId: string,
     tx: EntityManager,
   ): Promise<number> {
-    const count = await tx
+    const admins = await tx
       .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .select('member.id')
       .setLock('pessimistic_write')
       .where('member.companyId = :companyId', { companyId })
       .andWhere('member.role = :role', { role: CompanyRole.ADMIN })
       .andWhere('member.status = :status', {
         status: CompanyMemberStatus.ACTIVE,
       })
-      .getCount();
+      .getMany();
 
-    return count;
+    return admins.length;
   }
 
   /**
