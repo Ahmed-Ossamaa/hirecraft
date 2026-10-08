@@ -8,13 +8,15 @@ import {
   MdPersonAdd,
 } from "react-icons/md";
 import {
-  useRemoveMember,
-  useUpdateMemberRole,
-  useSuspendMember,
-  useActivateMember,
   useGetMembers,
   getGetMembersQueryKey,
 } from "@/shared/api/generated/company-members/company-members";
+import { 
+  useRemoveMember, 
+  useUpdateMemberRole, 
+  useSuspendMember, 
+  useActivateMember 
+} from "@/features/companies/api/useMemberMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { InviteMemberModal } from "./InviteMemberModal";
@@ -77,7 +79,6 @@ export const MembersList: React.FC = () => {
     if (!isConfirmed) return;
     try {
       await removeMutation.mutateAsync({ userId: memberId });
-      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member removed successfully");
     } catch (error) {
       toast.error("Failed to remove member");
@@ -94,7 +95,6 @@ export const MembersList: React.FC = () => {
     if (!isConfirmed) return;
     try {
       await suspendMutation.mutateAsync({ userId: memberId });
-      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member suspended successfully");
     } catch (error) {
       toast.error("Failed to suspend member");
@@ -111,7 +111,6 @@ export const MembersList: React.FC = () => {
     if (!isConfirmed) return;
     try {
       await activateMutation.mutateAsync({ userId: memberId });
-      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Member unsuspended successfully");
     } catch (error) {
       toast.error("Failed to unsuspend member");
@@ -127,7 +126,6 @@ export const MembersList: React.FC = () => {
         userId: memberId,
         data: { role: newRole },
       });
-      queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() });
       toast.success("Role updated successfully");
     } catch (error) {
       toast.error("Failed to update role");
