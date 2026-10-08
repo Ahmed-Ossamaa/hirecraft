@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input, Button, Textarea, Select } from "@/shared/components/ui";
-import { useCreateJob } from "@/shared/api/generated/jobs/jobs";
+import { useCreateJob } from "@/features/jobs/api/useJobMutations";
 import { useGetMachines } from "@/shared/api/generated/machines/machines";
 import { useGetMachineCategories } from "@/shared/api/generated/machine-categories/machine-categories";
 import { Machine, MachineCategory } from "@/shared/api/generated/model";
@@ -115,7 +115,6 @@ export const CreateJobForm: React.FC = () => {
       await createMutation.mutateAsync({ data: payload });
       toast.success("Job posted successfully!");
       router.push("/dashboard/company/jobs");
-      // router.refresh();
     } catch (error) {
       console.error("Failed to create job:", error);
       setError("root", {
