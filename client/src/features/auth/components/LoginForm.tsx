@@ -15,7 +15,7 @@ import { getApiError } from '@/shared/utils/error';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string(),
+  password: z.string().nonempty('Password is required'),
   keepSession: z.boolean().optional(),
 });
 

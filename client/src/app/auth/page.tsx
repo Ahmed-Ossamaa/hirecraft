@@ -1,4 +1,5 @@
 import { AuthSlider } from '@/features/auth/components/AuthSlider';
+import { Suspense } from 'react';
 
 export default function AuthPage() {
   return (
@@ -9,10 +10,11 @@ export default function AuthPage() {
         <div className="absolute -bottom-40 right-1/4 w-150 h-125 bg-primary/20 rounded-full blur-[160px]"></div>
       </div>
 
-
       {/* Main Container with Slider */}
       <main className="relative z-20 flex-1 flex flex-col items-center justify-center">
-        <AuthSlider />
+        <Suspense fallback={<div className="h-full flex items-center justify-center w-full"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>}>
+          <AuthSlider />
+        </Suspense>
       </main>
     </div>
   );

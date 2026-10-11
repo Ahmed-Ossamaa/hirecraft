@@ -35,7 +35,7 @@ export function DualCTASection() {
               </ul>
             </div>
             <div className="pt-space-xl">
-              <Link href="/auth/signup">
+              <Link href="/auth?mode=register">
                 <Button 
                   className="px-space-xl py-space-md shadow-lg shadow-sky-950/40 active:translate-y-0.5"
                   rightIcon={<MdArrowForward className="text-[18px]" />}
@@ -73,7 +73,7 @@ export function DualCTASection() {
               </ul>
             </div>
             <div className="pt-space-xl">
-              <Link href="/auth/signup">
+              <Link href="/auth?mode=register">
                 <Button 
                   variant="secondary"
                   className="px-space-xl py-space-md active:translate-y-0.5 hover:border-primary/60"
