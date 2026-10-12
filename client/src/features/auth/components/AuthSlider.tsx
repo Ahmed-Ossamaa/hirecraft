@@ -97,7 +97,7 @@ export const AuthSlider = () => {
           <Image
             alt="Industrial technician operating a CNC machine on a manufacturing floor"
             className="  object-cover object-center filter brightness-[0.8] contrast-[1.12]"
-            src="/sqr_img_39.jpg"
+            src="/images/sqr_img_39.jpg"
             fill
             sizes="50vw"
             priority

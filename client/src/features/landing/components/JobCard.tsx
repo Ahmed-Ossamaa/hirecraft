@@ -11,11 +11,11 @@ export function JobCard({ job }: JobCardProps) {
   const Icon = MdSettingsSuggest;
 
   return (
-    <div className="group flex flex-col justify-between rounded-xl bg-primary/5 dark:bg-card p-space-lg border border-border/80 shadow-md shadow-slate-200/50 dark:shadow-none hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 dark:hover:shadow-sky-950/40 transition-all duration-300">
+    <div className="group flex flex-col justify-between rounded-xl bg-card p-space-lg border border-border/80 shadow-md shadow-slate-200/50 dark:shadow-none hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 dark:hover:shadow-sky-950/40 transition-all duration-300">
       <div>
         <div className="flex items-start justify-between gap-space-xs pb-space-md">
           <div className="flex items-center gap-space-sm">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/5 dark:bg-card-hover border border-primary/10 dark:border-border text-primary">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-card-hover border border-primary/10 dark:border-border text-primary">
               <Icon className="text-[24px]" />
             </div>
             <div className="flex flex-col">

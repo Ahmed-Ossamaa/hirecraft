@@ -1,6 +1,4 @@
-import {
-  MdArrowForward,
-} from "react-icons/md";
+import { MdArrowForward } from "react-icons/md";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/shared/components/ui/Button";
@@ -37,9 +35,8 @@ export function HeroSection() {
             </div>
 
             <div className="mt-space-xs">
-              <Link href="/jobs">
+              <Link href="/jobs" className="inline-block">
                 <Button
-                  className="px-space-xl py-space-md shadow-md shadow-sky-950/40 active:translate-y-0.5"
                   id="search-btn"
                   rightIcon={<MdArrowForward className="text-[18px]" />}
                 >
@@ -57,7 +54,7 @@ export function HeroSection() {
                 <Image
                   alt="A modern advanced industrial manufacturing facility interior"
                   className="object-cover shadow-lg shadow-amber-950/40"
-                  src="/sqr_img_39.jpg"
+                  src="/images/sqr_img_39.jpg"
                   fill
                   sizes="500px"
                   priority
