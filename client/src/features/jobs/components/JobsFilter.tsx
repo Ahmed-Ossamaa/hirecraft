@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useDebounce } from "use-debounce";
+import { useDebouncedCallback } from "use-debounce";
 import { Input, Select, CountryCitySelect } from "@/shared/components/ui";
 import { FindAllExperienceLevel, FindAllJobType } from "@/shared/api/generated/model";
 import { FiSearch } from "react-icons/fi";
@@ -21,8 +21,10 @@ export const JobsFilter: React.FC = () => {
   const [yearsOfExp, setYearsOfExp] = useState(searchParams.get("yearsOfExperience") || "");
   const [jobType, setJobType] = useState(searchParams.get("jobType") || "");
 
-  // Debounced search
-  const [debouncedSearch] = useDebounce(search, 500);
+  // Debounced URL search updater
+  const debouncedUpdateSearch = useDebouncedCallback((val: string) => {
+    updateQueryParams({ search: val });
+  }, 500);
 
   const updateQueryParams = useCallback(
     (paramsToUpdate: Record<string, string | undefined>) => {
@@ -50,19 +52,16 @@ export const JobsFilter: React.FC = () => {
   );
 
   useEffect(() => {
-    // Only update if its different from the URL to avoid loop
-    if (debouncedSearch !== (searchParams.get("search") || "")) {
-      updateQueryParams({ search: debouncedSearch });
-    }
-  }, [debouncedSearch, searchParams, updateQueryParams]);
+    const currentSearch = searchParams.get("search") || "";
+    setSearch(currentSearch);
+    debouncedUpdateSearch.cancel();
 
-  useEffect(() => {
     setCountryCode(searchParams.get("country") || "");
     setCityName(searchParams.get("city") || "");
     setExpLevel(searchParams.get("experienceLevel") || "");
     setYearsOfExp(searchParams.get("yearsOfExperience") || "");
     setJobType(searchParams.get("jobType") || "");
-  }, [searchParams]);
+  }, [searchParams, debouncedUpdateSearch]);
 
   const expLevelOptions = [
     { label: "All Experience Levels", value: "" },
@@ -96,7 +95,16 @@ export const JobsFilter: React.FC = () => {
         <Input
           placeholder="Search jobs, machines..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSearch(val);
+            debouncedUpdateSearch(val);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              debouncedUpdateSearch.flush();
+            }
+          }}
           className="pl-9"
         />
       </div>
