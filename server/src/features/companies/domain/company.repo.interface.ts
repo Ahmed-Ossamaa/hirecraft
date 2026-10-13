@@ -27,6 +27,9 @@ export interface FindCompaniesOptions {
   limit?: number;
   order?: 'ASC' | 'DESC';
   search?: string;
+  industry?: string;
+  country?: string;
+  city?: string;
 }
 
 export interface ICompanyRepository {

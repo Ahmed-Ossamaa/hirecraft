@@ -50,9 +50,38 @@ export class CompanyTypeormRepository implements ICompanyRepository {
 
     const qb = this.repository.createQueryBuilder('company');
 
+    qb.select([
+      'company.id',
+      'company.name',
+      'company.logoUrl',
+      'company.coverUrl',
+      'company.industry',
+      'company.country',
+      'company.city',
+      'company.createdAt',
+    ]);
+
     if (options?.search) {
       const search = `%${options.search.trim()}%`;
       qb.andWhere('company.name ILIKE :search', { search });
+    }
+
+    if (options?.industry) {
+      qb.andWhere('company.industry = :industry', {
+        industry: options.industry.trim(),
+      });
+    }
+
+    if (options?.country) {
+      qb.andWhere('company.country = :country', {
+        country: options.country.trim(),
+      });
+    }
+
+    if (options?.city) {
+      qb.andWhere('company.city = :city', {
+        city: options.city.trim(),
+      });
     }
 
     qb.orderBy('company.createdAt', order);
