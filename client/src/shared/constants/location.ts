@@ -9,6 +9,9 @@ export const ALLOWED_COUNTRY_CODES = [
   "KW",
   "BH",
   "LY",
+  "SY",
+  "YE",
+  "LB"
 ] as const;
 
 export type AllowedCountryCode = (typeof ALLOWED_COUNTRY_CODES)[number];
