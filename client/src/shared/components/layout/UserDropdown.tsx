@@ -68,8 +68,11 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         className={`flex items-center gap-2 rounded-full cursor-pointer transition-colors ${
           showName
             ? "px-3 py-1.5 hover:bg-card-hover rounded-lg"
-            : "justify-center w-10 h-10 bg-input border-2 border-border overflow-hidden hover:border-primary"
+            : "justify-center w-8 h-8 md:w-9 md:h-9 bg-input border-2 border-border overflow-hidden hover:border-primary"
         }`}
+        type="button"
+        aria-label="User dropdown menu"
+        aria-expanded={isDropdownOpen}
       >
         {showName ? (
           <>
@@ -100,11 +103,11 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
             alt="Profile"
             src={user.avatarURL}
             className="w-full h-full object-cover"
-            width={40}
-            height={40}
+            width={36}
+            height={36}
           />
         ) : (
-          <MdPerson className="text-xl text-muted-foreground" />
+          <MdPerson className="text-[18px] md:text-xl text-muted-foreground" />
         )}
       </button>
 

@@ -125,10 +125,10 @@ export class WorkerProfilesController {
   @Patch('skills/:skillId')
   @Roles(UserType.CANDIDATE)
   @ApiOperation({ summary: 'Update an existing machine skill' })
-  @ApiStandardResponse(WorkerProfile)
+  @ApiStandardResponse(WorkerMachineSkill)
   @ApiResponse({
     status: 200,
-    description: 'Returns the updated worker profile.',
+    description: 'Returns the updated worker machine skill.',
   })
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async updateSkill(

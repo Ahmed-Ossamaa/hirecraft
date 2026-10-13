@@ -12,8 +12,12 @@ export type UpdateApplicationStatusDtoStatus = typeof UpdateApplicationStatusDto
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const UpdateApplicationStatusDtoStatus = {
   PENDING: 'PENDING',
-  REVIEWING: 'REVIEWING',
-  ACCEPTED: 'ACCEPTED',
+  SHORTLISTED: 'SHORTLISTED',
+  INTERVIEW_SCHEDULED: 'INTERVIEW_SCHEDULED',
+  OFFERED: 'OFFERED',
+  OFFER_ACCEPTED: 'OFFER_ACCEPTED',
+  OFFER_DECLINED: 'OFFER_DECLINED',
   REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
   ARCHIVED: 'ARCHIVED',
 } as const;

@@ -1,7 +1,19 @@
 export enum ApplicationStatus {
   PENDING = 'PENDING', // Just applied
-  REVIEWING = 'REVIEWING', // Employer is looking at it
-  ACCEPTED = 'ACCEPTED', // Employer wants to interview/hire
+  SHORTLISTED = 'SHORTLISTED', //Employer shortlisted for interview
+  INTERVIEW_SCHEDULED = 'INTERVIEW_SCHEDULED', //Interview scheduled
+  OFFERED = 'OFFERED', //Offer letter sent to candidate
+  OFFER_ACCEPTED = 'OFFER_ACCEPTED', //offer accepted by candidate
+  OFFER_DECLINED = 'OFFER_DECLINED', //Offer letter declined by candidate
   REJECTED = 'REJECTED', // Not a fit
-  ARCHIVED = 'ARCHIVED',
+  WITHDRAWN = 'WITHDRAWN', //candidate withdrawn
+  ARCHIVED = 'ARCHIVED', //archived by employer
+}
+
+export enum CandidateApplicationStatus {
+  PENDING = 'PENDING',
+  REVIEWED = 'REVIEWED',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  WITHDRAWN = 'WITHDRAWN',
 }

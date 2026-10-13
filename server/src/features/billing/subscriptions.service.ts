@@ -8,15 +8,18 @@ import {
   InternalServerErrorException,
   Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, IsNull, EntityManager } from 'typeorm';
-import { SubscriptionOrmEntity } from './infrastructure/subscription.orm-entity';
+import { DataSource, EntityManager } from 'typeorm';
 import { ProcessedWebhookOrmEntity } from './infrastructure/processed-webhook.orm-entity';
-import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.orm-entity';
-import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
+import { SUBSCRIPTION_REPOSITORY } from './domain/subscription.repo.interface';
+import type { ISubscriptionRepository } from './domain/subscription.repo.interface';
+import { COMPANY_REPOSITORY } from '@/features/companies/domain/company.repo.interface';
+import type { ICompanyRepository } from '@/features/companies/domain/company.repo.interface';
+import { COMPANY_MEMBER_REPOSITORY } from '@/features/company-members/domain/company-member.repo.interface';
+import type { ICompanyMemberRepository } from '@/features/company-members/domain/company-member.repo.interface';
+import { Company } from '@/features/companies/domain/company.entity';
+import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
 import { SubscriptionStatus } from './domain/subscription-status.enum';
 import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
-import { CompanyMemberStatus } from '@/features/company-members/domain/company-member-status.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 import { Plan } from '@/features/plans/domain/plan.entity';
@@ -40,10 +43,12 @@ export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
 
   constructor(
-    @InjectRepository(SubscriptionOrmEntity)
-    private readonly subscriptionRepo: Repository<SubscriptionOrmEntity>,
-    @InjectRepository(CompanyOrmEntity)
-    private readonly companyRepo: Repository<CompanyOrmEntity>,
+    @Inject(SUBSCRIPTION_REPOSITORY)
+    private readonly subscriptionRepo: ISubscriptionRepository,
+    @Inject(COMPANY_REPOSITORY)
+    private readonly companyRepo: ICompanyRepository,
+    @Inject(COMPANY_MEMBER_REPOSITORY)
+    private readonly companyMemberRepo: ICompanyMemberRepository,
     @Inject(PAYMENT_PROVIDER)
     private readonly paymentProvider: PaymentProvider,
     private readonly dataSource: DataSource,
@@ -102,12 +107,11 @@ export class SubscriptionsService {
    * Or defaults to the free plan tier.
    */
   async getSubscriptionForCompany(companyId: string, tx?: EntityManager) {
-    const repo = tx
-      ? tx.getRepository(SubscriptionOrmEntity)
-      : this.subscriptionRepo;
-    const activeSub = await repo.findOne({
-      where: { companyId, status: SubscriptionStatus.ACTIVE },
-    });
+    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+      companyId,
+      SubscriptionStatus.ACTIVE,
+      tx,
+    );
 
     if (activeSub) {
       const plan = this.plansService.getPlanById(activeSub.planId);
@@ -156,46 +160,7 @@ export class SubscriptionsService {
       createdAt: Date;
     }>
   > {
-    const page = options.page && options.page > 0 ? options.page : 1;
-    const limit = options.limit && options.limit > 0 ? options.limit : 10;
-    const skip = (page - 1) * limit;
-    const order = options.order || 'DESC';
-
-    const qb = this.subscriptionRepo.createQueryBuilder('sub');
-
-    if (status) {
-      qb.andWhere('sub.status = :status', { status });
-    }
-
-    if (planId) {
-      qb.andWhere('sub.planId = :planId', { planId });
-    }
-
-    qb.orderBy('sub.createdAt', order);
-    qb.skip(skip).take(limit);
-
-    const [items, total] = await qb.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-
-    const sanitizedData = items.map((sub) => ({
-      id: sub.id,
-      companyId: sub.companyId,
-      planId: sub.planId,
-      provider: sub.provider,
-      status: sub.status,
-      currentPeriodStart: sub.currentPeriodStart,
-      currentPeriodEnd: sub.currentPeriodEnd,
-      cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
-      createdAt: sub.createdAt,
-    }));
-
-    return {
-      data: sanitizedData,
-      total,
-      page,
-      limit,
-      totalPages,
-    };
+    return this.subscriptionRepo.findSubscriptions(options, status, planId);
   }
 
   /**
@@ -205,9 +170,10 @@ export class SubscriptionsService {
   async cancelSubscriptionAtPeriodEnd(companyId: string, userId: string) {
     await this.getCompanyWithAdminCheck(companyId, userId);
 
-    const activeSub = await this.subscriptionRepo.findOne({
-      where: { companyId, status: SubscriptionStatus.ACTIVE },
-    });
+    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+      companyId,
+      SubscriptionStatus.ACTIVE,
+    );
 
     if (!activeSub) {
       throw new NotFoundException('No active subscription found to cancel.');
@@ -260,19 +226,20 @@ export class SubscriptionsService {
     companyId: string,
     userId: string,
   ): Promise<{
-    company: CompanyOrmEntity;
-    adminMember: CompanyMemberOrmEntity;
+    company: Company;
+    adminMember: CompanyMember;
   }> {
-    const company = await this.companyRepo.findOne({
-      where: { id: companyId },
-      relations: { members: { user: true } },
-    });
+    const company = await this.companyRepo.findById(companyId);
 
     if (!company) {
       throw new NotFoundException('Company not found.');
     }
 
-    const member = company.members?.find((m) => m.userId === userId);
+    const member = await this.companyMemberRepo.findByUserIdAndCompanyId(
+      userId,
+      companyId,
+    );
+
     if (!member || member.role !== CompanyRole.ADMIN) {
       throw new ForbiddenException(
         'You are not authorized to manage subscriptions for this company.',
@@ -301,9 +268,10 @@ export class SubscriptionsService {
    * - Throws ConflictException if an active subscription is found.
    */
   private async ensureNoActiveSubscription(companyId: string): Promise<void> {
-    const activeSub = await this.subscriptionRepo.findOne({
-      where: { companyId, status: SubscriptionStatus.ACTIVE },
-    });
+    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+      companyId,
+      SubscriptionStatus.ACTIVE,
+    );
 
     if (activeSub) {
       throw new ConflictException(
@@ -318,7 +286,7 @@ export class SubscriptionsService {
    * - Handles concurrent customer creation safely using an atomic conditional database update.
    */
   private async getOrCreatePaymentCustomer(
-    company: CompanyOrmEntity,
+    company: Company,
     userEmail?: string,
   ): Promise<string> {
     if (company.paymentCustomerId) {
@@ -335,15 +303,13 @@ export class SubscriptionsService {
       `create_customer_company_${company.id}`,
     );
 
-    const updateResult = await this.companyRepo.update(
-      { id: company.id, paymentCustomerId: IsNull() },
-      { paymentCustomerId: customer.id },
+    const updated = await this.companyRepo.updatePaymentCustomerIdIfNull(
+      company.id,
+      customer.id,
     );
 
-    if (updateResult.affected === 0) {
-      const reloaded = await this.companyRepo.findOne({
-        where: { id: company.id },
-      });
+    if (!updated) {
+      const reloaded = await this.companyRepo.findById(company.id);
       if (!reloaded?.paymentCustomerId) {
         throw new InternalServerErrorException(
           'Failed to resolve payment customer ID after customer creation.',
@@ -383,9 +349,10 @@ export class SubscriptionsService {
             await this.paymentProvider.retrieveSubscription(subscriptionId);
 
           if (!companyId) {
-            const existingSub = await this.subscriptionRepo.findOne({
-              where: { providerSubId: subscriptionId },
-            });
+            const existingSub =
+              await this.subscriptionRepo.findOneByProviderSubId(
+                subscriptionId,
+              );
             if (existingSub) {
               companyId = existingSub.companyId;
             } else {
@@ -577,10 +544,10 @@ export class SubscriptionsService {
       provider,
       entityManager,
     } = params;
-    const subRepo = entityManager.getRepository(SubscriptionOrmEntity);
-    const localSub = await subRepo.findOne({
-      where: { providerSubId: paymentSub.id },
-    });
+    const localSub = await this.subscriptionRepo.findOneByProviderSubId(
+      paymentSub.id,
+      entityManager,
+    );
 
     if (localSub) {
       localSub.status = localStatus;
@@ -588,19 +555,21 @@ export class SubscriptionsService {
       localSub.currentPeriodEnd = paymentSub.currentPeriodEnd;
       localSub.cancelAtPeriodEnd = paymentSub.cancelAtPeriodEnd;
       localSub.planId = planId;
-      await subRepo.save(localSub);
+      await this.subscriptionRepo.save(localSub, entityManager);
     } else {
-      const newSub = subRepo.create({
-        companyId,
-        providerSubId: paymentSub.id,
-        provider,
-        planId,
-        status: localStatus,
-        currentPeriodStart: paymentSub.currentPeriodStart,
-        currentPeriodEnd: paymentSub.currentPeriodEnd,
-        cancelAtPeriodEnd: paymentSub.cancelAtPeriodEnd,
-      });
-      await subRepo.save(newSub);
+      await this.subscriptionRepo.create(
+        {
+          companyId,
+          providerSubId: paymentSub.id,
+          provider,
+          planId,
+          status: localStatus,
+          currentPeriodStart: paymentSub.currentPeriodStart,
+          currentPeriodEnd: paymentSub.currentPeriodEnd,
+          cancelAtPeriodEnd: paymentSub.cancelAtPeriodEnd,
+        },
+        entityManager,
+      );
     }
   }
 
@@ -612,19 +581,14 @@ export class SubscriptionsService {
     planName: string,
     currentPeriodEnd: Date | null,
   ): Promise<void> {
-    const company = await this.companyRepo.findOne({
-      where: { id: companyId },
-      relations: { members: { user: true } },
-    });
+    const company = await this.companyRepo.findById(companyId);
 
-    const adminMember = company?.members?.find(
-      (m) =>
-        m.role === CompanyRole.ADMIN &&
-        m.status === CompanyMemberStatus.ACTIVE &&
-        m.user?.email,
-    );
+    if (!company) return;
 
-    if (company && adminMember?.user?.email) {
+    const adminMember =
+      await this.companyMemberRepo.findActiveAdminByCompanyId(companyId);
+
+    if (adminMember?.user?.email) {
       const recipientName =
         adminMember.user.firstName && adminMember.user.lastName
           ? `${adminMember.user.firstName} ${adminMember.user.lastName}`

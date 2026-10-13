@@ -8,6 +8,7 @@ import { MdEdit, MdClose, MdVisibility, MdSettings } from 'react-icons/md';
 import { Button } from '@/shared/components/ui';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface CompanyDashboardClientProps {
   company: Company;
@@ -18,6 +19,7 @@ export const CompanyDashboardClient: React.FC<CompanyDashboardClientProps> = ({ 
   const user = useAuthStore(state => state.user);
   const companyRole = useAuthStore(state => state.companyRole);
   const isAdmin = companyRole === 'ADMIN';
+  const router = useRouter();
 
   return (
     <div className="flex-1 flex flex-col py-2 w-full max-w-5xl mx-auto space-y-6 mb-5">
@@ -60,7 +62,7 @@ export const CompanyDashboardClient: React.FC<CompanyDashboardClientProps> = ({ 
 
       {isEditing ? (
         <div className="animate-in fade-in duration-300">
-          <CompanyProfileForm initialData={company} onSuccess={() => setIsEditing(false)} />
+          <CompanyProfileForm initialData={company} onSuccess={() => { setIsEditing(false); router.refresh(); }} />
         </div>
       ) : (
         <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden animate-in fade-in duration-300">

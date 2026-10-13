@@ -5,11 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 import { Modal, Button, Textarea } from '@/shared/components/ui';
 import { FormError } from '@/shared/components/ui/FormError';
 import { getApiError } from '@/shared/utils/error';
-import { useApplyToJob } from '@/shared/api/generated/job-applications/job-applications';
+import { useApplyToJob } from "@/features/applications/api/useApplicationMutations";
 
 const applySchema = z.object({
   coverLetter: z.string().max(2000).optional().or(z.literal('')),
@@ -32,7 +31,6 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({
   jobTitle, 
   companyName 
 }) => {
-  const queryClient = useQueryClient();
   const applyMutation = useApplyToJob();
 
   const {
@@ -59,10 +57,6 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({
       });
       
       toast.success("Application submitted successfully!");
-      
-      // Invalidate queries so that job detail or applications list updates
-      queryClient.invalidateQueries({ queryKey: ['getJobById', jobId] });
-      queryClient.invalidateQueries({ queryKey: ['getMyApplications'] });
       
       handleClose();
     } catch (error) {

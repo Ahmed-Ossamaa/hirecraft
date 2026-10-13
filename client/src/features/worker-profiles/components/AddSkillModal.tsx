@@ -5,11 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Modal, Button, Select, Input } from '@/shared/components/ui';
-import { useAddSkill } from '@/shared/api/generated/worker-profiles/worker-profiles';
+import { useAddMachineSkill } from "@/features/worker-profiles/api/useProfileMutations";
 import { useGetMachines } from '@/shared/api/generated/machines/machines';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/worker-profiles';
 import { FormError } from '@/shared/components/ui/FormError';
 import { getApiError } from '@/shared/utils/error';
 
@@ -29,8 +27,7 @@ interface AddSkillModalProps {
 }
 
 export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose }) => {
-  const queryClient = useQueryClient();
-  const addSkillMutation = useAddSkill();
+  const addSkillMutation = useAddMachineSkill();
 
   // Basic fetch of machines for the dropdown
   // later : need search/pagination ().
@@ -63,8 +60,6 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
           yearsOfExperience: data.yearsOfExperience,
         }
       });
-      // Invalidate profile query to refetch skills
-      queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       toast.success("Skill added successfully");
       reset();
       onClose();

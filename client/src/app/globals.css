@@ -16,10 +16,17 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
 
+  --color-cta-section: var(--cta-section);
+  --color-cta-operator-card: var(--cta-operator-card);
+  --color-cta-employer-card: var(--cta-employer-card);
+  --color-cta-card-border: var(--cta-card-border);
+  --color-cta-accent-soft: var(--cta-accent-soft);
+
   --font-headline: "Newsreader", serif;
   --font-body: "Hanken Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Font Families */
   --font-headline-md: "Newsreader", serif;
@@ -58,7 +65,7 @@
   --text-headline-md: 26px;
   --text-headline-md--line-height: 32px;
   --text-headline-md--font-weight: 500;
-  
+
   --text-headline-lg-mobile: 28px;
   --text-headline-lg-mobile--line-height: 34px;
   --text-headline-lg-mobile--letter-spacing: -0.01em;
@@ -109,7 +116,7 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --card: #ffffff;
+  --card: #f4f8fd;
   --card-hover: #f1f5f9;
   --input: #ffffff;
   --border: #e2e8f0;
@@ -119,6 +126,12 @@
   --primary-hover: #1d4ed8;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
+  /* Dual CTA section */
+  --cta-section: #f1f6fd;
+  --cta-operator-card: #f8fbff;
+  --cta-employer-card: #edf5ff;
+  --cta-card-border: #cfe0ff;
+  --cta-accent-soft: #e0edff;
 }
 
 .dark {
@@ -134,6 +147,12 @@
   --primary-hover: #0284c7;
   --muted: #060a12;
   --muted-foreground: #94a3b8;
+  /* Dual CTA section */
+  --cta-section: #060b13;
+  --cta-operator-card: #0d1a30;
+  --cta-employer-card: #101f35;
+  --cta-card-border: #174775;
+  --cta-accent-soft: #102e50;
 }
 
 body {
@@ -158,20 +177,20 @@ body {
   border-radius: 4px;
 }
 
-html, body { 
-  margin: 0; 
-  padding: 0; 
-} 
-
-body { 
-  overscroll-behavior: none; 
-} 
-
-main > :first-child { 
-  margin-top: 0 !important; 
-} 
-
-main > :last-child { 
-  margin-bottom: 0 !important; 
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
+body {
+  overscroll-behavior: none;
+}
+
+main > :first-child {
+  margin-top: 0 !important;
+}
+
+main > :last-child {
+  margin-bottom: 0 !important;
+}

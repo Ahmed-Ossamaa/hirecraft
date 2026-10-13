@@ -13,3 +13,5 @@ export * from './FloatingBackButton';
 export * from './EmptyState';
 export * from './CollapsibleText';
 export * from './Tabs';
+export * from './Skeleton';
+export * from './TableSkeleton';

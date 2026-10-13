@@ -4,9 +4,7 @@ import React, { useState } from 'react';
 import { WorkerMachineSkill } from '@/shared/api/generated/model';
 import { Button } from '@/shared/components/ui';
 import { MdAdd, MdEdit, MdDelete, MdPrecisionManufacturing } from 'react-icons/md';
-import { useDeleteSkill } from '@/shared/api/generated/worker-profiles/worker-profiles';
-import { useQueryClient } from '@tanstack/react-query';
-import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/worker-profiles';
+import { useRemoveMachineSkill } from "@/features/worker-profiles/api/useProfileMutations";
 import { AddSkillModal } from './AddSkillModal';
 import { EditSkillModal } from './EditSkillModal';
 import { toast } from 'sonner';
@@ -18,8 +16,7 @@ interface MachineSkillsListProps {
 }
 
 export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [], profileId }) => {
-  const queryClient = useQueryClient();
-  const deleteSkillMutation = useDeleteSkill();
+  const deleteSkillMutation = useRemoveMachineSkill();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [skillToEdit, setSkillToEdit] = useState<WorkerMachineSkill | null>(null);
@@ -29,7 +26,6 @@ export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [
     
     try {
       await deleteSkillMutation.mutateAsync({ skillId });
-      queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       toast.success("Skill removed successfully");
     } catch (error) {
       console.error('Failed to delete skill:', error);

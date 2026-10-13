@@ -12,8 +12,12 @@ export type JobApplicationStatus = typeof JobApplicationStatus[keyof typeof JobA
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const JobApplicationStatus = {
   PENDING: 'PENDING',
-  REVIEWING: 'REVIEWING',
-  ACCEPTED: 'ACCEPTED',
+  SHORTLISTED: 'SHORTLISTED',
+  INTERVIEW_SCHEDULED: 'INTERVIEW_SCHEDULED',
+  OFFERED: 'OFFERED',
+  OFFER_ACCEPTED: 'OFFER_ACCEPTED',
+  OFFER_DECLINED: 'OFFER_DECLINED',
   REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
   ARCHIVED: 'ARCHIVED',
 } as const;

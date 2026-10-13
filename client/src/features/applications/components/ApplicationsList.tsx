@@ -7,7 +7,7 @@ import { Button, Pagination, EmptyState } from "@/shared/components/ui";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
-import { JobApplication } from "@/shared/api/generated/model";
+import { CandidateApplicationResponseDto } from "@/shared/api/generated/model";
 
 export const ApplicationsList: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -37,7 +37,7 @@ export const ApplicationsList: React.FC = () => {
     );
   }
 
-  const applications: JobApplication[] = data?.data?.data || [];
+  const applications: CandidateApplicationResponseDto[] = data?.data?.data || [];
   const totalPages = data?.data?.totalPages || 1;
 
   if (applications.length === 0) {

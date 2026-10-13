@@ -57,13 +57,6 @@ const signupSchema = z
           path: ["companyData", "country"],
         });
       }
-      // if (!data.companyData?.size || data.companyData.size.trim() === '') {
-      //   ctx.addIssue({
-      //     code: z.ZodIssueCode.custom,
-      //     message: "Company Size is required",
-      //     path: ['companyData', 'size']
-      //   });
-      // }
       if (
         !data.companyData?.industry ||
         data.companyData.industry.trim() === ""
@@ -164,7 +157,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="w-full h-full  pr-1 flex flex-col justify-between">
+    <div className="w-full h-full  pr-1 flex flex-col justify-center">
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-mono uppercase text-primary tracking-wider font-semibold">
@@ -183,11 +176,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         </p>
 
         {/* User Type Switcher */}
-        <div className="mt-4 p-1 rounded-xl bg-input border border-border grid grid-cols-2 gap-1">
+        <div className="mt-2 p-1 rounded-xl bg-input border border-border grid grid-cols-2 gap-1">
           <Button
             type="button"
             onClick={() => handleUserTypeChange("CANDIDATE")}
             variant={userType === "CANDIDATE" ? "primary" : "ghost"}
+            className="py-1.5"
           >
             Job Seeker / Technician
           </Button>
@@ -195,6 +189,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
             type="button"
             onClick={() => handleUserTypeChange("EMPLOYER")}
             variant={userType === "EMPLOYER" ? "primary" : "ghost"}
+            className="py-1.5"
           >
             Employer
           </Button>
@@ -228,7 +223,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         )}
 
         <form className="mt-4 space-y-3" onSubmit={handleSubmit(onSubmit)}>
-          <FormError message={errors.root?.message} className="mb-2" />
 
           {/* 1st basic info */}
           <div
@@ -237,7 +231,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
                 ? "hidden"
                 : "space-y-3"
             }
-          >
+           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="First Name"
@@ -321,17 +315,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
                 cityLabel="City"
                 countryCode={selectedCountry}
                 cityName={selectedCity}
-                onCountryChange={(code) => setValue("companyData.country", code, { shouldValidate: true })}
-                onCityChange={(city) => setValue("companyData.city", city, { shouldValidate: true })}
+                onCountryChange={(code) =>
+                  setValue("companyData.country", code, {
+                    shouldValidate: true,
+                  })
+                }
+                onCityChange={(city) =>
+                  setValue("companyData.city", city, { shouldValidate: true })
+                }
                 countryError={errors.companyData?.country?.message}
                 cityError={errors.companyData?.city?.message}
               />
-              {/* <Select 
-                label="Company Size" 
-                {...register('companyData.size')} 
-                error={errors.companyData?.size?.message}
-                options={COMPANY_SIZE_OPTIONS}
-              /> */}
             </div>
 
             <Select
@@ -341,7 +335,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               options={INDUSTRY_SECTOR_OPTIONS}
             />
 
-            <div className="pt-2 flex items-center gap-3">
+            <div className="pt-2 flex items-center gap-3 mb-2">
               <Button
                 type="button"
                 variant="secondary"
@@ -360,7 +354,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         </form>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
+      <div className="mt-1 pt-2 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
         By continuing, you agree to Technically&apos;s{" "}
         <a href="#" className="underline hover:text-primary transition">
           Terms of Service

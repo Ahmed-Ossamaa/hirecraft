@@ -6,9 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Modal, Button, Select, Input } from '@/shared/components/ui';
-import { useUpdateSkill } from '@/shared/api/generated/worker-profiles/worker-profiles';
-import { useQueryClient } from '@tanstack/react-query';
-import { getGetMyProfileQueryKey } from '@/shared/api/generated/worker-profiles/worker-profiles';
+import { useUpdateMachineSkill } from "@/features/worker-profiles/api/useProfileMutations";
 import { WorkerMachineSkill } from '@/shared/api/generated/model';
 import { FormError } from '@/shared/components/ui/FormError';
 import { getApiError } from '@/shared/utils/error';
@@ -27,8 +25,7 @@ interface EditSkillModalProps {
 }
 
 export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose, skill }) => {
-  const queryClient = useQueryClient();
-  const updateSkillMutation = useUpdateSkill();
+  const updateSkillMutation = useUpdateMachineSkill();
 
   const {
     register,
@@ -65,8 +62,6 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
           yearsOfExperience: data.yearsOfExperience,
         }
       });
-      // Invalidate profile query to refetch skills
-      queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
       toast.success("Skill updated successfully");
       reset();
       onClose();

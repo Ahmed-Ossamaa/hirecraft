@@ -13,9 +13,13 @@ import { WorkerProfilesService } from '../worker-profiles/worker-profiles.servic
 import { CreateJobApplicationDto } from './dto/apply-to-job.dto';
 import { JobApplication } from './domain/job-application.entity';
 import { JobsService } from '../jobs/jobs.service';
-import { ApplicationStatus } from './domain/application-status.enum';
+import {
+  ApplicationStatus,
+  CandidateApplicationStatus,
+} from './domain/application-status.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { CandidateApplicationResponseDto } from './dto/candidate-application-response.dto';
 
 @Injectable()
 export class ApplicationsService {
@@ -27,6 +31,14 @@ export class ApplicationsService {
     private readonly jobsService: JobsService,
   ) {}
 
+  /**
+   * @description : Worker applies to a job (should have worker profile and can apply twice to same ejob)
+   * @param userId  worker-id
+   * @param dto     CreateJobApplicationDto
+   * @throws      {NotFoundException} if the worker profile does not exist
+   * @throws      {ConflictException} if the worker has already applied to this job
+   * @returns       JobApplication entity
+   */
   async applyToJob(
     userId: string,
     dto: CreateJobApplicationDto,
@@ -53,10 +65,18 @@ export class ApplicationsService {
   async getMyApplications(
     userId: string,
     options: PageOptionsDto,
-  ): Promise<PaginatedResult<JobApplication>> {
-    const profile = await this.workerProfilesService.getMyProfile(userId);
+  ): Promise<PaginatedResult<CandidateApplicationResponseDto>> {
+    const profileId = await this.workerProfilesService.getProfileId(userId);
 
-    return this.applicationRepo.findByWorkerProfileId(profile.id, options);
+    const paginatedResult = await this.applicationRepo.findByWorkerProfileId(
+      profileId,
+      options,
+    );
+
+    return {
+      ...paginatedResult,
+      data: paginatedResult.data.map((app) => this.mapToCandidateResponse(app)),
+    };
   }
 
   async updateStatus(
@@ -88,8 +108,8 @@ export class ApplicationsService {
     companyId: string,
     options: PageOptionsDto,
   ): Promise<PaginatedResult<JobApplication>> {
-    const job = await this.jobsService.getJobById(jobId);
-    if (job.companyId !== companyId) {
+    const isOwner = await this.jobsService.checkJobOwnership(jobId, companyId);
+    if (!isOwner) {
       throw new ForbiddenException(
         'You do not have permission to view applications for this job.',
       );
@@ -100,5 +120,62 @@ export class ApplicationsService {
 
   async getCountsForJobs(jobIds: string[]): Promise<Map<string, number>> {
     return this.applicationRepo.getCountsByJobIds(jobIds);
+  }
+
+  //............. helpers..........................
+
+  /**
+   * Maps internal application lifecycle statuses to candidate-facing statuses.
+   *
+   * Hiring pipeline stages (such as shortlisted, interview scheduled, or offered)
+   * are abstracted into broader candidate milestones (e.g. REVIEWED) to provide a simplified
+   * view without exposing internal hiring workflows.
+   * @param status - The internal domain application status
+   * @returns The simplified candidate-facing status
+   */
+  private toCandidateStatus(
+    status: ApplicationStatus,
+  ): CandidateApplicationStatus {
+    switch (status) {
+      case ApplicationStatus.PENDING:
+        return CandidateApplicationStatus.PENDING;
+
+      case ApplicationStatus.SHORTLISTED:
+      case ApplicationStatus.INTERVIEW_SCHEDULED:
+      case ApplicationStatus.OFFERED:
+        return CandidateApplicationStatus.REVIEWED;
+
+      case ApplicationStatus.OFFER_ACCEPTED:
+        return CandidateApplicationStatus.ACCEPTED;
+
+      case ApplicationStatus.REJECTED:
+      case ApplicationStatus.OFFER_DECLINED:
+        return CandidateApplicationStatus.REJECTED;
+
+      case ApplicationStatus.WITHDRAWN:
+        return CandidateApplicationStatus.WITHDRAWN;
+
+      default:
+        throw new Error(`Unknown application status: ${status}`);
+    }
+  }
+
+  /**
+   * Maps JobApplication entity to CandidateApplicationResponseDto.
+   */
+  private mapToCandidateResponse(
+    app: JobApplication,
+  ): CandidateApplicationResponseDto {
+    return {
+      id: app.id,
+      jobId: app.jobId,
+      jobTitle: app.jobTitle,
+      companyName: app.companyName,
+      companyId: app.companyId,
+      status: this.toCandidateStatus(app.status),
+      coverLetter: app.coverLetter,
+      createdAt: app.createdAt,
+      updatedAt: app.updatedAt,
+    };
   }
 }

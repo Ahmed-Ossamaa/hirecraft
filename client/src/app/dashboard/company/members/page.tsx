@@ -1,6 +1,4 @@
 import { Metadata } from 'next';
-import { fetchServer } from '@/shared/lib/ssr-fetch';
-import { CompanyMember } from '@/shared/api/generated/model';
 import { MembersList } from '@/features/companies/components/MembersList';
 import { MdGroup } from 'react-icons/md';
 
@@ -9,28 +7,7 @@ export const metadata: Metadata = {
   description: 'Manage your company team members.',
 };
 
-interface GetMembersResponse {
-  data: CompanyMember[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function CompanyMembersPage(props: PageProps) {
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams.page) || 1;
-  const status = (searchParams.status as string) || 'ACTIVE';
-
-  const membersRes = await fetchServer<{ data: GetMembersResponse }>(`/api/v1/company-members?page=${page}&limit=10&status=${status}`);
-  const res = membersRes?.data;
-  const members = res?.data || [];
-  const currentPage = res?.page || 1;
-  const totalPages = res?.totalPages || 1;
-
+export default function CompanyMembersPage() {
   return (
     <div className="flex-1 flex flex-col py-2 w-full max-w-5xl mx-auto space-y-6 mb-5">
       <div className="flex items-center gap-3 pb-2">
@@ -47,12 +24,7 @@ export default async function CompanyMembersPage(props: PageProps) {
         </div>
       </div>
 
-      <MembersList 
-        initialMembers={members} 
-        currentPage={currentPage} 
-        totalPages={totalPages} 
-        currentStatus={status as "ACTIVE" | "PENDING" | "SUSPENDED"}
-      />
+      <MembersList />
     </div>
   );
 }

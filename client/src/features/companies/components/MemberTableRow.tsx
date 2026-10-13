@@ -53,7 +53,7 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
           <select
             value={member.role}
             onChange={(e) => onRoleChange(member.userId, e.target.value as CompanyMemberRole)}
-            disabled={isMe || !isCurrentUserAdmin}
+            disabled={isMe || !isCurrentUserAdmin || member.status !== 'ACTIVE'}
             className="bg-transparent border-none outline-none cursor-pointer text-foreground font-medium disabled:cursor-not-allowed"
           >
             <option value="ADMIN" className="bg-card text-foreground">

@@ -30,6 +30,11 @@ export interface ICompanyMemberRepository {
     companyId: string,
   ): Promise<CompanyMember | null>;
 
+  findActiveAdminByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null>;
+
   findAllByCompanyId(
     companyId: string,
     options: PageOptionsDto,

@@ -1,6 +1,4 @@
 import { Metadata } from "next";
-import { fetchServer } from "@/shared/lib/ssr-fetch";
-import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { EmployerJobsList } from "@/features/jobs/components/EmployerJobsList";
 import { MdWork } from "react-icons/md";
 
@@ -9,49 +7,7 @@ export const metadata: Metadata = {
   description: "Manage your job postings and applicants.",
 };
 
-interface GetJobsResponse {
-  data: JobWithStatsDto[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export default async function EmployerJobsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const resolvedParams = await searchParams;
-  const status =
-    typeof resolvedParams.status === "string" ? resolvedParams.status : "";
-  const search =
-    typeof resolvedParams.search === "string" ? resolvedParams.search : "";
-  const page =
-    typeof resolvedParams.page === "string" ? resolvedParams.page : "1";
-  const sortBy =
-    typeof resolvedParams.sortBy === "string" ? resolvedParams.sortBy : "";
-  const sortOrder =
-    typeof resolvedParams.order === "string" ? resolvedParams.order : "";
-
-  const query = new URLSearchParams();
-  query.append("limit", "10");
-  query.append("page", page);
-  if (status && status !== "ALL") query.append("status", status);
-  if (search) query.append("search", search);
-  if (sortBy) query.append("sortBy", sortBy);
-  if (sortOrder) query.append("order", sortOrder);
-
-  const jobsRes = await fetchServer<{ data: GetJobsResponse }>(
-    `/api/v1/jobs/company?${query.toString()}`,
-  );
-  
-  const jobs = jobsRes?.data?.data || [];
-  const meta = { 
-    total: jobsRes?.data?.total || 0, 
-    page: jobsRes?.data?.page || 1, 
-    lastPage: jobsRes?.data?.totalPages || 1 
-  };
-
+export default function EmployerJobsPage() {
   return (
     <div className="flex-1 flex flex-col py-2 w-full max-w-5xl mx-auto space-y-6 mb-5">
       <div className="flex items-center gap-3 pb-2">
@@ -68,7 +24,7 @@ export default async function EmployerJobsPage({
         </div>
       </div>
 
-      <EmployerJobsList initialJobs={jobs} meta={meta} />
+      <EmployerJobsList />
     </div>
   );
 }

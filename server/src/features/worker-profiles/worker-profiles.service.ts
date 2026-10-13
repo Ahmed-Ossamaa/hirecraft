@@ -28,9 +28,9 @@ export class WorkerProfilesService {
     dto: CreateWorkerProfileDto,
   ): Promise<WorkerProfile> {
     // A user can only have 1 profile.
-    const existingProfile = await this.profileRepository.findByUserId(userId);
+    const profileExists = await this.profileRepository.existsByUserId(userId);
 
-    if (existingProfile) {
+    if (profileExists) {
       throw new ConflictException('You already have a worker profile.');
     }
 
@@ -96,18 +96,18 @@ export class WorkerProfilesService {
     userId: string,
     skillId: string,
     dto: UpdateMachineSkillDto,
-  ): Promise<WorkerProfile> {
-    const profile = await this.profileRepository.findByUserId(userId);
-    if (!profile) throw new NotFoundException('Profile not found.');
+  ): Promise<WorkerMachineSkill> {
+    const profileId = await this.getProfileId(userId);
+    const updated = await this.profileRepository.updateSkill(
+      skillId,
+      dto,
+      profileId,
+    );
+    if (!updated) {
+      throw new NotFoundException(`Skill not found or you don't own it`);
+    }
 
-    // if the skill doesnt belong to this user profile
-    const skill = profile.skills?.find((s) => s.id === skillId);
-    if (!skill) throw new NotFoundException(`Skill not found on your profile.`);
-
-    await this.profileRepository.updateSkill(skillId, dto);
-    Object.assign(skill, dto);
-
-    return profile;
+    return updated;
   }
 
   async deleteSkill(userId: string, skillId: string): Promise<WorkerProfile> {

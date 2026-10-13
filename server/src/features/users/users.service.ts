@@ -121,7 +121,7 @@ export class UsersService {
   }
 
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<User> {
-    const user = await this.userRepository.findForAuthById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -143,7 +143,7 @@ export class UsersService {
   }
 
   async removeAvatar(userId: string): Promise<User> {
-    const user = await this.userRepository.findForAuthById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }

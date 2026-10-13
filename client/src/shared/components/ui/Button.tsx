@@ -15,7 +15,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button 
         ref={ref} 
         className={cn(
-          "font-medium transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+          "font-medium transition duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none",
           // Sizes
           {
             "py-1.5 px-3 rounded-lg text-xs": size === 'sm' && variant !== 'ghost' && variant !== 'link',

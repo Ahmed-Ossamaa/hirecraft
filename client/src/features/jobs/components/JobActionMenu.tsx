@@ -4,9 +4,7 @@ import { Button } from "@/shared/components/ui";
 import { MdMoreVert } from "react-icons/md";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUpdateJob } from "@/shared/api/generated/jobs/jobs";
-import { useMutation } from "@tanstack/react-query";
-import { customAxiosInstance } from "@/shared/api/axios-instance";
+import { useUpdateJob, useDeleteJob } from "@/features/jobs/api/useJobMutations";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/providers/confirm-provider";
 
@@ -17,25 +15,12 @@ interface JobActionMenuProps {
 export function JobActionMenu({ job }: JobActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [openUpwards, setOpenUpwards] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { confirm } = useConfirm();
-
   const updateMutation = useUpdateJob();
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      customAxiosInstance({
-        url: `/api/v1/jobs/${id}`,
-        method: "DELETE",
-      }),
-    onSuccess: () => {
-      toast.success("Job deleted successfully");
-      router.refresh();
-    },
-    onError: () => {
-      toast.error("Failed to delete job");
-    },
-  });
+  const deleteMutation = useDeleteJob();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -43,8 +28,15 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
         setOpen(false);
       }
     }
+    function handleScroll() {
+      setOpen(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   }, []);
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -52,11 +44,17 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
     if (!open && ref.current) {
       const rect = ref.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      if (spaceBelow < 280 && rect.top > 280) {
-        setOpenUpwards(true);
-      } else {
-        setOpenUpwards(false);
-      }
+      const opensUp = spaceBelow < 280 && rect.top > 280;
+      setOpenUpwards(opensUp);
+      
+      setDropdownStyle({
+        position: 'fixed',
+        top: opensUp ? undefined : rect.bottom + 8,
+        bottom: opensUp ? window.innerHeight - rect.top + 8 : undefined,
+        left: rect.right - 192,
+        width: 192,
+        zIndex: 9999,
+      });
     }
     setOpen(!open);
   };
@@ -69,7 +67,6 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       });
       toast.success(`Job marked as ${status}`);
       setOpen(false);
-      router.refresh();
     } catch (error) {
       toast.error("Failed to update status");
     }
@@ -83,8 +80,15 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       variant: "danger",
     });
     if (isConfirmed) {
-      deleteMutation.mutate(job.id);
-      setOpen(false);
+      deleteMutation.mutate(job.id, {
+        onSuccess: () => {
+          toast.success("Job deleted successfully");
+          setOpen(false);
+        },
+        onError: () => {
+          toast.error("Failed to delete job");
+        }
+      });
     }
   };
 
@@ -100,7 +104,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       </Button>
       {open && (
         <div
-          className={`absolute right-0 z-50 w-48 rounded-lg bg-card shadow-lg ring-1 ring-slate-300 dark:ring-slate-700  border border-border/60 focus:outline-none py-1 overflow-hidden ${openUpwards ? "bottom-full mb-2" : "top-full mt-2"}`}
+          style={dropdownStyle}
+          className={`rounded-lg bg-card shadow-lg ring-1 ring-slate-300 dark:ring-slate-700 border border-border/60 py-1 overflow-hidden`}
         >
           <Link
             href={`/dashboard/company/jobs/${job.id}/edit`}

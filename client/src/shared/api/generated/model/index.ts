@@ -55,6 +55,8 @@ export * from './applyToJob200AllOf';
 export * from './cancelSubscription200';
 export * from './cancelSubscription200AllOf';
 export * from './cancelSubscriptionDto';
+export * from './candidateApplicationResponseDto';
+export * from './candidateApplicationResponseDtoStatus';
 export * from './changePasswordDto';
 export * from './checkoutSessionResponseDto';
 export * from './companiesControllerUploadCoverBody';

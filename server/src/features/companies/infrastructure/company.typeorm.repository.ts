@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository, IsNull } from 'typeorm';
 import {
   ICompanyRepository,
   CreateCompanyParams,
@@ -73,9 +73,19 @@ export class CompanyTypeormRepository implements ICompanyRepository {
   async update(
     id: string,
     params: Partial<CreateCompanyParams>,
-  ): Promise<Company | null> {
+  ): Promise<void> {
     await this.repository.update(id, params);
-    return this.findById(id);
+  }
+
+  async updatePaymentCustomerIdIfNull(
+    companyId: string,
+    customerId: string,
+  ): Promise<boolean> {
+    const updateResult = await this.repository.update(
+      { id: companyId, paymentCustomerId: IsNull() },
+      { paymentCustomerId: customerId },
+    );
+    return (updateResult.affected ?? 0) > 0;
   }
 
   private mapToDomain(orm: CompanyOrmEntity): Company {

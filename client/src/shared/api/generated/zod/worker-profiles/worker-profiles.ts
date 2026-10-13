@@ -271,23 +271,6 @@ export const updateSkillResponse = zod.object({
 }).and(zod.object({
   "data": zod.object({
   "id": zod.string(),
-  "userId": zod.string(),
-  "title": zod.string(),
-  "lastCompany": zod.string().nullable(),
-  "bio": zod.string().nullable(),
-  "country": zod.string(),
-  "city": zod.string(),
-  "educationLevel": zod.enum(['HIGH_SCHOOL', 'VOCATIONAL', 'ASSOCIATE', 'BACHELOR', 'OTHER']).nullable(),
-  "educationDetails": zod.string().nullable(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "avatarURL": zod.string().nullish(),
-  "dob": zod.string().datetime({}).optional(),
-  "gender": zod.enum(['male', 'female']).optional(),
-  "phone": zod.string().nullish(),
-  "email": zod.string().optional(),
-  "skills": zod.array(zod.object({
-  "id": zod.string(),
   "machineId": zod.string(),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
   "yearsOfExperience": zod.number(),
@@ -295,9 +278,6 @@ export const updateSkillResponse = zod.object({
   "machineNameAr": zod.string().optional(),
   "categoryNameEn": zod.string().optional(),
   "categoryNameAr": zod.string().optional()
-})).optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
 }).optional()
 }))
 

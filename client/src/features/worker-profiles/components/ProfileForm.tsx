@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input, Button, Textarea, CountryCitySelect, Select } from '@/shared/components/ui';
-import { useCreateProfile, useUpdateWorkerProfile } from '@/shared/api/generated/worker-profiles/worker-profiles';
+import { useCreateWorkerProfile, useUpdateWorkerProfile } from "@/features/worker-profiles/api/useProfileMutations";
 import { toast } from 'sonner';
 import { WorkerProfile } from '@/shared/api/generated/model';
 import { FormError } from '@/shared/components/ui/FormError';
@@ -29,7 +29,7 @@ interface ProfileFormProps {
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess }) => {
-  const createProfileMutation = useCreateProfile();
+  const createProfileMutation = useCreateWorkerProfile();
   const updateProfileMutation = useUpdateWorkerProfile();
 
   const {

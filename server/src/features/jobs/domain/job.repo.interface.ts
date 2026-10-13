@@ -40,7 +40,7 @@ export type FindJobsFilters = {
 export interface IJobRepository {
   create(params: CreateJobParams, tx?: EntityManager): Promise<Job>;
   findById(id: string): Promise<Job | null>;
-  findByCompanyId(companyId: string): Promise<Job[]>;
+  exists(id: string, companyId?: string): Promise<boolean>;
   countActiveByCompanyId(
     companyId: string,
     tx?: EntityManager,
@@ -49,6 +49,11 @@ export interface IJobRepository {
     options: PageOptionsDto,
     filters?: FindJobsFilters,
   ): Promise<PaginatedResult<Job>>;
-  update(id: string, params: Partial<CreateJobParams>): Promise<Job | null>;
+  update(id: string, params: Partial<CreateJobParams>): Promise<void>;
+  updateReturning(
+    id: string,
+    params: Partial<CreateJobParams>,
+    companyId?: string,
+  ): Promise<Job | null>;
   delete(id: string): Promise<boolean>;
 }

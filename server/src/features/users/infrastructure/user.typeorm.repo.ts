@@ -63,8 +63,18 @@ export class UserTypeormRepository implements IUserRepository {
     userId: string,
     data: Partial<User>,
   ): Promise<User | null> {
-    await this.repository.update(userId, data);
-    return this.findById(userId);
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(UserOrmEntity)
+      .set(data)
+      .where('id = :userId', { userId })
+      .returning('*')
+      .execute();
+
+    const rawRows = result.raw as Record<string, any>[];
+    if (!rawRows || !rawRows[0]) return null;
+
+    return this.mapToDomain(rawRows[0] as UserOrmEntity);
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {

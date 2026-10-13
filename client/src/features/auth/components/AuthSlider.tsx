@@ -1,32 +1,54 @@
 "use client";
 
-import  { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { MdPrecisionManufacturing, MdArrowForward } from "react-icons/md";
 import { Button } from "@/shared/components/ui";
 
-export const AuthSlider= () => {
-  const [mode, setMode] = useState<"login" | "register">("login");
+export const AuthSlider = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const initialMode =
+    searchParams.get("mode") === "register" ? "register" : "login";
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
+
+  // Sync state with URL without triggering a full page reload if needed
+  useEffect(() => {
+    const currentMode = searchParams.get("mode");
+    if (currentMode === "register" && mode !== "register") {
+      setMode("register");
+    } else if (currentMode !== "register" && mode === "register") {
+      setMode("login");
+    }
+  }, [searchParams]);
+
+  const handleModeChange = (newMode: "login" | "register") => {
+    setMode(newMode);
+    router.replace(`${pathname}?mode=${newMode}`, { scroll: false });
+  };
 
   const isRegister = mode === "register";
 
   return (
     <div className="flex-1 flex items-center justify-center p-4  relative z-20 w-full max-w-7xl mx-auto min-h-screen">
-      <div className="relative w-full max-w-5xl h-155 bg-card border border-border rounded-2xl shadow-2xl flex overflow-hidden lg:flex-row flex-col">
+      <div className="relative w-full max-w-5xl h-155 bg-card border border-border rounded-2xl shadow-2xl flex lg:overflow-hidden lg:flex-row flex-col">
         {/* Mobile View Toggle - hidden on lg */}
-        <div className="lg:hidden w-full flex p-4 border-b border-border bg-background">
+        <div className="lg:hidden w-full flex p-4 border-b border-border bg-background rounded-t-2xl">
           <div className="flex w-full bg-input p-1 rounded-xl gap-1">
             <Button
-              onClick={() => setMode("login")}
+              onClick={() => handleModeChange("login")}
               variant={!isRegister ? "primary" : "ghost"}
-              className="flex-1"
+              className="flex-1 "
             >
               Sign In
             </Button>
             <Button
-              onClick={() => setMode("register")}
+              onClick={() => handleModeChange("register")}
               variant={isRegister ? "primary" : "ghost"}
               className="flex-1"
             >
@@ -61,7 +83,7 @@ export const AuthSlider= () => {
                 : "opacity-100 translate-x-0 pointer-events-auto"
             }`}
           >
-            <SignupForm onSuccess={() => setMode("login")} />
+            <SignupForm onSuccess={() => handleModeChange("login")} />
           </div>
         </div>
 
@@ -75,7 +97,7 @@ export const AuthSlider= () => {
           <Image
             alt="Industrial technician operating a CNC machine on a manufacturing floor"
             className="  object-cover object-center filter brightness-[0.8] contrast-[1.12]"
-            src="/sqr_img_39.jpg"
+            src="/images/sqr_img_39.jpg"
             fill
             sizes="50vw"
             priority
@@ -84,17 +106,17 @@ export const AuthSlider= () => {
           <div className="absolute inset-0 bg-sky-950/20 mix-blend-overlay"></div>
 
           {/* Overlay Content */}
-          <div className="absolute inset-0 p-10 flex flex-col justify-between z-10">
+          <div className="absolute inset-0 p-10 flex flex-col z-10">
             {/* Top Badge */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between shrink-0">
               <span className="px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase bg-input/90 backdrop-blur-md border border-primary/40 text-primary flex items-center gap-1.5 shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                 <span>Specialized Trades</span>
               </span>
             </div>
 
-            {/* Bottom Content */}
-            <div>
+            {/* Centered Content */}
+            <div className="flex-1 flex flex-col justify-center mt-22">
               <div className="p-5 rounded-2xl bg-card/90 backdrop-blur-md border border-border/80 mb-4 shadow-xl">
                 <div className="flex items-center gap-2 mb-2 text-primary">
                   <MdPrecisionManufacturing className="text-base" />
@@ -104,7 +126,7 @@ export const AuthSlider= () => {
                 </div>
                 <h3 className="font-headline text-xl text-foreground leading-tight">
                   {isRegister
-                    ? 'Filter talent by the exact machinery and control systems on your factory floor.'
+                    ? "Filter talent by the exact machinery and control systems on your factory floor."
                     : "Stop re-writing your resume. Let your hands-on machine experience do the talking."}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
@@ -114,7 +136,9 @@ export const AuthSlider= () => {
                 </p>
               </div>
               <Button
-                onClick={() => setMode(isRegister ? "login" : "register")}
+                onClick={() =>
+                  handleModeChange(isRegister ? "login" : "register")
+                }
                 variant="primary"
                 fullWidth
                 rightIcon={<MdArrowForward className="text-sm" />}

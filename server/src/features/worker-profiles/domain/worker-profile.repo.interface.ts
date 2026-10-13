@@ -28,6 +28,7 @@ export type UpdateMachineSkillParams = Partial<
 >;
 export interface WorkerProfileRepositoryInterface {
   findByUserId(userId: string): Promise<WorkerProfile | null>;
+  existsByUserId(userId: string): Promise<boolean>;
   findById(id: string): Promise<WorkerProfile | null>;
 
   create(data: CreateWorkerProfileParams): Promise<WorkerProfile>;
@@ -42,7 +43,11 @@ export interface WorkerProfileRepositoryInterface {
     params: AddMachineSkillParams,
   ): Promise<WorkerMachineSkill>;
 
-  updateSkill(skillId: string, params: UpdateMachineSkillParams): Promise<void>;
+  updateSkill(
+    skillId: string,
+    params: UpdateMachineSkillParams,
+    profileId: string,
+  ): Promise<WorkerMachineSkill | null>;
   deleteSkill(skillId: string): Promise<void>;
 
   getProfileId(userId: string): Promise<string | null>;

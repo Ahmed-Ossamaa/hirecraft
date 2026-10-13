@@ -15,6 +15,8 @@ export interface JobApplication {
   coverLetter?: string;
   jobTitle?: string;
   workerTitle?: string;
+  companyId?: string;
+  companyName?: string;
   createdAt: string;
   updatedAt: string;
   applicantName?: string;
