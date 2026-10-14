@@ -23,10 +23,8 @@ export const JobsFilter: React.FC = () => {
 
   // states
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [countryCode, setCountryCode] = useState(
-    searchParams.get("country") || "",
-  );
-  const [cityName, setCityName] = useState(searchParams.get("city") || "");
+  const [country, setCountry] = useState(searchParams.get("country") || "");
+  const [city, setCity] = useState(searchParams.get("city") || "");
   const [expLevel, setExpLevel] = useState(
     searchParams.get("experienceLevel") || "",
   );
@@ -70,8 +68,8 @@ export const JobsFilter: React.FC = () => {
     setSearch(currentSearch);
     debouncedUpdateSearch.cancel();
 
-    setCountryCode(searchParams.get("country") || "");
-    setCityName(searchParams.get("city") || "");
+    setCountry(searchParams.get("country") || "");
+    setCity(searchParams.get("city") || "");
     setExpLevel(searchParams.get("experienceLevel") || "");
     setYearsOfExp(searchParams.get("yearsOfExperience") || "");
     setJobType(searchParams.get("jobType") || "");
@@ -89,13 +87,13 @@ export const JobsFilter: React.FC = () => {
   };
 
   const handleCountryChange = (val: string) => {
-    setCountryCode(val);
-    setCityName("");
+    setCountry(val);
+    setCity("");
     updateQueryParams({ country: val, city: undefined });
   };
 
   const handleCityChange = (val: string) => {
-    setCityName(val);
+    setCity(val);
     updateQueryParams({ city: val });
   };
 
@@ -119,8 +117,8 @@ export const JobsFilter: React.FC = () => {
 
   const handleClearFilters = () => {
     setSearch("");
-    setCountryCode("");
-    setCityName("");
+    setCountry("");
+    setCity("");
     setExpLevel("");
     setYearsOfExp("");
     setJobType("");
@@ -130,7 +128,7 @@ export const JobsFilter: React.FC = () => {
   };
 
   const hasActiveFilters = Boolean(
-    search || countryCode || cityName || expLevel || yearsOfExp || jobType,
+    search || country || city || expLevel || yearsOfExp || jobType,
   );
 
   const expLevelOptions = [
@@ -185,8 +183,8 @@ export const JobsFilter: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* Country & City */}
         <CountryCitySelect
-          countryCode={countryCode}
-          cityName={cityName}
+          country={country}
+          city={city}
           onCountryChange={handleCountryChange}
           onCityChange={handleCityChange}
           allCountriesOptionLabel="All Countries"

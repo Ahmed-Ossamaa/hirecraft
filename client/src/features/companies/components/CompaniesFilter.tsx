@@ -21,10 +21,8 @@ export const CompaniesFilter: React.FC = () => {
   // states
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [industry, setIndustry] = useState(searchParams.get("industry") || "");
-  const [countryCode, setCountryCode] = useState(
-    searchParams.get("country") || "",
-  );
-  const [cityName, setCityName] = useState(searchParams.get("city") || "");
+  const [country, setCountry] = useState(searchParams.get("country") || "");
+  const [city, setCity] = useState(searchParams.get("city") || "");
 
   // Debounced search
   const debouncedUpdateSearch = useDebouncedCallback((val: string) => {
@@ -62,8 +60,8 @@ export const CompaniesFilter: React.FC = () => {
     debouncedUpdateSearch.cancel();
 
     setIndustry(searchParams.get("industry") || "");
-    setCountryCode(searchParams.get("country") || "");
-    setCityName(searchParams.get("city") || "");
+    setCountry(searchParams.get("country") || "");
+    setCity(searchParams.get("city") || "");
   }, [searchParams, debouncedUpdateSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,28 +82,28 @@ export const CompaniesFilter: React.FC = () => {
   };
 
   const handleCountryChange = (newCountry: string) => {
-    setCountryCode(newCountry);
-    setCityName("");
+    setCountry(newCountry);
+    setCity("");
     updateQueryParams({ country: newCountry, city: undefined });
   };
 
   const handleCityChange = (newCity: string) => {
-    setCityName(newCity);
+    setCity(newCity);
     updateQueryParams({ city: newCity });
   };
 
   const handleClearFilters = () => {
     setSearch("");
     setIndustry("");
-    setCountryCode("");
-    setCityName("");
+    setCountry("");
+    setCity("");
     startTransition(() => {
       router.push(pathname, { scroll: false });
     });
   };
 
   const hasActiveFilters = Boolean(
-    search || industry || countryCode || cityName,
+    search || industry || country || city,
   );
 
   const industryOptions = [
@@ -140,8 +138,8 @@ export const CompaniesFilter: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* Country & City Dropdowns */}
         <CountryCitySelect
-          countryCode={countryCode}
-          cityName={cityName}
+          country={country}
+          city={city}
           onCountryChange={handleCountryChange}
           onCityChange={handleCityChange}
           allCountriesOptionLabel="All Countries"

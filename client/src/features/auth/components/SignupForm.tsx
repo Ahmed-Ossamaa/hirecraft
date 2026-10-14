@@ -313,10 +313,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               <CountryCitySelect
                 countryLabel="Country"
                 cityLabel="City"
-                countryCode={selectedCountry}
-                cityName={selectedCity}
-                onCountryChange={(code) =>
-                  setValue("companyData.country", code, {
+                country={selectedCountry}
+                city={selectedCity}
+                onCountryChange={(country) =>
+                  setValue("companyData.country", country, {
                     shouldValidate: true,
                   })
                 }
