@@ -17,6 +17,9 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/role.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { UserType } from '../users/domain/user-type.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
@@ -27,7 +30,8 @@ import { SavedJobResponseDto } from './dto/saved-job-response.dto';
 
 @ApiTags('Saved Jobs')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserType.CANDIDATE)
 @Controller('me/saved-jobs')
 export class SavedJobsController {
   constructor(private readonly savedJobsService: SavedJobsService) {}
