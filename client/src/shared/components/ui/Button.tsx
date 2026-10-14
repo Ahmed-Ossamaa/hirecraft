@@ -25,7 +25,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           },
           // Variants
           {
-            "bg-primary hover:bg-primary-hover disabled:hover:bg-primary text-background shadow-lg shadow-primary/30": variant === 'primary',
+            "bg-primary hover:bg-primary-hover disabled:hover:bg-primary text-background shadow-md shadow-primary/30": variant === 'primary',
             "bg-card-hover hover:bg-border disabled:hover:bg-card-hover text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground border border-border shadow-sm": variant === 'secondary',
             "bg-transparent border border-primary text-primary hover:bg-primary/10 disabled:hover:bg-transparent shadow-sm": variant === 'outline',
             "text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground hover:bg-card-hover disabled:hover:bg-transparent py-2 px-3 gap-1.5 text-xs rounded-lg": variant === 'ghost',

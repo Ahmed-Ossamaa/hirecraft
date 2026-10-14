@@ -65,7 +65,7 @@ export const ApplicationsList: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
                   <h3 className="font-headline font-semibold text-xs sm:text-base md:text-lg text-foreground hover:text-primary transition-colors wrap-break-word">
-                    <Link href={`/jobs?jobid=${app.jobId}`}>
+                    <Link href={`/jobs?jobId=${app.jobId}`}>
                       {app.jobTitle || "Job Application"}
                     </Link>
                   </h3>

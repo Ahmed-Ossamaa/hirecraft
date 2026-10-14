@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   MdPerson,
   MdWorkOutline,
+  MdBookmarkBorder,
   MdBusiness,
   MdGroup,
   MdPostAdd,
@@ -34,6 +35,11 @@ const candidateNav: NavItem[] = [
     label: "Applications",
     href: "/dashboard/applications",
     icon: <MdWorkOutline className="text-lg" />,
+  },
+  {
+    label: "Saved Jobs",
+    href: "/dashboard/saved-jobs",
+    icon: <MdBookmarkBorder className="text-lg" />,
   },
   {
     label: "Browse Jobs",
