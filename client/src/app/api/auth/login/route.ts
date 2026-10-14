@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import {
+  AUTH_COOKIES,
+  AUTH_COOKIE_MAX_AGE,
+  getAuthCookieOptions,
+} from '@/shared/constants/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -37,32 +42,26 @@ export async function POST(request: Request) {
 
     // Set the three cookies on the Next.js domain
     if (accessToken) {
-      nextResponse.cookies.set('access_token', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-      });
+      nextResponse.cookies.set(
+        AUTH_COOKIES.ACCESS_TOKEN,
+        accessToken,
+        getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.ACCESS_TOKEN)
+      );
     }
 
     if (refreshToken) {
-      nextResponse.cookies.set('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-      });
+      nextResponse.cookies.set(
+        AUTH_COOKIES.REFRESH_TOKEN,
+        refreshToken,
+        getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.REFRESH_TOKEN)
+      );
     }
 
-    nextResponse.cookies.set('hasSession', 'true', {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-    });
+    nextResponse.cookies.set(
+      AUTH_COOKIES.HAS_SESSION,
+      'true',
+      getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.HAS_SESSION, false)
+    );
 
     return nextResponse;
   } catch (error) {

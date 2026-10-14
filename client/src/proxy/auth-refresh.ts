@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isTokenExpired } from './jwt-utils';
 import { updateCookieHeader, redirectToAuthAndClearCookies } from './cookie-utils';
+import {
+  AUTH_COOKIES,
+  AUTH_COOKIE_MAX_AGE,
+  getAuthCookieOptions,
+} from '@/shared/constants/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -11,7 +16,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
  * @returns null if the token is still valid and no refresh is needed.
  */
 export async function handleSilentRefresh(request: NextRequest): Promise<NextResponse | null> {
-  const accessToken = request.cookies.get('access_token')?.value;
+  const accessToken = request.cookies.get(AUTH_COOKIES.ACCESS_TOKEN)?.value;
 
   // If access_token exists and is NOT expired, proceed without refreshing
   if (accessToken && !isTokenExpired(accessToken)) {
@@ -19,7 +24,7 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
   }
 
   // Access token is missing or expired -> attempt refresh using refresh_token
-  const refreshToken = request.cookies.get('refresh_token')?.value;
+  const refreshToken = request.cookies.get(AUTH_COOKIES.REFRESH_TOKEN)?.value;
 
   if (!refreshToken) {
     return redirectToAuthAndClearCookies(request);
@@ -30,7 +35,7 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `refresh_token=${refreshToken}`,
+        Cookie: `${AUTH_COOKIES.REFRESH_TOKEN}=${refreshToken}`,
       },
     });
 
@@ -58,14 +63,14 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
       }
     }
 
-    //  Prepare request headers
+    // Prepare request headers
     const requestHeaders = new Headers(request.headers);
     let cookieHeaderString = request.headers.get('cookie') || '';
-    cookieHeaderString = updateCookieHeader(cookieHeaderString, 'access_token', newAccessToken);
+    cookieHeaderString = updateCookieHeader(cookieHeaderString, AUTH_COOKIES.ACCESS_TOKEN, newAccessToken);
     if (newRefreshToken !== refreshToken) {
-      cookieHeaderString = updateCookieHeader(cookieHeaderString, 'refresh_token', newRefreshToken);
+      cookieHeaderString = updateCookieHeader(cookieHeaderString, AUTH_COOKIES.REFRESH_TOKEN, newRefreshToken);
     }
-    cookieHeaderString = updateCookieHeader(cookieHeaderString, 'hasSession', 'true');
+    cookieHeaderString = updateCookieHeader(cookieHeaderString, AUTH_COOKIES.HAS_SESSION, 'true');
     requestHeaders.set('cookie', cookieHeaderString);
 
     // Create response with updated request headers for current SSR render
@@ -76,33 +81,25 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
     });
 
     // Set cookies on response for client browser persistence
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    response.cookies.set('access_token', newAccessToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60,
-    });
+    response.cookies.set(
+      AUTH_COOKIES.ACCESS_TOKEN,
+      newAccessToken,
+      getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.ACCESS_TOKEN)
+    );
 
     if (newRefreshToken !== refreshToken) {
-      response.cookies.set('refresh_token', newRefreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 30 * 24 * 60 * 60,
-      });
+      response.cookies.set(
+        AUTH_COOKIES.REFRESH_TOKEN,
+        newRefreshToken,
+        getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.REFRESH_TOKEN)
+      );
     }
 
-    response.cookies.set('hasSession', 'true', {
-      httpOnly: false,
-      secure: isProduction,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60,
-    });
+    response.cookies.set(
+      AUTH_COOKIES.HAS_SESSION,
+      'true',
+      getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.HAS_SESSION, false)
+    );
 
     return response;
   } catch (error) {
