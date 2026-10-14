@@ -12,7 +12,6 @@ import {
   MdKeyboardArrowDown,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { useLogout } from "@/shared/api/generated/auth/auth";
 import { toast } from "sonner";
 
 interface UserDropdownProps {
@@ -27,7 +26,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const router = useRouter();
 
   const { user, clearAuth } = useAuthStore();
-  const logoutMutation = useLogout();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,15 +42,23 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   }, []);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
-      await logoutMutation.mutateAsync();
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
       clearAuth();
       setIsDropdownOpen(false);
       router.push("/");
+      router.refresh();
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Failed to logout");
+      clearAuth();
+      router.push("/");
+      toast.error("Failed to logout cleanly");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -152,7 +159,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
           <div className="border-t border-border/50 py-1">
             <button
               onClick={handleLogout}
-              disabled={logoutMutation.isPending}
+              disabled={isLoggingOut}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
             >
               <MdLogout className="text-[16px]" />

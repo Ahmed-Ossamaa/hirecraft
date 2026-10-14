@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { setClientCookie, removeClientCookie } from "../lib/cookies";
 import { User } from "../api/generated/model";
+import { AUTH_COOKIES } from "../constants/auth";
 
 interface AuthState {
   user: User | null;
@@ -20,7 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
 
   setAuth: (user = null, orgId = null, role = null) => {
-    setClientCookie("hasSession", "true");
+    setClientCookie(AUTH_COOKIES.HAS_SESSION, "true");
     set({
       user,
       organizationId: orgId,
@@ -38,7 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: () => {
-    removeClientCookie("hasSession");
+    removeClientCookie(AUTH_COOKIES.HAS_SESSION);
     set({
       user: null,
       organizationId: null,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { AUTH_COOKIES } from '@/shared/constants/auth';
 
 /**
  * Helper to update or insert a specific cookie in a Cookie header string.
@@ -31,9 +32,9 @@ export function redirectToAuthAndClearCookies(request: NextRequest): NextRespons
   const response = NextResponse.redirect(loginUrl);
 
   // Clear auth cookies to ensure clean state and prevent infinite loops
-  response.cookies.delete('access_token');
-  response.cookies.delete('refresh_token');
-  response.cookies.delete('hasSession');
+  response.cookies.delete(AUTH_COOKIES.ACCESS_TOKEN);
+  response.cookies.delete(AUTH_COOKIES.REFRESH_TOKEN);
+  response.cookies.delete(AUTH_COOKIES.HAS_SESSION);
 
   return response;
 }

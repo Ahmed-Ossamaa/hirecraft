@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../stores/auth-store";
 import { customAxiosInstance } from "../api/axios-instance";
 import { User } from "../api/generated/model";
+import { AUTH_COOKIES } from "../constants/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -11,7 +12,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const hasSession = document.cookie.includes("hasSession=true");
+      const hasSession = document.cookie.includes(`${AUTH_COOKIES.HAS_SESSION}=true`);
 
       if (hasSession && !isAuthenticated) {
         try {

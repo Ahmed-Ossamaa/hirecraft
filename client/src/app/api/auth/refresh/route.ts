@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import {
+  AUTH_COOKIES,
+  AUTH_COOKIE_MAX_AGE,
+  getAuthCookieOptions,
+} from '@/shared/constants/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export async function POST() {
   const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refresh_token')?.value;
+  const refreshToken = cookieStore.get(AUTH_COOKIES.REFRESH_TOKEN)?.value;
 
   if (!refreshToken) {
     return NextResponse.json({ message: 'No refresh token' }, { status: 401 });
@@ -16,7 +21,7 @@ export async function POST() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': `refresh_token=${refreshToken}`,
+        'Cookie': `${AUTH_COOKIES.REFRESH_TOKEN}=${refreshToken}`,
       },
     });
 
@@ -36,26 +41,22 @@ export async function POST() {
     const nextResponse = NextResponse.json(authData);
 
     // Set new access_token cookie
-    nextResponse.cookies.set('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60, // 7 days (or match token expiry)
-    });
+    nextResponse.cookies.set(
+      AUTH_COOKIES.ACCESS_TOKEN,
+      accessToken,
+      getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.ACCESS_TOKEN)
+    );
 
     // Check if backend returned a new refresh_token in headers
     const setCookieHeader = response.headers.get('set-cookie');
     if (setCookieHeader) {
       const refreshTokenMatch = setCookieHeader.match(/refresh_token=([^;]+)/);
       if (refreshTokenMatch && refreshTokenMatch[1]) {
-        nextResponse.cookies.set('refresh_token', refreshTokenMatch[1], {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 30 * 24 * 60 * 60, // 30 days
-        });
+        nextResponse.cookies.set(
+          AUTH_COOKIES.REFRESH_TOKEN,
+          refreshTokenMatch[1],
+          getAuthCookieOptions(AUTH_COOKIE_MAX_AGE.REFRESH_TOKEN)
+        );
       }
     }
 

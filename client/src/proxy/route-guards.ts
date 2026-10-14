@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { AUTH_COOKIES } from '@/shared/constants/auth';
 
 const PROTECTED_PREFIXES = [
   '/dashboard',
@@ -19,7 +20,7 @@ const AUTH_PREFIXES = [
 
 export function handleRouteGuards(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl;
-  const hasSession = request.cookies.get('hasSession')?.value === 'true';
+  const hasSession = request.cookies.get(AUTH_COOKIES.HAS_SESSION)?.value === 'true';
 
   const isProtectedRoute = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
