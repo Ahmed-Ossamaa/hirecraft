@@ -22,6 +22,7 @@ import plansConfig from './config/plans.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BillingModule } from './features/billing/billing.module';
 import { AdminModule } from './features/admin/admin.module';
+import { SavedJobsModule } from './features/saved-jobs/saved-jobs.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AdminModule } from './features/admin/admin.module';
     WorkerProfilesModule,
     BillingModule,
     AdminModule,
+    SavedJobsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -72,13 +72,13 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
           <Input 
             label="First Name *"
             {...register('firstName')} 
-            placeholder="Jane" 
+            placeholder="Ahmed" 
             error={errors.firstName?.message}
           />
           <Input 
             label="Last Name *"
             {...register('lastName')} 
-            placeholder="Doe" 
+            placeholder="Ossama" 
             error={errors.lastName?.message}
           />
         </div>
