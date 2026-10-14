@@ -132,8 +132,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
           <CountryCitySelect
             countryLabel="Country"
             cityLabel="City"
-            countryCode={country}
-            cityName={city}
+            country={country}
+            city={city}
             onCountryChange={(val) => {
               setValue('country', val, { shouldValidate: true });
               setValue('city', '', { shouldValidate: true }); // reset city on country change

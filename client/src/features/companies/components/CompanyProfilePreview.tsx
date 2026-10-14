@@ -10,22 +10,27 @@ import {
   MdLanguage,
   MdDateRange,
   MdStars,
+  MdArrowForward,
 } from "react-icons/md";
-import { CollapsibleText } from "@/shared/components/ui";
+import { CollapsibleText, Button } from "@/shared/components/ui";
 import { PublicJobCard } from "@/features/jobs/components/PublicJobCard";
 import Image from "next/image";
+import Link from "next/link";
 
 interface CompanyProfilePreviewProps {
   company: Company;
   jobs?: Job[];
+  totalJobs?: number;
   hideTopMargin?: boolean;
 }
 
 export const CompanyProfilePreview = ({
   company,
   jobs = [],
+  totalJobs,
   hideTopMargin = false,
 }: CompanyProfilePreviewProps) => {
+  const displayTotal = totalJobs ?? jobs.length;
   return (
     <div
       className={`bg-background pb-20 ${hideTopMargin ? "" : "min-h-screen"}`}
@@ -43,7 +48,7 @@ export const CompanyProfilePreview = ({
             sizes="100vw"
           />
         ) : (
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
+          <div className="w-full h-full bg-company-cover opacity-80" />
         )}
       </div>
 
@@ -216,12 +221,27 @@ export const CompanyProfilePreview = ({
         {jobs.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-headline font-semibold text-foreground">
-                Open Positions
-              </h2>
-              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                {jobs.length} Job{jobs.length !== 1 ? "s" : ""}
-              </span>
+              <div>
+                <h2 className="text-2xl font-headline font-semibold text-foreground">
+                  Recent Open Positions
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Showing {jobs.length} of {displayTotal}{" "}
+                  {displayTotal === 1 ? "opening" : "openings"}
+                </p>
+              </div>
+
+              {displayTotal > jobs.length && (
+                <Link href={`/jobs?companyId=${company.id}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    rightIcon={<MdArrowForward className="text-xs" />}
+                  >
+                    View All ({displayTotal})
+                  </Button>
+                </Link>
+              )}
             </div>
 
             <div className="space-y-4">

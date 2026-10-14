@@ -25,6 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  FindAllCompanies200,
+  FindAllCompaniesParams,
   GetCompanyById200,
   GetMyCompany200,
   RemoveCover200,
@@ -41,6 +43,99 @@ import { customAxiosInstance } from '../../axios-instance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Get all companies paginated with filters (Public)
+ */
+export const findAllCompanies = (
+    params?: FindAllCompaniesParams,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<FindAllCompanies200>(
+      {url: `/api/v1/companies`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getFindAllCompaniesQueryKey = (params?: FindAllCompaniesParams,) => {
+    return [
+    `/api/v1/companies`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getFindAllCompaniesQueryOptions = <TData = Awaited<ReturnType<typeof findAllCompanies>>, TError = unknown>(params?: FindAllCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getFindAllCompaniesQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof findAllCompanies>>> = ({ signal }) => findAllCompanies(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type FindAllCompaniesQueryResult = NonNullable<Awaited<ReturnType<typeof findAllCompanies>>>
+export type FindAllCompaniesQueryError = unknown
+
+
+export function useFindAllCompanies<TData = Awaited<ReturnType<typeof findAllCompanies>>, TError = unknown>(
+ params: undefined |  FindAllCompaniesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof findAllCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof findAllCompanies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFindAllCompanies<TData = Awaited<ReturnType<typeof findAllCompanies>>, TError = unknown>(
+ params?: FindAllCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof findAllCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof findAllCompanies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useFindAllCompanies<TData = Awaited<ReturnType<typeof findAllCompanies>>, TError = unknown>(
+ params?: FindAllCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get all companies paginated with filters (Public)
+ */
+
+export function useFindAllCompanies<TData = Awaited<ReturnType<typeof findAllCompanies>>, TError = unknown>(
+ params?: FindAllCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAllCompanies>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getFindAllCompaniesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
 
 
 

@@ -9,6 +9,54 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Get all companies paginated with filters (Public)
+ */
+export const findAllCompaniesQueryOrderDefault = "DESC";export const findAllCompaniesQueryPageDefault = 1;
+
+export const findAllCompaniesQueryLimitDefault = 10;
+export const findAllCompaniesQueryLimitMax = 100;
+
+
+
+export const findAllCompaniesQueryParams = zod.object({
+  "search": zod.string().optional().describe('Search company by name\/title'),
+  "industry": zod.string().optional().describe('Filter by exact industry sector'),
+  "country": zod.string().optional().describe('Filter by exact country code or name'),
+  "city": zod.string().optional().describe('Filter by exact city name'),
+  "sortBy": zod.string().optional(),
+  "order": zod.enum(['ASC', 'DESC']).default(findAllCompaniesQueryOrderDefault),
+  "page": zod.number().min(1).default(findAllCompaniesQueryPageDefault),
+  "limit": zod.number().min(1).max(findAllCompaniesQueryLimitMax).default(findAllCompaniesQueryLimitDefault)
+})
+
+export const findAllCompaniesResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "data": zod.array(zod.object({
+
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number(),
+  "totalPages": zod.number()
+}).and(zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "coverUrl": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "country": zod.string().nullish(),
+  "city": zod.string().nullish()
+})).optional()
+})).optional()
+}))
+
+/**
  * @summary Get details of my company
  */
 export const getMyCompanyResponse = zod.object({

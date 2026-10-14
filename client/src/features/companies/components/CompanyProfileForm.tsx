@@ -198,9 +198,9 @@ export const CompanyProfileForm: React.FC<CompanyProfileProps> = ({ initialData,
             <CountryCitySelect
               countryLabel="Country"
               cityLabel="City"
-              countryCode={selectedCountry}
-              cityName={selectedCity}
-              onCountryChange={(code) => setValue("country", code, { shouldValidate: true })}
+              country={selectedCountry}
+              city={selectedCity}
+              onCountryChange={(country) => setValue("country", country, { shouldValidate: true })}
               onCityChange={(city) => setValue("city", city, { shouldValidate: true })}
               countryError={errors.country?.message}
               cityError={errors.city?.message}

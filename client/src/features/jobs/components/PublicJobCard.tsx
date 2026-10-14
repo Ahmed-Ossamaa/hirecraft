@@ -11,7 +11,7 @@ interface PublicJobCardProps {
 export const PublicJobCard: React.FC<PublicJobCardProps> = ({ job }) => {
   return (
     <Link
-      href={`/jobs?${job.id}`}
+      href={`/jobs?jobId=${job.id}`}
       className="block bg-card rounded-2xl border border-border shadow-sm hover:border-primary/50 hover:shadow-md transition-all p-5"
     >
       <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">

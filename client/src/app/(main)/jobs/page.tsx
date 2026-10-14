@@ -1,8 +1,14 @@
-import  { Suspense } from "react";
+import { Suspense } from "react";
+import type { Metadata } from "next";
 import { JobsView } from "@/features/jobs/components/JobsView";
 import { getJobs } from "@/features/jobs/api/getJobs";
-
 import { FindAllParams } from "@/shared/api/generated/model";
+
+export const metadata: Metadata = {
+  title: "Explore Jobs | Technically",
+  description:
+    "Discover manufacturing, machining, and technical jobs with industrial employers. Find opportunities that match your skills.",
+};
 
 interface JobsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -10,15 +16,41 @@ interface JobsPageProps {
 
 export default async function JobsPage(props: JobsPageProps) {
   const searchParams = await props.searchParams;
-  const allowedStringKeys = ['search', 'experienceLevel', 'jobType', 'country', 'city', 'companyId', 'order'] as const;
+  const allowedStringKeys = [
+    "search",
+    "experienceLevel",
+    "jobType",
+    "country",
+    "city",
+    "companyId",
+    "order",
+  ] as const;
   const apiParams: FindAllParams = {};
-  
+
   allowedStringKeys.forEach((key) => {
-    if (searchParams[key]) apiParams[key] = searchParams[key] as any;
+    const val = searchParams[key];
+    if (typeof val === "string" && val.trim() !== "") {
+      apiParams[key] = val.trim() as any;
+    }
   });
-  if (searchParams.page) apiParams.page = Number(searchParams.page);
-  if (searchParams.limit) apiParams.limit = Number(searchParams.limit);
-  if (searchParams.yearsOfExperience) apiParams.yearsOfExperience = Number(searchParams.yearsOfExperience);
+  if (searchParams.page) {
+    const pageNum = Number(searchParams.page);
+    if (!isNaN(pageNum) && pageNum > 0) {
+      apiParams.page = pageNum;
+    }
+  }
+  if (searchParams.limit) {
+    const limitNum = Number(searchParams.limit);
+    if (!isNaN(limitNum) && limitNum > 0) {
+      apiParams.limit = limitNum;
+    }
+  }
+  if (searchParams.yearsOfExperience) {
+    const yearsOfExperienceNum = Number(searchParams.yearsOfExperience);
+    if (!isNaN(yearsOfExperienceNum) && yearsOfExperienceNum >= 0) {
+      apiParams.yearsOfExperience = yearsOfExperienceNum;
+    }
+  }
 
   const initialData = await getJobs(apiParams);
 

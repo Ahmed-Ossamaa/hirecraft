@@ -22,6 +22,8 @@
   --color-cta-card-border: var(--cta-card-border);
   --color-cta-accent-soft: var(--cta-accent-soft);
 
+  --background-image-company-cover: var(--company-cover-gradient);
+
   --font-headline: "Newsreader", serif;
   --font-body: "Hanken Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -132,6 +134,9 @@
   --cta-employer-card: #edf5ff;
   --cta-card-border: #cfe0ff;
   --cta-accent-soft: #e0edff;
+
+  /* Company cover fallback */
+  --company-cover-gradient: linear-gradient(135deg, #2563eb 0%, #38bdf8 50%, #075985 100%);
 }
 
 .dark {
@@ -153,6 +158,9 @@
   --cta-employer-card: #101f35;
   --cta-card-border: #174775;
   --cta-accent-soft: #102e50;
+
+  /* Company cover fallback */
+  --company-cover-gradient: linear-gradient(135deg, #0d1731 0%, #1f5572 50%, #0a2f45 100%);
 }
 
 body {
@@ -175,6 +183,12 @@ body {
 .custom-scroll::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
+}
+
+/* Company cover fallback */
+.company-cover-gradient,
+.bg-company-cover {
+  background: var(--company-cover-gradient);
 }
 
 html,
