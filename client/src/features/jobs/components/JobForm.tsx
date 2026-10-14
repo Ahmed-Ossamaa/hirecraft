@@ -5,10 +5,10 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input, Button, Textarea, Select } from "@/shared/components/ui";
-import { useCreateJob } from "@/features/jobs/api/useJobMutations";
+import { useCreateJob, useUpdateJob } from "@/features/jobs/api/useJobMutations";
 import { useGetMachines } from "@/shared/api/generated/machines/machines";
 import { useGetMachineCategories } from "@/shared/api/generated/machine-categories/machine-categories";
-import { Machine, MachineCategory } from "@/shared/api/generated/model";
+import { Machine, MachineCategory, Job } from "@/shared/api/generated/model";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { MdAdd, MdDeleteOutline } from "react-icons/md";
@@ -16,7 +16,7 @@ import { FormError } from "@/shared/components/ui/FormError";
 import { getApiError } from "@/shared/utils/error";
 import { CountryCitySelect } from "@/shared/components/ui/CountryCitySelect";
 
-const createJobSchema = z.object({
+const jobSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(255),
   description: z.string().min(10, "Description must be at least 10 characters"),
   categoryId: z.string().min(1, "Machine category is required"),
@@ -34,11 +34,18 @@ const createJobSchema = z.object({
     .optional(),
 });
 
-type CreateJobFormData = z.infer<typeof createJobSchema>;
+type JobFormData = z.infer<typeof jobSchema>;
 
-export const CreateJobForm: React.FC = () => {
+export interface JobFormProps {
+  initialJob?: Job;
+}
+
+export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
+  const isEdit = Boolean(initialJob);
   const router = useRouter();
   const createMutation = useCreateJob();
+  const updateMutation = useUpdateJob();
+
   const { data: categoriesRes, isLoading: isLoadingCategories } = useGetMachineCategories({ limit: 100 });
   const categories: MachineCategory[] = (categoriesRes?.data?.data as any) || [];
 
@@ -55,20 +62,23 @@ export const CreateJobForm: React.FC = () => {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<CreateJobFormData>({
-    resolver: zodResolver(createJobSchema),
+  } = useForm<JobFormData>({
+    resolver: zodResolver(jobSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      categoryId: "",
-      machineId: "",
-      experienceLevel: "SKILLED",
-      jobType: "FULL_TIME",
-      country: "",
-      city: "",
-      salaryRange: "",
-      yearsOfExperience: 0,
-      requirements: [{ value: "" }],
+      title: initialJob?.title || "",
+      description: initialJob?.description || "",
+      categoryId: initialJob?.machineCategoryId || "",
+      machineId: initialJob?.machineId || "",
+      experienceLevel: (initialJob?.experienceLevel as any) || "SKILLED",
+      jobType: (initialJob?.jobType as any) || "FULL_TIME",
+      country: initialJob?.country || "",
+      city: initialJob?.city || "",
+      salaryRange: initialJob?.salaryRange || "",
+      yearsOfExperience: initialJob?.yearsOfExperience ?? 0,
+      requirements:
+        initialJob?.requirements && initialJob.requirements.length > 0
+          ? initialJob.requirements.map((r) => ({ value: r }))
+          : [{ value: "" }],
     },
   });
 
@@ -77,16 +87,35 @@ export const CreateJobForm: React.FC = () => {
     ? machines.filter((m) => m.categoryId === selectedCategoryId)
     : machines;
 
+  const isFirstRender = React.useRef(true);
+  const prevCategoryIdRef = React.useRef(initialJob?.machineCategoryId || "");
+
   React.useEffect(() => {
-    setValue("machineId", "");
-  }, [selectedCategoryId, setValue]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    if (prevCategoryIdRef.current !== selectedCategoryId) {
+      prevCategoryIdRef.current = selectedCategoryId;
+      const currentMachineId = watch("machineId");
+      if (currentMachineId) {
+        const isStillValid = machines.some(
+          (m) => m.id === currentMachineId && m.categoryId === selectedCategoryId
+        );
+        if (!isStillValid) {
+          setValue("machineId", "");
+        }
+      }
+    }
+  }, [selectedCategoryId, machines, setValue, watch]);
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "requirements",
   });
 
-  const onSubmit = async (data: CreateJobFormData) => {
+  const onSubmit = async (data: JobFormData) => {
     try {
       // Find category ID based on selected machine
       const selectedMachine = machines.find((m) => m.id === data.machineId);
@@ -104,7 +133,7 @@ export const CreateJobForm: React.FC = () => {
         jobType: data.jobType,
         country: data.country,
         city: data.city,
-        ...(data.yearsOfExperience
+        ...(data.yearsOfExperience !== undefined
           ? { yearsOfExperience: data.yearsOfExperience }
           : {}),
         ...(data.salaryRange ? { salaryRange: data.salaryRange } : {}),
@@ -112,14 +141,23 @@ export const CreateJobForm: React.FC = () => {
           data.requirements?.map((r) => r.value).filter(Boolean) || [],
       };
 
-      await createMutation.mutateAsync({ data: payload });
-      toast.success("Job posted successfully!");
+      if (isEdit && initialJob) {
+        await updateMutation.mutateAsync({
+          id: initialJob.id,
+          data: payload,
+        });
+        toast.success("Job updated successfully!");
+      } else {
+        await createMutation.mutateAsync({ data: payload });
+        toast.success("Job posted successfully!");
+      }
+
       router.push("/dashboard/company/jobs");
     } catch (error) {
-      console.error("Failed to create job:", error);
+      console.error(isEdit ? "Failed to update job:" : "Failed to create job:", error);
       setError("root", {
         type: "manual",
-        message: getApiError(error, "Failed to post job."),
+        message: getApiError(error, isEdit ? "Failed to update job." : "Failed to post job."),
       });
     }
   };
@@ -130,7 +168,31 @@ export const CreateJobForm: React.FC = () => {
         <FormError message={errors.root?.message} />
 
         <div className="space-y-4 border-b border-border/60 pb-6">
-          <h3 className="font-headline text-lg font-semibold">Basic Details</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="font-headline text-lg font-semibold">Basic Details</h3>
+            {isEdit && initialJob && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium">Status:</span>
+                <span
+                  className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-md border tracking-wide ${
+                    initialJob.status === "PUBLISHED"
+                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      : initialJob.status === "DRAFT"
+                        ? "bg-muted text-muted-foreground border-border/60"
+                        : "bg-slate-500/10 text-slate-500 border-slate-500/20"
+                  }`}
+                >
+                  {initialJob.status}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {isEdit && (
+            <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-xl p-3">
+              Job status transitions (Publish, Close, Archive) are handled through the Actions menu on the Jobs list.
+            </p>
+          )}
 
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
@@ -258,14 +320,14 @@ export const CreateJobForm: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <CountryCitySelect
-              countryCode={watch("country")}
-              cityName={watch("city")}
-              onCountryChange={(code) => {
-                setValue("country", code, { shouldValidate: true });
-                setValue("city", "", { shouldValidate: true }); // reset city on country change
+              country={watch("country")}
+              city={watch("city")}
+              onCountryChange={(val) => {
+                setValue("country", val, { shouldValidate: true });
+                setValue("city", "", { shouldValidate: true });
               }}
-              onCityChange={(city) =>
-                setValue("city", city, { shouldValidate: true })
+              onCityChange={(val) =>
+                setValue("city", val, { shouldValidate: true })
               }
               countryLabel="Country *"
               cityLabel="City *"
@@ -342,10 +404,18 @@ export const CreateJobForm: React.FC = () => {
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Posting..." : "Post Job"}
+            {isSubmitting
+              ? isEdit
+                ? "Saving..."
+                : "Posting..."
+              : isEdit
+                ? "Save Changes"
+                : "Post Job"}
           </Button>
         </div>
       </form>
     </div>
   );
 };
+
+export default JobForm;

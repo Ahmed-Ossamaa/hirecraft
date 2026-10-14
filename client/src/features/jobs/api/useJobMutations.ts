@@ -2,9 +2,11 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { 
   useCreateJob as useOrvalCreateJob, 
   useUpdateJob as useOrvalUpdateJob, 
-  getGetCompanyJobsQueryKey 
+  getGetCompanyJobsQueryKey,
+  getGetJobByIdQueryKey,
 } from "@/shared/api/generated/jobs/jobs";
 import { customAxiosInstance } from "@/shared/api/axios-instance";
+import type { GetCompanyJobs200, GetJobById200, Job, JobWithStatsDto } from "@/shared/api/generated/model";
 
 export const useCreateJob = () => {
   const queryClient = useQueryClient();
@@ -24,27 +26,39 @@ export const useUpdateJob = () => {
 
   return useOrvalUpdateJob({
     mutation: {
-      onSuccess: (response, variables) => {
-        const queries = queryClient.getQueriesData({ queryKey: getGetCompanyJobsQueryKey() });
-        queries.forEach(([queryKey, oldData]: [any, any]) => {
-          if (!oldData || !oldData.data || !oldData.data.data) return;
+      onMutate: async (variables) => {
+        // Cancel any  on the go queries to prevent overwriting optimistic updates
+        await queryClient.cancelQueries({ queryKey: getGetCompanyJobsQueryKey() });
+        await queryClient.cancelQueries({ queryKey: getGetJobByIdQueryKey(variables.id) });
+
+        // previous values
+        const previousCompanyQueries = queryClient.getQueriesData({
+          queryKey: getGetCompanyJobsQueryKey(),
+        });
+        const previousJobDetail = queryClient.getQueryData<GetJobById200>(
+          getGetJobByIdQueryKey(variables.id)
+        );
+
+        // Optimistic update company-job list caches
+        previousCompanyQueries.forEach(([queryKey, oldData]: [any, any]) => {
+          if (!oldData?.data?.data) return;
 
           const params = queryKey[1] as any;
           let newDataArray = oldData.data.data;
 
-          if (params?.status && params.status !== "ALL" && params.status !== response.data.status) {
+          if (
+            variables.data.status &&
+            params?.status &&
+            params.status !== "ALL" &&
+            params.status !== variables.data.status
+          ) {
             // Remove if it no longer matches the tab's status filter
             newDataArray = newDataArray.filter((j: any) => j.id !== variables.id);
           } else {
-            // Update it if it exists, or prepend if it should be in this tab but isn't
-            const exists = newDataArray.some((j: any) => j.id === variables.id);
-            if (exists) {
-              newDataArray = newDataArray.map((j: any) =>
-                j.id === variables.id ? { ...j, ...response.data } : j
-              );
-            } else if (!params?.page || params.page === 1) {
-              newDataArray = [response.data, ...newDataArray];
-            }
+            // Update in place if present
+            newDataArray = newDataArray.map((j: any) =>
+              j.id === variables.id ? { ...j, ...variables.data } : j
+            );
           }
 
           queryClient.setQueryData(queryKey, {
@@ -55,6 +69,48 @@ export const useUpdateJob = () => {
             },
           });
         });
+
+        //Optimistically update job-detail cache if currently cached
+        if (previousJobDetail?.data) {
+          queryClient.setQueryData(getGetJobByIdQueryKey(variables.id), (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                ...variables.data,
+              },
+            };
+          });
+        }
+
+        return { previousCompanyQueries, previousJobDetail };
+      },
+      onError: (_err, variables, context: any) => {
+        // Restore snapshots on error
+        if (context?.previousCompanyQueries) {
+          context.previousCompanyQueries.forEach(([queryKey, oldData]: [any, any]) => {
+            queryClient.setQueryData(queryKey, oldData);
+          });
+        }
+        if (context?.previousJobDetail) {
+          queryClient.setQueryData(
+            getGetJobByIdQueryKey(variables.id),
+            context.previousJobDetail
+          );
+        }
+      },
+      onSuccess: (response, variables) => {
+        // Write the server response directly to the detail cache
+        if (response?.data) {
+          queryClient.setQueryData(
+            getGetJobByIdQueryKey(variables.id),
+            response
+          );
+        }
+
+        // Invalidate company-job lists to ensure counts, pagination & sorting consistency
+        queryClient.invalidateQueries({ queryKey: getGetCompanyJobsQueryKey() });
       },
     },
   });

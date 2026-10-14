@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { CreateJobForm } from '@/features/jobs/components/CreateJobForm';
+import { JobForm } from '@/features/jobs/components/JobForm';
 import { MdAdd } from 'react-icons/md';
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default function CreateJobPage() {
         </div>
       </div>
 
-      <CreateJobForm />
+      <JobForm />
     </div>
   );
 }
