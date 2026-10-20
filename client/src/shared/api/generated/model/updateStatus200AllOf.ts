@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { JobApplication } from './jobApplication';
+import type { UpdateApplicationStatusResponseDto } from './updateApplicationStatusResponseDto';
 
 export type UpdateStatus200AllOf = {
-  data?: JobApplication;
+  data?: UpdateApplicationStatusResponseDto;
 };

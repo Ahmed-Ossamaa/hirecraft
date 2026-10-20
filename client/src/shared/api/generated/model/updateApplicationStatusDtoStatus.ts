@@ -19,5 +19,4 @@ export const UpdateApplicationStatusDtoStatus = {
   OFFER_DECLINED: 'OFFER_DECLINED',
   REJECTED: 'REJECTED',
   WITHDRAWN: 'WITHDRAWN',
-  ARCHIVED: 'ARCHIVED',
 } as const;

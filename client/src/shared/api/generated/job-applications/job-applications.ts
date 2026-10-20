@@ -29,10 +29,12 @@ import type {
   CreateJobApplicationDto,
   GetApplicationsForJob200,
   GetApplicationsForJobParams,
+  GetJobApplicationStats200,
   GetMyApplications200,
   GetMyApplicationsParams,
-  UpdateApplicationStatusDto,
-  UpdateStatus200
+  UpdateApplicationArchiveDto,
+  UpdateApplicationStarDto,
+  UpdateApplicationStatusDto
 } from '.././model';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -208,7 +210,7 @@ export const updateStatus = (
  options?: SecondParameter<typeof customAxiosInstance>,) => {
       
       
-      return customAxiosInstance<UpdateStatus200>(
+      return customAxiosInstance<void>(
       {url: `/api/v1/applications/${id}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateApplicationStatusDto
@@ -264,6 +266,226 @@ export const useUpdateStatus = <TError = unknown,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * @summary Archive or unarchive an application (Employer only)
+ */
+export const updateArchiveStatus = (
+    id: string,
+    updateApplicationArchiveDto: UpdateApplicationArchiveDto,
+ options?: SecondParameter<typeof customAxiosInstance>,) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/v1/applications/${id}/archive`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateApplicationArchiveDto
+    },
+      options);
+    }
+  
+
+
+export const getUpdateArchiveStatusMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateArchiveStatus>>, TError,{id: string;data: UpdateApplicationArchiveDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateArchiveStatus>>, TError,{id: string;data: UpdateApplicationArchiveDto}, TContext> => {
+
+const mutationKey = ['updateArchiveStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateArchiveStatus>>, {id: string;data: UpdateApplicationArchiveDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateArchiveStatus(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateArchiveStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateArchiveStatus>>>
+    export type UpdateArchiveStatusMutationBody = UpdateApplicationArchiveDto
+    export type UpdateArchiveStatusMutationError = unknown
+
+    /**
+ * @summary Archive or unarchive an application (Employer only)
+ */
+export const useUpdateArchiveStatus = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateArchiveStatus>>, TError,{id: string;data: UpdateApplicationArchiveDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateArchiveStatus>>,
+        TError,
+        {id: string;data: UpdateApplicationArchiveDto},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateArchiveStatusMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Star or unstar an application (Employer only)
+ */
+export const updateStarredStatus = (
+    id: string,
+    updateApplicationStarDto: UpdateApplicationStarDto,
+ options?: SecondParameter<typeof customAxiosInstance>,) => {
+      
+      
+      return customAxiosInstance<void>(
+      {url: `/api/v1/applications/${id}/star`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateApplicationStarDto
+    },
+      options);
+    }
+  
+
+
+export const getUpdateStarredStatusMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStarredStatus>>, TError,{id: string;data: UpdateApplicationStarDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStarredStatus>>, TError,{id: string;data: UpdateApplicationStarDto}, TContext> => {
+
+const mutationKey = ['updateStarredStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStarredStatus>>, {id: string;data: UpdateApplicationStarDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateStarredStatus(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStarredStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateStarredStatus>>>
+    export type UpdateStarredStatusMutationBody = UpdateApplicationStarDto
+    export type UpdateStarredStatusMutationError = unknown
+
+    /**
+ * @summary Star or unstar an application (Employer only)
+ */
+export const useUpdateStarredStatus = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStarredStatus>>, TError,{id: string;data: UpdateApplicationStarDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateStarredStatus>>,
+        TError,
+        {id: string;data: UpdateApplicationStarDto},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateStarredStatusMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Get application counts and aggregate analytics for a specific job (Employer only)
+ */
+export const getJobApplicationStats = (
+    jobId: string,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<GetJobApplicationStats200>(
+      {url: `/api/v1/applications/job/${jobId}/stats`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetJobApplicationStatsQueryKey = (jobId?: string,) => {
+    return [
+    `/api/v1/applications/job/${jobId}/stats`
+    ] as const;
+    }
+
+    
+export const getGetJobApplicationStatsQueryOptions = <TData = Awaited<ReturnType<typeof getJobApplicationStats>>, TError = void>(jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetJobApplicationStatsQueryKey(jobId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobApplicationStats>>> = ({ signal }) => getJobApplicationStats(jobId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(jobId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetJobApplicationStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getJobApplicationStats>>>
+export type GetJobApplicationStatsQueryError = void
+
+
+export function useGetJobApplicationStats<TData = Awaited<ReturnType<typeof getJobApplicationStats>>, TError = void>(
+ jobId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getJobApplicationStats>>,
+          TError,
+          Awaited<ReturnType<typeof getJobApplicationStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetJobApplicationStats<TData = Awaited<ReturnType<typeof getJobApplicationStats>>, TError = void>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getJobApplicationStats>>,
+          TError,
+          Awaited<ReturnType<typeof getJobApplicationStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetJobApplicationStats<TData = Awaited<ReturnType<typeof getJobApplicationStats>>, TError = void>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get application counts and aggregate analytics for a specific job (Employer only)
+ */
+
+export function useGetJobApplicationStats<TData = Awaited<ReturnType<typeof getJobApplicationStats>>, TError = void>(
+ jobId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobApplicationStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetJobApplicationStatsQueryOptions(jobId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Get all applications for a specific job (Employer only)
  */
 export const getApplicationsForJob = (

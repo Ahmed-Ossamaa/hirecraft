@@ -13,6 +13,8 @@ export interface JobApplication {
   workerProfileId: string;
   status: JobApplicationStatus;
   coverLetter?: string;
+  isArchived?: boolean;
+  isStarred?: boolean;
   jobTitle?: string;
   workerTitle?: string;
   companyId?: string;
@@ -21,4 +23,6 @@ export interface JobApplication {
   updatedAt: string;
   applicantName?: string;
   applicantEmail?: string;
+  /** @nullable */
+  applicantAvatar?: string | null;
 }
