@@ -16,7 +16,14 @@ import {
   useUpdateApplicationStar,
   useUpdateApplicationArchive,
 } from "../api/useApplicationMutations";
-import { MdPeople, MdSearch, MdClose, MdPersonOutline } from "react-icons/md";
+import {
+  MdPeople,
+  MdSearch,
+  MdClose,
+  MdPersonOutline,
+  MdArrowUpward,
+  MdArrowDownward,
+} from "react-icons/md";
 import {
   Tabs,
   TableSkeleton,
@@ -310,9 +317,13 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
                         className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
                         onClick={handleToggleSort}
                       >
-                        Applied At
-                        <span className="ml-1 text-primary">
-                          {currentOrder === "ASC" ? " ↑" : " ↓"}
+                        <span className="inline-flex items-center">
+                          Applied At
+                          {currentOrder === "ASC" ? (
+                            <MdArrowUpward className="inline-block ml-1 text-sm text-primary" />
+                          ) : (
+                            <MdArrowDownward className="inline-block ml-1 text-sm text-primary" />
+                          )}
                         </span>
                       </th>
                       <th className="px-5 py-3 font-medium">Status</th>

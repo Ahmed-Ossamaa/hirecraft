@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { useGetCompanyJobs } from "@/shared/api/generated/jobs/jobs";
 import { Button } from "@/shared/components/ui";
@@ -8,14 +9,15 @@ import {
   MdAdd,
   MdWorkOutline,
   MdSearch,
-  MdPeopleOutline,
   MdClose,
+  MdArrowUpward,
+  MdArrowDownward,
+  MdUnfoldMore,
 } from "react-icons/md";
 import Link from "next/link";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDetailsModal } from "./JobDetailsModal";
-import { JobActionMenu } from "./JobActionMenu";
+import { EmployerJobTableRow } from "./EmployerJobTableRow";
 import { EmptyState, Tabs, TableSkeleton } from "@/shared/components/ui";
 
 export const EmployerJobsList: React.FC = () => {
@@ -24,8 +26,8 @@ export const EmployerJobsList: React.FC = () => {
 
   const currentStatus = searchParams.get("status") || "ALL";
   const currentSearch = searchParams.get("search") || "";
-  const currentSortBy = searchParams.get("sortBy") || "";
-  const currentSortOrder = searchParams.get("order") || "";
+  const currentSortBy = searchParams.get("sortBy") || "date";
+  const currentSortOrder = searchParams.get("order") || "DESC";
 
   const currentPage = Number(searchParams.get("page")) || 1;
 
@@ -48,15 +50,13 @@ export const EmployerJobsList: React.FC = () => {
   const [searchValue, setSearchValue] = useState(currentSearch);
   const [selectedJob, setSelectedJob] = useState<JobWithStatsDto | null>(null);
 
-  // Debounced Search
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (searchValue !== currentSearch) {
-        updateFilters({ search: searchValue, page: 1 });
-      }
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [searchValue, currentSearch]);
+    setSearchValue(currentSearch);
+  }, [currentSearch]);
+
+  const debouncedUpdateSearch = useDebouncedCallback((val: string) => {
+    updateFilters({ search: val, page: 1 });
+  }, 400);
 
   const updateFilters = (updates: {
     status?: string;
@@ -109,9 +109,7 @@ export const EmployerJobsList: React.FC = () => {
       }
     }
 
-    
-
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleSort = (field: string) => {
@@ -129,9 +127,15 @@ export const EmployerJobsList: React.FC = () => {
 
   const SortIcon = ({ field }: { field: string }) => {
     if (currentSortBy !== field) {
-      return <span className="opacity-0 group-hover:opacity-30 ml-1">↕</span>;
+      return (
+        <MdUnfoldMore className="inline-block ml-1 text-sm text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+      );
     }
-    return <span className="ml-1 text-primary">{currentSortOrder === "ASC" ? "↑" : "↓"}</span>;
+    return currentSortOrder === "ASC" ? (
+      <MdArrowUpward className="inline-block ml-1 text-sm text-primary" />
+    ) : (
+      <MdArrowDownward className="inline-block ml-1 text-sm text-primary" />
+    );
   };
 
   return (
@@ -168,11 +172,18 @@ export const EmployerJobsList: React.FC = () => {
               placeholder="Search jobs by title or machine name"
               className="bg-transparent border-none outline-none text-sm w-full py-1.5 text-foreground placeholder:text-muted-foreground"
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              onChange={(e) => {
+                setSearchValue(e.target.value);
+                debouncedUpdateSearch(e.target.value);
+              }}
             />
             {searchValue && (
               <button
-                onClick={() => setSearchValue("")}
+                onClick={() => {
+                  setSearchValue("");
+                  debouncedUpdateSearch.cancel();
+                  updateFilters({ search: "", page: 1 });
+                }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <MdClose />
@@ -211,6 +222,7 @@ export const EmployerJobsList: React.FC = () => {
                 ? () => router.push("/dashboard/company/jobs/create")
                 : () => {
                     setSearchValue("");
+                    debouncedUpdateSearch.cancel();
                     updateFilters({ search: "", status: "ALL" });
                   }
             }
@@ -225,86 +237,43 @@ export const EmployerJobsList: React.FC = () => {
                 <th className="px-5 py-3 font-medium">
                   Job Title
                 </th>
-                <th className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors" onClick={() => handleSort('status')}>
-                  Status <SortIcon field="status" />
+                <th
+                  className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
+                  onClick={() => handleSort('status')}
+                >
+                  <span className="inline-flex items-center">
+                    Status <SortIcon field="status" />
+                  </span>
                 </th>
                 <th className="px-5 py-3 font-medium">
                   Type & Experience
                 </th>
-                <th className="px-5 py-3 font-medium text-center cursor-pointer group hover:text-foreground transition-colors" onClick={() => handleSort('applicants')}>
-                  Applicants <SortIcon field="applicants" />
+                <th
+                  className="px-5 py-3 font-medium text-center cursor-pointer group hover:text-foreground transition-colors select-none"
+                  onClick={() => handleSort('applicants')}
+                >
+                  <span className="inline-flex items-center justify-center">
+                    Applicants <SortIcon field="applicants" />
+                  </span>
                 </th>
-                <th className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors" onClick={() => handleSort('date')}>
-                  Posted <SortIcon field="date" />
+                <th
+                  className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
+                  onClick={() => handleSort('date')}
+                >
+                  <span className="inline-flex items-center">
+                    Posted <SortIcon field="date" />
+                  </span>
                 </th>
                 <th className="px-5 py-3 font-medium text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
               {jobs.map((job) => (
-                <tr
+                <EmployerJobTableRow
                   key={job.id}
-                  className="hover:bg-muted/20 transition-colors group"
-                >
-                  <td className="px-5 py-3.5 align-middle">
-                    <button
-                      onClick={() => setSelectedJob(job)}
-                      className="font-medium text-foreground hover:text-primary transition-colors text-[15px] text-left cursor-pointer"
-                    >
-                      {job.title}
-                    </button>
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      {job.machineNameEn || "General Machine"}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 align-middle">
-                    <span
-                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border tracking-wide ${
-                        job.status === "PUBLISHED"
-                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                          : job.status === "DRAFT"
-                            ? "bg-muted text-muted-foreground border-border/60"
-                            : "bg-slate-500/10 text-slate-500 border-slate-500/20"
-                      }`}
-                    >
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 align-middle text-sm text-foreground">
-                    <div className="text-foreground">{job.jobType}</div>
-                    <div className="text-muted-foreground text-xs mt-0.5">
-                      {job.experienceLevel}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 align-middle text-center">
-                    <Link
-                      href={`/dashboard/company/jobs/${job.id}/applicants`}
-                      className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline hover:text-primary/80 transition-colors"
-                    >
-                      <span className="text-base">
-                        {job.applicationCount || 0}
-                      </span>
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3.5 align-middle text-muted-foreground text-sm">
-                    {formatTimeAgo(job.createdAt)}
-                  </td>
-                  <td className="px-5 py-3.5 align-middle text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/dashboard/company/jobs/${job.id}/applicants`}
-                      >
-                        <Button
-                          size="sm"
-                          leftIcon={<MdPeopleOutline className="text-xs" />}
-                        >
-                          Applicants
-                        </Button>
-                      </Link>
-                      <JobActionMenu job={job} />
-                    </div>
-                  </td>
-                </tr>
+                  job={job}
+                  onSelect={setSelectedJob}
+                />
               ))}
             </tbody>
           </table>
