@@ -15,7 +15,7 @@ import {
   useUpdateApplicationStatus,
   useUpdateApplicationStar,
   useUpdateApplicationArchive,
-} from "../api/useApplicationMutations";
+} from "@/features/jobs/api/useApplicationMutations";
 import {
   MdPeople,
   MdSearch,

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui";

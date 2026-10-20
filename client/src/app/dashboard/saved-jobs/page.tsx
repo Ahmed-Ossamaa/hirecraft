@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SavedJobsList } from "@/features/jobs/components/SavedJobsList";
+import { SavedJobsList } from "@/features/jobs/components/public/SavedJobsList";
 
 export const metadata: Metadata = {
   title: "Saved Jobs | Technically",

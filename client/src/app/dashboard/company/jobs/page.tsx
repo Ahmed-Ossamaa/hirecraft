@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { EmployerJobsList } from "@/features/jobs/components/EmployerJobsList";
+import { EmployerJobsList } from "@/features/jobs/components/employer/EmployerJobsList";
 import { MdWork } from "react-icons/md";
 
 export const metadata: Metadata = {
