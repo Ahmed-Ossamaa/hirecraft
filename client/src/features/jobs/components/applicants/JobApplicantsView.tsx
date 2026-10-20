@@ -23,6 +23,7 @@ import {
   MdPersonOutline,
   MdArrowUpward,
   MdArrowDownward,
+  MdStar,
 } from "react-icons/md";
 import {
   Tabs,
@@ -169,14 +170,21 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
     updateFilters({ order: newOrder, page: 1 });
   };
 
-  const filterTbas = [
+  const filterTabs = [
     { id: "ALL", label: "All" },
     { id: "PENDING", label: "Pending" },
     { id: "SHORTLISTED", label: "Shortlisted" },
     { id: "SCHEDULED", label: "Scheduled" },
     { id: "OFFERED", label: "Offered" },
     { id: "CLOSED", label: "Closed" },
-    { id: "STARRED", label: "Starred ★" },
+    {
+      id: "STARRED",
+      label: (
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+          Starred <MdStar className="text-amber-400 text-sm shrink-0" />
+        </span>
+      ),
+    },
     { id: "ARCHIVED", label: "Archived" },
   ];
   return (
@@ -220,7 +228,7 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
           {/* Filter Tabs & Search */}
           <div className="space-y-4">
             <Tabs
-              tabs={filterTbas}
+              tabs={filterTabs}
               activeTab={currentTab}
               onTabChange={(id) =>
                 updateFilters({ tab: id as GetApplicationsForJobTab })
@@ -365,7 +373,7 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {totalPages >= 1 && (
             <div className="flex justify-center items-center pt-2">
               <Pagination
                 currentPage={currentPage}
