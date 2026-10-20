@@ -59,14 +59,14 @@ export const MembersList: React.FC = () => {
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleTabChange = (status: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("status", status);
     params.set("page", "1");
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleRemove = async (memberId: string, memberName?: string) => {
