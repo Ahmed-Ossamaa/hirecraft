@@ -117,66 +117,6 @@ export const updateMemberRoleBody = zod.object({
   "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']).describe('New role for the company member')
 })
 
-export const updateMemberRoleResponse = zod.object({
-  "message": zod.string(),
-  "data": zod.object({
-
-})
-}).and(zod.object({
-  "data": zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED']),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "user": zod.object({
-  "id": zod.string(),
-  "email": zod.string(),
-  "firstName": zod.string(),
-  "lastName": zod.string(),
-  "userType": zod.enum(['CANDIDATE', 'EMPLOYER', 'PLATFORM_ADMIN']),
-  "phoneNumber": zod.string(),
-  "gender": zod.enum(['male', 'female']).optional(),
-  "dob": zod.string().datetime({}).optional(),
-  "avatarURL": zod.string().nullish(),
-  "avatarPublicId": zod.string().nullish(),
-  "isBanned": zod.boolean(),
-  "isEmailVerified": zod.boolean(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-}).optional(),
-  "company": zod.object({
-  "id": zod.string(),
-  "name": zod.string(),
-  "logoUrl": zod.string().nullish(),
-  "logoPublicId": zod.string().nullish(),
-  "coverUrl": zod.string().nullish(),
-  "coverPublicId": zod.string().nullish(),
-  "description": zod.string().optional(),
-  "country": zod.string().optional(),
-  "city": zod.string().optional(),
-  "address": zod.string().optional(),
-  "email": zod.string().nullish(),
-  "phone": zod.string().nullish(),
-  "specialties": zod.array(zod.string()).nullish(),
-  "website": zod.string().nullish(),
-  "foundedYear": zod.number().nullish(),
-  "size": zod.string().optional(),
-  "industry": zod.string().optional(),
-  "paymentCustomerId": zod.string().nullish(),
-  "members": zod.array(zod.unknown()).optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-}).optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-}).optional()
-}))
-
 /**
  * @summary Remove a member from the company
  */
