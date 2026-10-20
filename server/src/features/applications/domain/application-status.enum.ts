@@ -7,7 +7,6 @@ export enum ApplicationStatus {
   OFFER_DECLINED = 'OFFER_DECLINED', //Offer letter declined by candidate
   REJECTED = 'REJECTED', // Not a fit
   WITHDRAWN = 'WITHDRAWN', //candidate withdrawn
-  ARCHIVED = 'ARCHIVED', //archived by employer
 }
 
 export enum CandidateApplicationStatus {

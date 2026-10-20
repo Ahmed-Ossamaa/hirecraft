@@ -10,6 +10,11 @@ import { JobApplicationOrmEntity } from './job-application.orm-entity';
 import { ApplicationStatus } from '../domain/application-status.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import {
+  GetJobApplicationsQueryDto,
+  ApplicationTab,
+} from '../dto/get-job-applications-query.dto';
+import { JobApplicationStatsDto } from '../dto/job-application-stats.dto';
 
 @Injectable()
 export class JobApplicationTypeormRepository implements JobApplicationRepositoryInterface {
@@ -36,14 +41,20 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       .leftJoin('app.workerProfile', 'wp')
       .addSelect(['wp.id', 'wp.title', 'wp.city', 'wp.country'])
       .leftJoin('wp.user', 'user')
-      .addSelect(['user.id', 'user.firstName', 'user.lastName', 'user.email'])
+      .addSelect([
+        'user.id',
+        'user.firstName',
+        'user.lastName',
+        'user.email',
+        'user.avatarURL',
+      ])
       .getOne();
     return application ? this.mapToDomain(application) : null;
   }
 
   async findByJobId(
     jobId: string,
-    options: PageOptionsDto,
+    options: GetJobApplicationsQueryDto,
   ): Promise<PaginatedResult<JobApplication>> {
     const qb = this.repository
       .createQueryBuilder('app')
@@ -51,10 +62,59 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       .leftJoin('app.workerProfile', 'wp')
       .addSelect(['wp.id', 'wp.title', 'wp.city', 'wp.country'])
       .leftJoin('wp.user', 'user')
-      .addSelect(['user.id', 'user.firstName', 'user.lastName', 'user.email'])
-      .orderBy('app.createdAt', options.order)
-      .skip(options.skip)
-      .take(options.limit);
+      .addSelect([
+        'user.id',
+        'user.firstName',
+        'user.lastName',
+        'user.email',
+        'user.avatarURL',
+      ]);
+
+    const tab = options.tab || ApplicationTab.ALL;
+    if (tab === ApplicationTab.ARCHIVED) {
+      qb.andWhere('app.isArchived = true');
+    } else if (tab === ApplicationTab.STARRED) {
+      qb.andWhere('app.isStarred = true');
+    } else {
+      qb.andWhere('app.isArchived = false');
+
+      if (tab === ApplicationTab.PENDING) {
+        qb.andWhere('app.status = :status', {
+          status: ApplicationStatus.PENDING,
+        });
+      } else if (tab === ApplicationTab.SHORTLISTED) {
+        qb.andWhere('app.status = :status', {
+          status: ApplicationStatus.SHORTLISTED,
+        });
+      } else if (tab === ApplicationTab.SCHEDULED) {
+        qb.andWhere('app.status = :status', {
+          status: ApplicationStatus.INTERVIEW_SCHEDULED,
+        });
+      } else if (tab === ApplicationTab.OFFERED) {
+        qb.andWhere('app.status IN (:...offered)', {
+          offered: [
+            ApplicationStatus.OFFERED,
+            ApplicationStatus.OFFER_ACCEPTED,
+            ApplicationStatus.OFFER_DECLINED,
+          ],
+        });
+      } else if (tab === ApplicationTab.CLOSED) {
+        qb.andWhere('app.status IN (:...closed)', {
+          closed: [ApplicationStatus.REJECTED, ApplicationStatus.WITHDRAWN],
+        });
+      }
+    }
+
+    if (options.search?.trim()) {
+      const prefix = `${options.search.trim().toLowerCase()}%`;
+      qb.andWhere(
+        `LOWER(user.firstName || ' ' || user.lastName) LIKE :prefix`,
+        { prefix },
+      );
+    }
+
+    qb.orderBy('app.createdAt', options.order || 'DESC');
+    qb.skip(options.skip).take(options.limit);
 
     const [applications, total] = await qb.getManyAndCount();
 
@@ -92,12 +152,57 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
     };
   }
 
-  async updateStatus(
-    id: string,
-    status: ApplicationStatus,
-  ): Promise<JobApplication | null> {
+  async updateStatus(id: string, status: ApplicationStatus): Promise<void> {
     await this.repository.update(id, { status });
-    return this.findById(id);
+  }
+
+  async updateArchiveStatus(id: string, isArchived: boolean): Promise<void> {
+    await this.repository.update(id, { isArchived });
+  }
+
+  async updateStarredStatus(id: string, isStarred: boolean): Promise<void> {
+    await this.repository.update(id, { isStarred });
+  }
+
+  async getStatsByJobId(jobId: string): Promise<JobApplicationStatsDto> {
+    const raw = await this.repository.manager
+      .createQueryBuilder(JobApplicationOrmEntity, 'app')
+      .select('COUNT(*)::int', 'total')
+      .addSelect(
+        `COUNT(*) FILTER (WHERE app."isArchived" = false AND app."status" = :pending)::int`,
+        'pending',
+      )
+      .addSelect(
+        `COUNT(*) FILTER (WHERE app."isArchived" = false AND app."status" IN (:...inProgress))::int`,
+        'inProgress',
+      )
+      .addSelect(
+        `COUNT(*) FILTER (WHERE app."isArchived" = false AND app."status" = :accepted)::int`,
+        'offersAccepted',
+      )
+      .where('app."jobId" = :jobId', {
+        jobId,
+        pending: ApplicationStatus.PENDING,
+        inProgress: [
+          ApplicationStatus.SHORTLISTED,
+          ApplicationStatus.INTERVIEW_SCHEDULED,
+          ApplicationStatus.OFFERED,
+        ],
+        accepted: ApplicationStatus.OFFER_ACCEPTED,
+      })
+      .getRawOne<{
+        total: number;
+        pending: number;
+        inProgress: number;
+        offersAccepted: number;
+      }>();
+
+    return {
+      total: Number(raw?.total || 0),
+      pending: Number(raw?.pending || 0),
+      inProgress: Number(raw?.inProgress || 0),
+      offersAccepted: Number(raw?.offersAccepted || 0),
+    };
   }
 
   async exists(jobId: string, workerProfileId: string): Promise<boolean> {
@@ -140,7 +245,15 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
   private mapToDomain(orm: JobApplicationOrmEntity): JobApplication {
     const application = new JobApplication();
 
-    Object.assign(application, orm);
+    application.id = orm.id;
+    application.jobId = orm.jobId;
+    application.workerProfileId = orm.workerProfileId;
+    application.status = orm.status;
+    application.coverLetter = orm.coverLetter;
+    application.isArchived = orm.isArchived ?? false;
+    application.isStarred = orm.isStarred ?? false;
+    application.createdAt = orm.createdAt;
+    application.updatedAt = orm.updatedAt;
 
     application.jobTitle = orm.job?.title;
     application.workerTitle = orm.workerProfile?.title;
@@ -154,6 +267,7 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       application.applicantName =
         `${orm.workerProfile.user.firstName} ${orm.workerProfile.user.lastName}`.trim();
       application.applicantEmail = orm.workerProfile.user.email;
+      application.applicantAvatar = orm.workerProfile.user.avatarURL ?? null;
     }
 
     return application;

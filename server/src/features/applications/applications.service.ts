@@ -20,6 +20,9 @@ import {
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { CandidateApplicationResponseDto } from './dto/candidate-application-response.dto';
+import { GetJobApplicationsQueryDto } from './dto/get-job-applications-query.dto';
+import { JobApplicationStatsDto } from './dto/job-application-stats.dto';
+import { EmployerApplicationResponseDto } from './dto/employer-application-response.dto';
 
 @Injectable()
 export class ApplicationsService {
@@ -83,7 +86,7 @@ export class ApplicationsService {
     applicationId: string,
     companyId: string,
     status: ApplicationStatus,
-  ): Promise<JobApplication> {
+  ): Promise<void> {
     const isOwner = await this.applicationRepo.isEmployerOwner(
       applicationId,
       companyId,
@@ -93,21 +96,61 @@ export class ApplicationsService {
         'You do not have permission to modify this application.',
       );
     }
-    const updatedApp = await this.applicationRepo.updateStatus(
+    await this.applicationRepo.updateStatus(applicationId, status);
+  }
+
+  async updateArchiveStatus(
+    applicationId: string,
+    companyId: string,
+    isArchived: boolean,
+  ): Promise<void> {
+    const isOwner = await this.applicationRepo.isEmployerOwner(
       applicationId,
-      status,
+      companyId,
     );
-    if (!updatedApp) {
-      throw new Error('Application not found');
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this application.',
+      );
     }
-    return updatedApp;
+    await this.applicationRepo.updateArchiveStatus(applicationId, isArchived);
+  }
+
+  async updateStarredStatus(
+    applicationId: string,
+    companyId: string,
+    isStarred: boolean,
+  ): Promise<void> {
+    const isOwner = await this.applicationRepo.isEmployerOwner(
+      applicationId,
+      companyId,
+    );
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this application.',
+      );
+    }
+    await this.applicationRepo.updateStarredStatus(applicationId, isStarred);
+  }
+
+  async getJobApplicationStats(
+    jobId: string,
+    companyId: string,
+  ): Promise<JobApplicationStatsDto> {
+    const isOwner = await this.jobsService.checkJobOwnership(jobId, companyId);
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to view stats for this job.',
+      );
+    }
+    return this.applicationRepo.getStatsByJobId(jobId);
   }
 
   async getApplicationsForJob(
     jobId: string,
     companyId: string,
-    options: PageOptionsDto,
-  ): Promise<PaginatedResult<JobApplication>> {
+    options: GetJobApplicationsQueryDto,
+  ): Promise<PaginatedResult<EmployerApplicationResponseDto>> {
     const isOwner = await this.jobsService.checkJobOwnership(jobId, companyId);
     if (!isOwner) {
       throw new ForbiddenException(
@@ -115,7 +158,15 @@ export class ApplicationsService {
       );
     }
 
-    return this.applicationRepo.findByJobId(jobId, options);
+    const paginatedResult = await this.applicationRepo.findByJobId(
+      jobId,
+      options,
+    );
+
+    return {
+      ...paginatedResult,
+      data: paginatedResult.data.map((app) => this.mapToEmployerResponse(app)),
+    };
   }
 
   async getCountsForJobs(jobIds: string[]): Promise<Map<string, number>> {
@@ -156,7 +207,7 @@ export class ApplicationsService {
         return CandidateApplicationStatus.WITHDRAWN;
 
       default:
-        throw new Error(`Unknown application status: ${status}`);
+        throw new Error(`Unknown application status`);
     }
   }
 
@@ -174,6 +225,30 @@ export class ApplicationsService {
       companyId: app.companyId,
       status: this.toCandidateStatus(app.status),
       coverLetter: app.coverLetter,
+      createdAt: app.createdAt,
+      updatedAt: app.updatedAt,
+    };
+  }
+
+  /**
+   * Maps JobApplication entity to EmployerApplicationResponseDto,
+   * returning  flattened fields
+   */
+  private mapToEmployerResponse(
+    app: JobApplication,
+  ): EmployerApplicationResponseDto {
+    return {
+      id: app.id,
+      jobId: app.jobId,
+      workerProfileId: app.workerProfileId,
+      status: app.status,
+      coverLetter: app.coverLetter,
+      isArchived: app.isArchived ?? false,
+      isStarred: app.isStarred ?? false,
+      workerTitle: app.workerTitle,
+      applicantName: app.applicantName,
+      applicantEmail: app.applicantEmail,
+      applicantAvatar: app.applicantAvatar ?? null,
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,
     };

@@ -34,6 +34,12 @@ export class JobApplicationOrmEntity {
   @Column({ type: 'text', nullable: true })
   coverLetter?: string;
 
+  @Column({ type: 'boolean', default: false })
+  isArchived?: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  isStarred?: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
