@@ -2,6 +2,8 @@ import { JobApplication } from './job-application.entity';
 import { ApplicationStatus } from './application-status.enum';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { GetJobApplicationsQueryDto } from '../dto/get-job-applications-query.dto';
+import { JobApplicationStatsDto } from '../dto/job-application-stats.dto';
 
 export const JOB_APPLICATION_REPOSITORY = Symbol('JOB_APPLICATION_REPOSITORY');
 
@@ -27,7 +29,7 @@ export interface JobApplicationRepositoryInterface {
    */
   findByJobId(
     jobId: string,
-    options: PageOptionsDto,
+    options: GetJobApplicationsQueryDto,
   ): Promise<PaginatedResult<JobApplication>>;
 
   /**
@@ -39,12 +41,24 @@ export interface JobApplicationRepositoryInterface {
   ): Promise<PaginatedResult<JobApplication>>;
 
   /**
-   * Employer: "Accept / Reject/ Archive/ etc.. this applicant"
+   * Employer: "Update applicant status"
    */
-  updateStatus(
-    id: string,
-    status: ApplicationStatus,
-  ): Promise<JobApplication | null>;
+  updateStatus(id: string, status: ApplicationStatus): Promise<void>;
+
+  /**
+   * Employer: Archive or unarchive an applicant
+   */
+  updateArchiveStatus(id: string, isArchived: boolean): Promise<void>;
+
+  /**
+   * Employer: Star or unstar an applicant
+   */
+  updateStarredStatus(id: string, isStarred: boolean): Promise<void>;
+
+  /**
+   * Employer: statistics for a specific job
+   */
+  getStatsByJobId(jobId: string): Promise<JobApplicationStatsDto>;
 
   /**
    * Check if I have already applied to this job

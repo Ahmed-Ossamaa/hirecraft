@@ -5,9 +5,15 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { GetApplicationsForJobTab } from './getApplicationsForJobTab';
 import type { GetApplicationsForJobOrder } from './getApplicationsForJobOrder';
 
 export type GetApplicationsForJobParams = {
+/**
+ * Search candidate name by prefix
+ */
+search?: string;
+tab?: GetApplicationsForJobTab;
 sortBy?: string;
 order?: GetApplicationsForJobOrder;
 /**

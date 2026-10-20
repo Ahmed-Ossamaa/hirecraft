@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -87,10 +87,10 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
     ? machines.filter((m) => m.categoryId === selectedCategoryId)
     : machines;
 
-  const isFirstRender = React.useRef(true);
-  const prevCategoryIdRef = React.useRef(initialJob?.machineCategoryId || "");
+  const isFirstRender = useRef(true);
+  const prevCategoryIdRef = useRef(initialJob?.machineCategoryId || "");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;

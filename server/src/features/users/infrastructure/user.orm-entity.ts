@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
   OneToOne,
+  Index,
 } from 'typeorm';
 import { UserType } from '../domain/user-type.enum';
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
@@ -26,9 +27,11 @@ export class UserOrmEntity {
   @Column({ type: 'varchar', select: false, nullable: true })
   hashedRefreshToken?: string | null;
 
+  @Index('idx_users_first_name')
   @Column()
   firstName!: string;
 
+  @Index('idx_users_last_name')
   @Column()
   lastName!: string;
 

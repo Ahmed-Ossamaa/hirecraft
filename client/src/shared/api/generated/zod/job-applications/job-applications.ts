@@ -26,8 +26,10 @@ export const applyToJobResponse = zod.object({
   "id": zod.string(),
   "jobId": zod.string(),
   "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN']),
   "coverLetter": zod.string().optional(),
+  "isArchived": zod.boolean().optional(),
+  "isStarred": zod.boolean().optional(),
   "jobTitle": zod.string().optional(),
   "workerTitle": zod.string().optional(),
   "companyId": zod.string().optional(),
@@ -35,7 +37,8 @@ export const applyToJobResponse = zod.object({
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({}),
   "applicantName": zod.string().optional(),
-  "applicantEmail": zod.string().optional()
+  "applicantEmail": zod.string().optional(),
+  "applicantAvatar": zod.string().nullish()
 }).optional()
 }))
 
@@ -93,29 +96,49 @@ export const updateStatusParams = zod.object({
 })
 
 export const updateStatusBody = zod.object({
-  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED'])
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN'])
 })
 
-export const updateStatusResponse = zod.object({
+/**
+ * @summary Archive or unarchive an application (Employer only)
+ */
+export const updateArchiveStatusParams = zod.object({
+  "id": zod.string()
+})
+
+export const updateArchiveStatusBody = zod.object({
+  "isArchived": zod.boolean().describe('Archive status of the application')
+})
+
+/**
+ * @summary Star or unstar an application (Employer only)
+ */
+export const updateStarredStatusParams = zod.object({
+  "id": zod.string()
+})
+
+export const updateStarredStatusBody = zod.object({
+  "isStarred": zod.boolean().describe('Starred \/ bookmarked status of the application')
+})
+
+/**
+ * @summary Get application counts and aggregate analytics for a specific job (Employer only)
+ */
+export const getJobApplicationStatsParams = zod.object({
+  "jobId": zod.string()
+})
+
+export const getJobApplicationStatsResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
 
 })
 }).and(zod.object({
   "data": zod.object({
-  "id": zod.string(),
-  "jobId": zod.string(),
-  "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
-  "coverLetter": zod.string().optional(),
-  "jobTitle": zod.string().optional(),
-  "workerTitle": zod.string().optional(),
-  "companyId": zod.string().optional(),
-  "companyName": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({}),
-  "applicantName": zod.string().optional(),
-  "applicantEmail": zod.string().optional()
+  "total": zod.number().describe('Total applications for this job (including archived)'),
+  "pending": zod.number().describe('Active applications pending review'),
+  "inProgress": zod.number().describe('Active applications in progress (shortlisted, scheduled, offered)'),
+  "offersAccepted": zod.number().describe('Active applications with offer accepted')
 }).optional()
 }))
 
@@ -126,7 +149,7 @@ export const getApplicationsForJobParams = zod.object({
   "jobId": zod.string()
 })
 
-export const getApplicationsForJobQueryOrderDefault = "DESC";export const getApplicationsForJobQueryPageDefault = 1;
+export const getApplicationsForJobQueryTabDefault = "ALL";export const getApplicationsForJobQueryOrderDefault = "DESC";export const getApplicationsForJobQueryPageDefault = 1;
 
 export const getApplicationsForJobQueryLimitDefault = 10;
 export const getApplicationsForJobQueryLimitMax = 100;
@@ -134,11 +157,15 @@ export const getApplicationsForJobQueryLimitMax = 100;
 
 
 export const getApplicationsForJobQueryParams = zod.object({
+  "search": zod.string().optional().describe('Search candidate name by prefix'),
+  "tab": zod.enum(['ALL', 'PENDING', 'SHORTLISTED', 'SCHEDULED', 'OFFERED', 'CLOSED', 'STARRED', 'ARCHIVED']).default(getApplicationsForJobQueryTabDefault),
   "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getApplicationsForJobQueryOrderDefault),
   "page": zod.number().min(1).default(getApplicationsForJobQueryPageDefault),
   "limit": zod.number().min(1).max(getApplicationsForJobQueryLimitMax).default(getApplicationsForJobQueryLimitDefault)
 })
+
+export const getApplicationsForJobResponseDataDataItemIsArchivedDefault = false;export const getApplicationsForJobResponseDataDataItemIsStarredDefault = false;
 
 export const getApplicationsForJobResponse = zod.object({
   "message": zod.string(),
@@ -156,19 +183,19 @@ export const getApplicationsForJobResponse = zod.object({
   "totalPages": zod.number()
 }).and(zod.object({
   "data": zod.array(zod.object({
-  "id": zod.string(),
-  "jobId": zod.string(),
-  "workerProfileId": zod.string(),
-  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN', 'ARCHIVED']),
-  "coverLetter": zod.string().optional(),
-  "jobTitle": zod.string().optional(),
-  "workerTitle": zod.string().optional(),
-  "companyId": zod.string().optional(),
-  "companyName": zod.string().optional(),
+  "id": zod.string().describe('The unique identifier of the application'),
+  "jobId": zod.string().describe('The ID of the job applied for'),
+  "workerProfileId": zod.string().describe('The ID of the worker profile'),
+  "status": zod.enum(['PENDING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'OFFER_ACCEPTED', 'OFFER_DECLINED', 'REJECTED', 'WITHDRAWN']).describe('The status of the application'),
+  "coverLetter": zod.string().optional().describe('The cover letter provided by the candidate'),
+  "isArchived": zod.boolean().describe('Whether the application is archived'),
+  "isStarred": zod.boolean().describe('Whether the application is starred'),
+  "workerTitle": zod.string().optional().describe('The professional title of the applicant'),
+  "applicantName": zod.string().optional().describe('The full name of the applicant'),
+  "applicantEmail": zod.string().optional().describe('The email of the applicant'),
+  "applicantAvatar": zod.string().nullish().describe('The avatar URL of the applicant'),
   "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({}),
-  "applicantName": zod.string().optional(),
-  "applicantEmail": zod.string().optional()
+  "updatedAt": zod.string().datetime({})
 })).optional()
 })).optional()
 }))

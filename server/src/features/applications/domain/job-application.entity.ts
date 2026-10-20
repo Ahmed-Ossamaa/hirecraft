@@ -6,8 +6,9 @@ export class JobApplication {
   workerProfileId!: string;
   status!: ApplicationStatus;
   coverLetter?: string;
+  isArchived?: boolean;
+  isStarred?: boolean;
 
-  // populated by the Mapper later
   jobTitle?: string;
   workerTitle?: string;
   companyId?: string;
@@ -18,4 +19,5 @@ export class JobApplication {
 
   applicantName?: string;
   applicantEmail?: string;
+  applicantAvatar?: string | null;
 }

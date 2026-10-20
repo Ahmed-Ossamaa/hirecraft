@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFindAll } from '@/shared/api/generated/jobs/jobs';
@@ -19,7 +19,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
   const searchParams = useSearchParams();
   const jobIdParam = searchParams.get('jobId');
 
-  const apiParams = React.useMemo(() => {
+  const apiParams = useMemo(() => {
     const allowedStringKeys = ['search', 'experienceLevel', 'jobType', 'country', 'city', 'companyId', 'order'] as const;
     const params: Record<string, any> = {};
     
@@ -53,7 +53,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
   const totalJobs = res?.total ?? jobs.length;
   
   // Find the currently selected job
-  const selectedJob = React.useMemo(() => {
+  const selectedJob = useMemo(() => {
     if (jobIdParam) {
       return jobs.find((j: Job) => j.id === jobIdParam) || null;
     }
