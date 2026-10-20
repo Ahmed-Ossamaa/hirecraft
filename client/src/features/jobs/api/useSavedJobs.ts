@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ export const useSavedJobs = (params?: GetSavedJobsParams) => {
     },
   });
 
-  const savedJobs: SavedJobResponseDto[] = React.useMemo(() => {
+  const savedJobs: SavedJobResponseDto[] = useMemo(() => {
     return query.data?.data?.data || [];
   }, [query.data]);
 
@@ -34,11 +34,11 @@ export const useSavedJobs = (params?: GetSavedJobsParams) => {
   const page = query.data?.data?.page || 1;
   const totalPages = query.data?.data?.totalPages || 1;
 
-  const savedJobIdSet = React.useMemo(() => {
+  const savedJobIdSet = useMemo(() => {
     return new Set(savedJobs.map((item) => item.jobId));
   }, [savedJobs]);
 
-  const isJobSaved = React.useCallback(
+  const isJobSaved = useCallback(
     (jobId?: string) => {
       if (!jobId) return false;
       return savedJobIdSet.has(jobId);
@@ -67,7 +67,7 @@ export const useToggleSaveJob = () => {
 
   const isPending = saveMutation.isPending || unsaveMutation.isPending;
 
-  const unsaveJob = React.useCallback(
+  const unsaveJob = useCallback(
     async (jobId: string) => {
       if (!isAuthenticated) {
         toast.error("Please log in to manage saved jobs");
@@ -134,7 +134,7 @@ export const useToggleSaveJob = () => {
     [isAuthenticated, queryClient, router, unsaveMutation]
   );
 
-  const toggleSave = React.useCallback(
+  const toggleSave = useCallback(
     async (job: Job, currentlySaved: boolean) => {
       if (!isAuthenticated) {
         toast.error("Please log in to save jobs");
