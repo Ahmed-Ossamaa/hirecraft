@@ -114,22 +114,14 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     userId: string,
     role: CompanyRole,
     tx?: EntityManager,
-  ): Promise<CompanyMember | null> {
+  ): Promise<boolean> {
     const manager = tx || this.repository.manager;
-    const result = await manager
-      .createQueryBuilder()
-      .update(CompanyMemberOrmEntity)
-      .set({ role })
-      .where('userId = :userId AND status = :status', {
-        userId,
-        status: CompanyMemberStatus.ACTIVE,
-      })
-      .returning('*')
-      .execute();
-
-    const rawRows = result.raw as Record<string, any>[];
-    if (!rawRows || !rawRows[0]) return null;
-    return this.mapToDomain(rawRows[0] as CompanyMemberOrmEntity);
+    const result = await manager.update(
+      CompanyMemberOrmEntity,
+      { userId, status: CompanyMemberStatus.ACTIVE },
+      { role },
+    );
+    return (result.affected ?? 0) > 0;
   }
 
   /**

@@ -19,7 +19,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { CompanyMembersService } from './company-members.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
@@ -90,11 +89,11 @@ export class CompanyMembersController {
   }
 
   @Patch(':userId/role')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserType.EMPLOYER, UserType.PLATFORM_ADMIN)
   @ApiOperation({ summary: "Update a member's role in their active company" })
-  @ApiStandardResponse(CompanyMember)
   @ApiResponse({
-    status: 200,
+    status: 204,
     description: 'Member role updated successfully.',
   })
   @ApiResponse({
@@ -147,10 +146,10 @@ export class CompanyMembersController {
   }
 
   @Post(':userId/suspend')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Suspend a member from the company' })
-  @ApiResponse({ status: 200, description: 'Member suspended' })
+  @ApiResponse({ status: 204, description: 'Member suspended' })
   async suspendMember(
     @Param('userId', ParseUUIDPipe) targetUserId: string,
     @CurrentUser('companyId') companyId: string,
@@ -169,10 +168,10 @@ export class CompanyMembersController {
   }
 
   @Post(':userId/activate')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserType.EMPLOYER)
   @ApiOperation({ summary: 'Activate/Restore a member in the company' })
-  @ApiResponse({ status: 200, description: 'Member activated' })
+  @ApiResponse({ status: 204, description: 'Member activated' })
   async activateMember(
     @Param('userId', ParseUUIDPipe) targetUserId: string,
     @CurrentUser('companyId') companyId: string,

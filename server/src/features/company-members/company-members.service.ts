@@ -114,8 +114,8 @@ export class CompanyMembersService {
     callerUserId: string,
     callerCompanyId?: string,
     callerRole?: CompanyRole,
-  ): Promise<CompanyMember> {
-    return this.dataSource.transaction(async (tx) => {
+  ): Promise<void> {
+    await this.dataSource.transaction(async (tx) => {
       const activeMember =
         await this.companyMemberRepository.findActiveByUserId(targetUserId, tx);
 
@@ -160,17 +160,15 @@ export class CompanyMembersService {
         }
       }
 
-      const updatedMember = await this.companyMemberRepository.updateRole(
+      const updated = await this.companyMemberRepository.updateRole(
         targetUserId,
         newRole,
         tx,
       );
 
-      if (!updatedMember) {
+      if (!updated) {
         throw new NotFoundException('Active company membership not found.');
       }
-
-      return updatedMember;
     });
   }
 

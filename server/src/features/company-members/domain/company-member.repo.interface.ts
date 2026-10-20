@@ -45,7 +45,7 @@ export interface ICompanyMemberRepository {
     userId: string,
     role: CompanyRole,
     tx?: EntityManager,
-  ): Promise<CompanyMember | null>;
+  ): Promise<boolean>;
 
   updateStatus(
     userId: string,
