@@ -177,6 +177,10 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
         'inProgress',
       )
       .addSelect(
+        `COUNT(*) FILTER (WHERE app."isArchived" = false AND app."status" IN (:...offers))::int`,
+        'offers',
+      )
+      .addSelect(
         `COUNT(*) FILTER (WHERE app."isArchived" = false AND app."status" = :accepted)::int`,
         'offersAccepted',
       )
@@ -186,7 +190,11 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
         inProgress: [
           ApplicationStatus.SHORTLISTED,
           ApplicationStatus.INTERVIEW_SCHEDULED,
+        ],
+        offers: [
           ApplicationStatus.OFFERED,
+          ApplicationStatus.OFFER_ACCEPTED,
+          ApplicationStatus.OFFER_DECLINED,
         ],
         accepted: ApplicationStatus.OFFER_ACCEPTED,
       })
@@ -194,6 +202,7 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
         total: number;
         pending: number;
         inProgress: number;
+        offers: number;
         offersAccepted: number;
       }>();
 
@@ -201,6 +210,7 @@ export class JobApplicationTypeormRepository implements JobApplicationRepository
       total: Number(raw?.total || 0),
       pending: Number(raw?.pending || 0),
       inProgress: Number(raw?.inProgress || 0),
+      offers: Number(raw?.offers || 0),
       offersAccepted: Number(raw?.offersAccepted || 0),
     };
   }

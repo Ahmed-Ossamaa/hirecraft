@@ -11,9 +11,15 @@ export class JobApplicationStatsDto {
 
   @ApiProperty({
     description:
-      'Active applications in progress (shortlisted, scheduled, offered)',
+      'Active applications in progress (shortlisted or interview scheduled)',
   })
   inProgress!: number;
+
+  @ApiProperty({
+    description:
+      'Active applications in offers stage (offered, offer accepted, or offer declined)',
+  })
+  offers!: number;
 
   @ApiProperty({ description: 'Active applications with offer accepted' })
   offersAccepted!: number;
