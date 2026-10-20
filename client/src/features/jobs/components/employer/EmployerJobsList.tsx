@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { useGetCompanyJobs } from "@/shared/api/generated/jobs/jobs";
-import { Button } from "@/shared/components/ui";
 import {
+  MdWork,
   MdAdd,
   MdWorkOutline,
   MdSearch,
@@ -18,7 +18,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDetailsModal } from "./JobDetailsModal";
 import { EmployerJobTableRow } from "./EmployerJobTableRow";
-import { EmptyState, Tabs, TableSkeleton } from "@/shared/components/ui";
+import {
+  Button,
+  EmptyState,
+  Pagination,
+  Tabs,
+  TableSkeleton,
+} from "@/shared/components/ui";
 
 export const EmployerJobsList: React.FC = () => {
   const router = useRouter();
@@ -37,11 +43,12 @@ export const EmployerJobsList: React.FC = () => {
     status: currentStatus !== "ALL" ? (currentStatus as any) : undefined,
     search: currentSearch || undefined,
     sortBy: currentSortBy || undefined,
-    order: currentSortOrder as any || undefined,
+    order: (currentSortOrder as any) || undefined,
   });
 
   const jobs = (jobsRes?.data?.data || []) as JobWithStatsDto[];
   const meta = {
+    totalPages: jobsRes?.data?.totalPages || 1,
     total: jobsRes?.data?.total || 0,
     page: jobsRes?.data?.page || 1,
     lastPage: jobsRes?.data?.totalPages || 1,
@@ -140,7 +147,31 @@ export const EmployerJobsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header & Status Tabs */}
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-2">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+          <MdWork className="text-xl" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-headline font-semibold text-foreground tracking-tight">
+              Job Management
+            </h1>
+            {isLoading ? (
+              <span className="w-14 h-5 bg-muted/60 animate-pulse rounded-full inline-block align-middle" />
+            ) : (
+              <span className="text-xs  text-muted-foreground font-medium">
+                ({meta.total} {meta.total === 1 ? "job" : "jobs"})
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Create, edit, and manage your job postings and applicants.
+          </p>
+        </div>
+      </div>
+
+      {/* Status Tabs & Action */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <Tabs
@@ -200,11 +231,7 @@ export const EmployerJobsList: React.FC = () => {
         <div className="bg-card rounded-xl border border-border/40 p-10 shadow-sm">
           <EmptyState
             icon={<MdWorkOutline className="text-3xl" />}
-            title={
-              currentSearch
-                ? "No matching jobs found"
-                : "No jobs found"
-            }
+            title={currentSearch ? "No matching jobs found" : "No jobs found"}
             description={
               currentSearch
                 ? `No jobs match "${currentSearch}". Try adjusting your search or filters.`
@@ -229,90 +256,66 @@ export const EmployerJobsList: React.FC = () => {
           />
         </div>
       ) : (
-        <div className={`bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100`}>
-          <div className="overflow-x-auto pb-24">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
-              <tr>
-                <th className="px-5 py-3 font-medium">
-                  Job Title
-                </th>
-                <th
-                  className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
-                  onClick={() => handleSort('status')}
-                >
-                  <span className="inline-flex items-center">
-                    Status <SortIcon field="status" />
-                  </span>
-                </th>
-                <th className="px-5 py-3 font-medium">
-                  Type & Experience
-                </th>
-                <th
-                  className="px-5 py-3 font-medium text-center cursor-pointer group hover:text-foreground transition-colors select-none"
-                  onClick={() => handleSort('applicants')}
-                >
-                  <span className="inline-flex items-center justify-center">
-                    Applicants <SortIcon field="applicants" />
-                  </span>
-                </th>
-                <th
-                  className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
-                  onClick={() => handleSort('date')}
-                >
-                  <span className="inline-flex items-center">
-                    Posted <SortIcon field="date" />
-                  </span>
-                </th>
-                <th className="px-5 py-3 font-medium text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {jobs.map((job) => (
-                <EmployerJobTableRow
-                  key={job.id}
-                  job={job}
-                  onSelect={setSelectedJob}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination controls */}
-        {meta && jobs.length > 0 && (
-          <div className="px-5 py-4 border-t border-border/40 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Showing page{" "}
-              <span className="font-medium text-foreground">{meta.page}</span>{" "}
-              of{" "}
-              <span className="font-medium text-foreground">
-                {meta.lastPage}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={meta.page <= 1}
-                onClick={() => updateFilters({ page: meta.page - 1 })}
-              >
-                Prev
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={meta.page >= meta.lastPage}
-                onClick={() => updateFilters({ page: meta.page + 1 })}
-              >
-                Next
-              </Button>
-            </div>
+        <div
+          className={`bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100`}
+        >
+          <div className="overflow-x-auto pb-2">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Job Title</th>
+                  <th
+                    className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
+                    onClick={() => handleSort("status")}
+                  >
+                    <span className="inline-flex items-center">
+                      Status <SortIcon field="status" />
+                    </span>
+                  </th>
+                  <th className="px-5 py-3 font-medium">Type & Experience</th>
+                  <th
+                    className="px-5 py-3 font-medium text-center cursor-pointer group hover:text-foreground transition-colors select-none"
+                    onClick={() => handleSort("applicants")}
+                  >
+                    <span className="inline-flex items-center justify-center">
+                      Applicants <SortIcon field="applicants" />
+                    </span>
+                  </th>
+                  <th
+                    className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
+                    onClick={() => handleSort("date")}
+                  >
+                    <span className="inline-flex items-center">
+                      Posted <SortIcon field="date" />
+                    </span>
+                  </th>
+                  <th className="px-5 py-3 font-medium text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {jobs.map((job) => (
+                  <EmployerJobTableRow
+                    key={job.id}
+                    job={job}
+                    onSelect={setSelectedJob}
+                  />
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
       )}
 
+      {/* Pagination */}
+      {meta.totalPages >= 1 && (
+        <div className="flex justify-center items-center pt-2">
+          <Pagination
+            currentPage={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={(page) => updateFilters({ page })}
+          />
+        </div>
+      )}
       {selectedJob && (
         <JobDetailsModal
           job={selectedJob}

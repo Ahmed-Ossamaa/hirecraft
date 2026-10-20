@@ -19,7 +19,6 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
   const [openUpwards, setOpenUpwards] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { confirm } = useConfirm();
   const updateMutation = useUpdateJob();
   const deleteMutation = useDeleteJob();
@@ -99,6 +98,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="action menu"
+        title="Action Menu"
         className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted/30 hover:text-foreground"
         onClick={handleToggle}
       >

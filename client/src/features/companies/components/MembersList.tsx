@@ -3,19 +3,22 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button, Pagination, Tabs, TableSkeleton } from "@/shared/components/ui";
 import {
-  MdPersonAdd,
-} from "react-icons/md";
+  Button,
+  Pagination,
+  Tabs,
+  TableSkeleton,
+} from "@/shared/components/ui";
+import { MdGroup, MdPersonAdd } from "react-icons/md";
 import {
   useGetMembers,
   getGetMembersQueryKey,
 } from "@/shared/api/generated/company-members/company-members";
-import { 
-  useRemoveMember, 
-  useUpdateMemberRole, 
-  useSuspendMember, 
-  useActivateMember 
+import {
+  useRemoveMember,
+  useUpdateMemberRole,
+  useSuspendMember,
+  useActivateMember,
 } from "@/features/companies/api/useMemberMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -27,7 +30,6 @@ import { MemberTableRow } from "./MemberTableRow";
 export const MembersList: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
-  const organizationId = useAuthStore((s) => s.organizationId);
   const companyRole = useAuthStore((s) => s.companyRole);
 
   const isCurrentUserAdmin = companyRole === "ADMIN";
@@ -46,10 +48,11 @@ export const MembersList: React.FC = () => {
     limit: 10,
     status: currentStatus as any,
   });
-  
+
   const members = (membersRes?.data?.data || []) as CompanyMember[];
   const currentPage = membersRes?.data?.page || 1;
   const totalPages = membersRes?.data?.totalPages || 1;
+  const total = membersRes?.data?.total || 0;
 
   const removeMutation = useRemoveMember();
   const suspendMutation = useSuspendMember();
@@ -132,10 +135,32 @@ export const MembersList: React.FC = () => {
     }
   };
 
-
-
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3 pb-2">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+          <MdGroup className="text-xl" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-headline font-semibold text-foreground tracking-tight">
+              Team Members
+            </h1>
+            {isLoading ? (
+              <span className="w-14 h-5 bg-muted/60 animate-pulse rounded-full inline-block align-middle" />
+            ) : (
+              <span className="text-xs text-muted-foreground font-medium">
+                ({total} {total === 1 ? "member" : "members"})
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage who has access to your company dashboard.
+          </p>
+        </div>
+      </div>
+
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex w-full">
@@ -174,64 +199,69 @@ export const MembersList: React.FC = () => {
         <TableSkeleton rows={5} />
       ) : (
         <div className="bg-card rounded-xl border border-border/40 shadow-sm transition-opacity opacity-100">
-          <div className="overflow-x-auto pb-24">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
-              <tr>
-                <th className="px-5 py-3 font-medium">Member</th>
-                <th className="px-5 py-3 font-medium">
-                  {currentStatus === "PENDING" ? "Invited" : "Joined"}
-                </th>
-                <th className="px-5 py-3 font-medium">Role</th>
-                {isCurrentUserAdmin && (
-                  <th className="px-5 py-3 font-medium text-right">Actions</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {members.map((member) => (
-                <MemberTableRow
-                  key={member.id}
-                  member={member}
-                  currentUserId={user?.id}
-                  isCurrentUserAdmin={isCurrentUserAdmin}
-                  currentStatus={currentStatus as "ACTIVE" | "PENDING" | "SUSPENDED"}
-                  onRoleChange={handleRoleChange}
-                  onSuspend={handleSuspend}
-                  onActivate={handleActivate}
-                  onRemove={handleRemove}
-                />
-              ))}
-              {members.length === 0 && (
+          <div className="overflow-x-auto pb-2">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest [&>tr>th:first-child]:rounded-tl-xl [&>tr>th:last-child]:rounded-tr-xl">
                 <tr>
-                  <td
-                    colSpan={isCurrentUserAdmin ? 4 : 3}
-                    className="px-5 py-8 text-center text-muted-foreground"
-                  >
-                    No members found.
-                  </td>
+                  <th className="px-5 py-3 font-medium">Member</th>
+                  <th className="px-5 py-3 font-medium">
+                    {currentStatus === "PENDING" ? "Invited" : "Joined"}
+                  </th>
+                  <th className="px-5 py-3 font-medium">Role</th>
+                  {isCurrentUserAdmin && (
+                    <th className="px-5 py-3 font-medium text-right">
+                      Actions
+                    </th>
+                  )}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 0 && (
-          <div className="px-5 py-4 border-t border-border/40 flex justify-center items-center">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {members.map((member) => (
+                  <MemberTableRow
+                    key={member.id}
+                    member={member}
+                    currentUserId={user?.id}
+                    isCurrentUserAdmin={isCurrentUserAdmin}
+                    currentStatus={
+                      currentStatus as "ACTIVE" | "PENDING" | "SUSPENDED"
+                    }
+                    onRoleChange={handleRoleChange}
+                    onSuspend={handleSuspend}
+                    onActivate={handleActivate}
+                    onRemove={handleRemove}
+                  />
+                ))}
+                {members.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={isCurrentUserAdmin ? 4 : 3}
+                      className="px-5 py-8 text-center text-muted-foreground"
+                    >
+                      No members found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
       )}
 
+      {totalPages >= 1 && (
+        <div className="flex justify-center items-center pt-2">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
       <InviteMemberModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() })}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: getGetMembersQueryKey() })
+        }
       />
     </div>
   );
