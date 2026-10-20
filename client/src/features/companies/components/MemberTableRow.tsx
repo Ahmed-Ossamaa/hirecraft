@@ -30,7 +30,7 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
   const isMe = member.userId === currentUserId;
 
   return (
-    <tr className="hover:bg-card-hover/20 transition-colors">
+    <tr className="hover:bg-row-hover transition-colors">
       <td className="px-5 py-3.5">
         <div className="font-medium text-foreground flex items-center gap-2">
           {memberName}

@@ -27,7 +27,7 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
   onSelect,
 }) => {
   return (
-    <tr className="hover:bg-muted/20 transition-colors group">
+    <tr className="hover:bg-row-hover transition-colors group">
       {/* Job Title & Machine */}
       <td className="px-5 py-3.5 align-middle">
         <button

@@ -7,6 +7,7 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-hover: var(--card-hover);
+  --color-row-hover: var(--row-hover);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
@@ -120,6 +121,7 @@
   --foreground: #0f172a;
   --card: #f4f8fd;
   --card-hover: #f1f5f9;
+  --row-hover: #d9e0e859;
   --input: #ffffff;
   --border: #e2e8f0;
   --border-subtle: #cbd5e1;
@@ -144,6 +146,7 @@
   --foreground: #f8fafc;
   --card: #0c1523;
   --card-hover: #121d30;
+  --row-hover: #121e30;
   --input: #070c16;
   --border: #1a2c47;
   --border-subtle: #142236;
@@ -183,6 +186,15 @@ body {
 .custom-scroll::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
+}
+
+/* Hide scrollbar utility for horizontal scrollable containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Company cover fallback */

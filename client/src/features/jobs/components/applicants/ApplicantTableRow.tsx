@@ -40,7 +40,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
   onToggleArchive,
 }) => {
   return (
-    <tr className="hover:bg-card-hover/20 transition-colors">
+    <tr className="hover:bg-row-hover transition-colors">
       {/* Column 1: Applicant (Clickable to open profile) */}
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-2.5">
@@ -97,7 +97,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
 
       {/* Column 2: Applied At */}
       <td
-        className="px-5 py-3.5 text-muted-foreground whitespace-nowrap"
+        className="px-5 py-3.5 text-muted-foreground whitespace-nowrap cursor-help"
         title={new Date(app.createdAt).toLocaleString()}
       >
         {formatTimeAgo(app.createdAt)}

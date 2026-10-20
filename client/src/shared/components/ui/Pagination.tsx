@@ -64,8 +64,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
         aria-label="Previous Page"
+        title="prev"
         className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition",
+          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition cursor-pointer",
           "border-border bg-card text-foreground hover:bg-card-hover",
           "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
         )}
@@ -94,7 +95,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             onClick={() => onPageChange(page)}
             aria-current={isCurrent ? "page" : undefined}
             className={cn(
-              "w-8 h-8 rounded-lg text-xs font-mono font-medium transition flex items-center justify-center border",
+              "w-8 h-8 rounded-lg text-xs font-mono font-medium transition flex items-center justify-center border cursor-pointer",
               isCurrent
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
                 : "bg-card text-foreground border-border hover:bg-card-hover"
@@ -111,8 +112,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
         aria-label="Next Page"
+        title="next"
         className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition",
+          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition  cursor-pointer",
           "border-border bg-card text-foreground hover:bg-card-hover",
           "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
         )}
