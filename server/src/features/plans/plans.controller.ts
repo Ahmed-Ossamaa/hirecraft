@@ -16,7 +16,7 @@ export class PlansController {
     status: 200,
     description: 'Returns all available subscription plans and their limits.',
   })
-  getPlans(): Plan[] {
-    return this.plansService.getPlans();
+  async getPlans(): Promise<Plan[]> {
+    return this.plansService.getPlansWithPrices();
   }
 }
