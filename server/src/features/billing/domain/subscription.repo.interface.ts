@@ -31,4 +31,9 @@ export interface ISubscriptionRepository {
   ): Promise<Subscription>;
 
   save(subscription: Subscription, tx?: EntityManager): Promise<Subscription>;
+
+  findExpiredActiveSubscriptions(
+    now: Date,
+    tx?: EntityManager,
+  ): Promise<Subscription[]>;
 }

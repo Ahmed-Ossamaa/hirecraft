@@ -53,6 +53,9 @@ export class SubscriptionOrmEntity {
   @Column({ type: 'boolean', default: false })
   cancelAtPeriodEnd!: boolean;
 
+  @Column({ type: 'enum', enum: PlanId, nullable: true })
+  scheduledPlanId?: PlanId | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

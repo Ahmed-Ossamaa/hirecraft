@@ -7,18 +7,27 @@ import {
   BadRequestException,
   InternalServerErrorException,
   Inject,
+  forwardRef,
 } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
-import { ProcessedWebhookOrmEntity } from './infrastructure/processed-webhook.orm-entity';
-import { SUBSCRIPTION_REPOSITORY } from './domain/subscription.repo.interface';
-import type { ISubscriptionRepository } from './domain/subscription.repo.interface';
-import { COMPANY_REPOSITORY } from '@/features/companies/domain/company.repo.interface';
-import type { ICompanyRepository } from '@/features/companies/domain/company.repo.interface';
-import { COMPANY_MEMBER_REPOSITORY } from '@/features/company-members/domain/company-member.repo.interface';
-import type { ICompanyMemberRepository } from '@/features/company-members/domain/company-member.repo.interface';
+import { DataSource, EntityManager, MoreThan, In } from 'typeorm';
+import { ProcessedWebhookOrmEntity } from '../infrastructure/processed-webhook.orm-entity';
+import { JobPostingUsageOrmEntity } from '../infrastructure/job-posting-usage.orm-entity';
+import { JobOrmEntity } from '@/features/jobs/infrastructure/job.orm-entity';
+import { JobStatus } from '@/features/jobs/domain/job-status.enum';
+import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
+import { CompanyMemberStatus } from '@/features/company-members/domain/company-member-status.enum';
+import {
+  CurrentSubscriptionDto,
+  SubscriptionUsageDto,
+} from '../dto/billing-responses.dto';
+import { SUBSCRIPTION_REPOSITORY } from '../domain/subscription.repo.interface';
+import type { ISubscriptionRepository } from '../domain/subscription.repo.interface';
+import { CompaniesService } from '@/features/companies/companies.service';
+import { CompanyMembersService } from '@/features/company-members/company-members.service';
 import { Company } from '@/features/companies/domain/company.entity';
 import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
-import { SubscriptionStatus } from './domain/subscription-status.enum';
+import { Subscription } from '../domain/subscription.entity';
+import { SubscriptionStatus } from '../domain/subscription-status.enum';
 import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
@@ -31,13 +40,12 @@ import {
   PaymentEventType,
   PaymentSubscriptionStatus,
   PaymentProviderName,
-} from './domain/payment-provider.interface';
+} from '@/integrations/payment/domain/payment-provider.interface';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionCreatedEvent } from '@/integrations/mail/mail.events';
 import * as crypto from 'crypto';
-
 @Injectable()
 export class SubscriptionsService {
   private readonly logger = new Logger(SubscriptionsService.name);
@@ -45,10 +53,9 @@ export class SubscriptionsService {
   constructor(
     @Inject(SUBSCRIPTION_REPOSITORY)
     private readonly subscriptionRepo: ISubscriptionRepository,
-    @Inject(COMPANY_REPOSITORY)
-    private readonly companyRepo: ICompanyRepository,
-    @Inject(COMPANY_MEMBER_REPOSITORY)
-    private readonly companyMemberRepo: ICompanyMemberRepository,
+    private readonly companiesService: CompaniesService,
+    @Inject(forwardRef(() => CompanyMembersService))
+    private readonly companyMembersService: CompanyMembersService,
     @Inject(PAYMENT_PROVIDER)
     private readonly paymentProvider: PaymentProvider,
     private readonly dataSource: DataSource,
@@ -57,9 +64,108 @@ export class SubscriptionsService {
   ) {}
 
   /**
+   * - Orchestrates upgrading, downgrading, or subscribing to a plan for a company.
+   * - If the company is on Free tier: returns Stripe Checkout session.
+   * - If the company is on an active paid plan:
+   *   - Upgrade: Executes immediate in-place upgrade with cycle reset and fresh monthly quota.
+   *   - Downgrade: Schedules downgrade for the end of the current billing cycle.
+   */
+  async changeSubscriptionPlan(
+    companyId: string,
+    targetPlanId: PlanId,
+    userId: string,
+    idempotencyKey?: string,
+  ): Promise<{
+    action: 'CHECKOUT' | 'UPGRADED' | 'DOWNGRADE_SCHEDULED';
+    url?: string | null;
+    subscription?: CurrentSubscriptionDto;
+  }> {
+    await this.getCompanyWithAdminCheck(companyId, userId);
+
+    const targetPlan = this.plansService.getPlanById(targetPlanId);
+
+    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+      companyId,
+      SubscriptionStatus.ACTIVE,
+    );
+
+    // 1. Initial subscription from Free Tier
+    if (!activeSub || !activeSub.providerSubId) {
+      if (targetPlan.isFree) {
+        throw new BadRequestException('Company is already on the Free plan.');
+      }
+      const url = await this.createCheckoutSession(
+        companyId,
+        targetPlanId,
+        userId,
+        idempotencyKey,
+      );
+      return { action: 'CHECKOUT', url };
+    }
+
+    // 2. Already actively on this plan
+    if (activeSub.planId === targetPlanId && !activeSub.scheduledPlanId) {
+      throw new BadRequestException(
+        'Company is already actively subscribed to this plan.',
+      );
+    }
+
+    const currentPlan = this.plansService.getPlanById(activeSub.planId);
+
+    // 3. Downgrading to Free Tier
+    if (targetPlan.isFree) {
+      await this.cancelSubscriptionAtPeriodEnd(companyId, userId);
+      const sub = await this.getSubscriptionForCompany(companyId);
+      return { action: 'DOWNGRADE_SCHEDULED', subscription: sub };
+    }
+
+    // 4. Compare Tier Levels (Upgrade vs Downgrade)
+    const isUpgrade =
+      targetPlan.tierLevel > currentPlan.tierLevel ||
+      (targetPlan.tierLevel === currentPlan.tierLevel &&
+        targetPlan.interval === 'year' &&
+        currentPlan.interval === 'month');
+
+    if (isUpgrade) {
+      // Immediate Upgrade: full price charge, fresh billing cycle anchor, 0 used credits
+      const paymentSub = await this.paymentProvider.upgradeSubscription(
+        activeSub.providerSubId,
+        targetPlan.paymentPriceId!,
+      );
+
+      activeSub.planId = targetPlan.id;
+      activeSub.currentPeriodStart = paymentSub.currentPeriodStart;
+      activeSub.currentPeriodEnd = paymentSub.currentPeriodEnd;
+      activeSub.cancelAtPeriodEnd = false;
+      activeSub.scheduledPlanId = null;
+      await this.subscriptionRepo.save(activeSub);
+
+      await this.notifySubscriptionActivated(
+        companyId,
+        targetPlan.name,
+        activeSub.currentPeriodEnd,
+      );
+
+      const sub = await this.getSubscriptionForCompany(companyId);
+      return { action: 'UPGRADED', subscription: sub };
+    } else {
+      // Scheduled Downgrade: keep current higher plan & limits until currentPeriodEnd
+      await this.paymentProvider.scheduleDowngrade(
+        activeSub.providerSubId,
+        targetPlan.paymentPriceId!,
+      );
+
+      activeSub.scheduledPlanId = targetPlan.id;
+      await this.subscriptionRepo.save(activeSub);
+
+      const sub = await this.getSubscriptionForCompany(companyId);
+      return { action: 'DOWNGRADE_SCHEDULED', subscription: sub };
+    }
+  }
+
+  /**
    * - Orchestrates the checkout session creation flow for a company.
-   * - Validates company admin access, paid plan eligibility, ensures no active subscription exists,
-   * creates/resolves the payment provider customer, and returns the Stripe checkout URL.
+   * - If an active subscription already exists, delegates directly to changeSubscriptionPlan.
    */
   async createCheckoutSession(
     companyId: string,
@@ -72,9 +178,22 @@ export class SubscriptionsService {
       userId,
     );
 
-    const plan = this.validatePaidPlan(planId);
+    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+      companyId,
+      SubscriptionStatus.ACTIVE,
+    );
 
-    await this.ensureNoActiveSubscription(companyId);
+    if (activeSub) {
+      const result = await this.changeSubscriptionPlan(
+        companyId,
+        planId,
+        userId,
+        idempotencyKey,
+      );
+      return result.url || '';
+    }
+
+    const plan = this.validatePaidPlan(planId);
 
     const customerId = await this.getOrCreatePaymentCustomer(
       company,
@@ -102,9 +221,89 @@ export class SubscriptionsService {
   }
 
   /**
+   * - Confirms and reconciles a paid checkout session directly from the payment provider.
+   * - Provides synchronous fallback activation for users landing on the success page,
+   *   eliminating race conditions with asynchronous webhook delivery.
+   */
+  async confirmCheckoutSession(
+    sessionId: string,
+    userId: string,
+  ): Promise<CurrentSubscriptionDto> {
+    try {
+      const sessionDetails =
+        await this.paymentProvider.retrieveCheckoutSession(sessionId);
+
+      if (sessionDetails.paymentStatus !== 'paid') {
+        throw new BadRequestException('Checkout session is not paid.');
+      }
+
+      if (!sessionDetails.subscriptionId) {
+        throw new BadRequestException(
+          'No subscription found for this checkout session.',
+        );
+      }
+
+      const companyId = sessionDetails.companyId;
+      if (!companyId) {
+        throw new BadRequestException(
+          'No company found associated with this checkout session.',
+        );
+      }
+
+      await this.getCompanyWithAdminCheck(companyId, userId);
+
+      const paymentSub = await this.paymentProvider.retrieveSubscription(
+        sessionDetails.subscriptionId,
+      );
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      let notificationData: {
+        companyId: string;
+        planName: string;
+        currentPeriodEnd: Date | null;
+      } | null = null;
+
+      try {
+        notificationData = await this.syncSubscriptionState(
+          paymentSub,
+          companyId,
+          queryRunner.manager,
+          PaymentProviderName.STRIPE,
+        );
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        throw err;
+      } finally {
+        await queryRunner.release();
+      }
+
+      if (notificationData) {
+        await this.notifySubscriptionActivated(
+          notificationData.companyId,
+          notificationData.planName,
+          notificationData.currentPeriodEnd,
+        );
+      }
+
+      return this.getSubscriptionForCompany(companyId);
+    } catch (err) {
+      this.logger.error(
+        `Failed to confirm checkout session ${sessionId}:`,
+        err instanceof Error ? err.stack : err,
+      );
+      throw err;
+    }
+  }
+
+  /**
    * - Retrieves the current subscription details for a company.
-   * - Returns active subscription information and plan details if present,
-   * Or defaults to the free plan tier.
+   * - Validates current paid entitlement JIT: if currentPeriodEnd <= NOW, treats subscription as EXPIRED.
+   * - Returns active subscription information and plan details if valid,
+   * or falls back to the Free plan with a deterministic rolling billing cycle.
    */
   async getSubscriptionForCompany(companyId: string, tx?: EntityManager) {
     const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
@@ -113,31 +312,147 @@ export class SubscriptionsService {
       tx,
     );
 
+    const now = new Date();
+
     if (activeSub) {
-      const plan = this.plansService.getPlanById(activeSub.planId);
-      return {
-        id: activeSub.id,
-        companyId: activeSub.companyId,
-        planId: activeSub.planId,
-        plan,
-        status: activeSub.status,
-        currentPeriodStart: activeSub.currentPeriodStart,
-        currentPeriodEnd: activeSub.currentPeriodEnd,
-        cancelAtPeriodEnd: activeSub.cancelAtPeriodEnd,
-      };
+      if (activeSub.currentPeriodEnd && activeSub.currentPeriodEnd <= now) {
+        if (activeSub.scheduledPlanId) {
+          this.logger.log(
+            `Subscription ${activeSub.id} for company ${companyId} passed period end. Transitioning JIT to scheduled plan ${activeSub.scheduledPlanId}.`,
+          );
+          activeSub.planId = activeSub.scheduledPlanId;
+          activeSub.scheduledPlanId = null;
+          activeSub.currentPeriodStart = new Date(activeSub.currentPeriodEnd);
+          const nextEnd = new Date(activeSub.currentPeriodStart);
+          const targetPlan = this.plansService.getPlanById(activeSub.planId);
+          if (targetPlan.interval === 'year') {
+            nextEnd.setFullYear(nextEnd.getFullYear() + 1);
+          } else {
+            nextEnd.setMonth(nextEnd.getMonth() + 1);
+          }
+          activeSub.currentPeriodEnd = nextEnd;
+          await this.subscriptionRepo.save(activeSub, tx);
+        } else {
+          this.logger.log(
+            `Subscription ${activeSub.id} for company ${companyId} passed period end (${activeSub.currentPeriodEnd.toISOString()}). Marking EXPIRED JIT.`,
+          );
+          activeSub.status = SubscriptionStatus.EXPIRED;
+          await this.subscriptionRepo.save(activeSub, tx);
+        }
+      } else {
+        const plan = this.plansService.getPlanById(activeSub.planId);
+        const scheduledPlan = activeSub.scheduledPlanId
+          ? this.plansService.getPlanById(activeSub.scheduledPlanId)
+          : null;
+        const usage = await this.calculateCompanyUsage(
+          companyId,
+          activeSub.currentPeriodStart,
+          activeSub.currentPeriodEnd,
+          tx,
+        );
+        return {
+          id: activeSub.id,
+          companyId: activeSub.companyId,
+          planId: activeSub.planId,
+          plan,
+          status: activeSub.status,
+          currentPeriodStart: activeSub.currentPeriodStart,
+          currentPeriodEnd: activeSub.currentPeriodEnd,
+          cancelAtPeriodEnd: activeSub.cancelAtPeriodEnd,
+          scheduledPlanId: activeSub.scheduledPlanId ?? null,
+          scheduledPlan,
+          usage,
+        };
+      }
     }
 
+    const company = await this.companiesService
+      .getCompanyById(companyId)
+      .catch(() => null);
+    const anchorDate = company?.createdAt ?? now;
+    const { periodStart, periodEnd } = this.calculateFreeTierPeriod(
+      anchorDate,
+      now,
+    );
+
     const freePlan = this.plansService.getPlanById(PlanId.FREE_MONTHLY);
+    const usage = await this.calculateCompanyUsage(
+      companyId,
+      periodStart,
+      periodEnd,
+      tx,
+    );
     return {
       id: null,
       companyId,
       planId: freePlan.id,
       plan: freePlan,
       status: SubscriptionStatus.ACTIVE,
-      currentPeriodStart: null,
-      currentPeriodEnd: null,
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
       cancelAtPeriodEnd: false,
+      scheduledPlanId: null,
+      scheduledPlan: null,
+      usage,
     };
+  }
+
+  async calculateCompanyUsage(
+    companyId: string,
+    periodStart: Date | null,
+    periodEnd: Date | null,
+    tx?: EntityManager,
+  ): Promise<SubscriptionUsageDto> {
+    const manager = tx || this.dataSource?.manager;
+    if (!manager) {
+      return { activeJobs: 0, jobPostingsUsed: 0, teamMembersCount: 0 };
+    }
+
+    try {
+      const activeJobsPromise = manager.getRepository(JobOrmEntity).count({
+        where: {
+          companyId,
+          status: JobStatus.PUBLISHED,
+          expiresAt: MoreThan(new Date()),
+        },
+      });
+
+      const teamMembersPromise = manager
+        .getRepository(CompanyMemberOrmEntity)
+        .count({
+          where: {
+            companyId,
+            status: In([
+              CompanyMemberStatus.ACTIVE,
+              CompanyMemberStatus.PENDING,
+            ]),
+          },
+        });
+
+      const qb = manager
+        .getRepository(JobPostingUsageOrmEntity)
+        .createQueryBuilder('usage')
+        .where('usage.companyId = :companyId', { companyId });
+
+      if (periodStart) {
+        qb.andWhere('usage.publishedAt >= :start', { start: periodStart });
+      }
+      if (periodEnd) {
+        qb.andWhere('usage.publishedAt < :end', { end: periodEnd });
+      }
+
+      const [activeJobs, teamMembersCount, jobPostingsUsed] = await Promise.all(
+        [activeJobsPromise, teamMembersPromise, qb.getCount()],
+      );
+
+      return { activeJobs, jobPostingsUsed, teamMembersCount };
+    } catch (err) {
+      this.logger.error(
+        `Failed to calculate usage for company ${companyId}`,
+        err,
+      );
+      return { activeJobs: 0, jobPostingsUsed: 0, teamMembersCount: 0 };
+    }
   }
 
   /**
@@ -216,6 +531,38 @@ export class SubscriptionsService {
     await this.processWebhookTransaction(event, latestPaymentSub, companyId);
   }
 
+  async findExpiredActiveSubscriptions(
+    now: Date = new Date(),
+    tx?: EntityManager,
+  ): Promise<Subscription[]> {
+    return this.subscriptionRepo.findExpiredActiveSubscriptions(now, tx);
+  }
+
+  async markSubscriptionExpired(
+    subscription: Subscription,
+    tx?: EntityManager,
+  ): Promise<Subscription> {
+    if (subscription.scheduledPlanId) {
+      this.logger.log(
+        `Subscription ${subscription.id} transitioning to scheduled plan ${subscription.scheduledPlanId} at period end.`,
+      );
+      subscription.planId = subscription.scheduledPlanId;
+      subscription.scheduledPlanId = null;
+      subscription.currentPeriodStart = new Date(subscription.currentPeriodEnd);
+      const nextEnd = new Date(subscription.currentPeriodStart);
+      const targetPlan = this.plansService.getPlanById(subscription.planId);
+      if (targetPlan.interval === 'year') {
+        nextEnd.setFullYear(nextEnd.getFullYear() + 1);
+      } else {
+        nextEnd.setMonth(nextEnd.getMonth() + 1);
+      }
+      subscription.currentPeriodEnd = nextEnd;
+      return this.subscriptionRepo.save(subscription, tx);
+    }
+    subscription.status = SubscriptionStatus.EXPIRED;
+    return this.subscriptionRepo.save(subscription, tx);
+  }
+
   // ----- Private Methods -------
 
   /**
@@ -229,13 +576,9 @@ export class SubscriptionsService {
     company: Company;
     adminMember: CompanyMember;
   }> {
-    const company = await this.companyRepo.findById(companyId);
+    const company = await this.companiesService.getCompanyById(companyId);
 
-    if (!company) {
-      throw new NotFoundException('Company not found.');
-    }
-
-    const member = await this.companyMemberRepo.findByUserIdAndCompanyId(
+    const member = await this.companyMembersService.checkMembership(
       userId,
       companyId,
     );
@@ -303,13 +646,13 @@ export class SubscriptionsService {
       `create_customer_company_${company.id}`,
     );
 
-    const updated = await this.companyRepo.updatePaymentCustomerIdIfNull(
+    const updated = await this.companiesService.updatePaymentCustomerIdIfNull(
       company.id,
       customer.id,
     );
 
     if (!updated) {
-      const reloaded = await this.companyRepo.findById(company.id);
+      const reloaded = await this.companiesService.getCompanyById(company.id);
       if (!reloaded?.paymentCustomerId) {
         throw new InternalServerErrorException(
           'Failed to resolve payment customer ID after customer creation.',
@@ -501,6 +844,8 @@ export class SubscriptionsService {
           planName: plan.name,
           currentPeriodEnd: paymentSub.currentPeriodEnd,
         };
+      } else {
+        this.eventEmitter.emit('subscription.reconcile', { companyId });
       }
       return null;
     } catch (err: unknown) {
@@ -557,6 +902,20 @@ export class SubscriptionsService {
       localSub.planId = planId;
       await this.subscriptionRepo.save(localSub, entityManager);
     } else {
+      //mark the old record for this company as cancelled and insert new record
+      if (localStatus === SubscriptionStatus.ACTIVE) {
+        const existingActive =
+          await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+            companyId,
+            SubscriptionStatus.ACTIVE,
+            entityManager,
+          );
+        if (existingActive) {
+          existingActive.status = SubscriptionStatus.CANCELLED;
+          await this.subscriptionRepo.save(existingActive, entityManager);
+        }
+      }
+
       await this.subscriptionRepo.create(
         {
           companyId,
@@ -581,12 +940,14 @@ export class SubscriptionsService {
     planName: string,
     currentPeriodEnd: Date | null,
   ): Promise<void> {
-    const company = await this.companyRepo.findById(companyId);
+    const company = await this.companiesService
+      .getCompanyById(companyId)
+      .catch(() => null);
 
     if (!company) return;
 
     const adminMember =
-      await this.companyMemberRepo.findActiveAdminByCompanyId(companyId);
+      await this.companyMembersService.getActiveAdmin(companyId);
 
     if (adminMember?.user?.email) {
       const recipientName =
@@ -628,5 +989,20 @@ export class SubscriptionsService {
       throw new Error('DUPLICATE_ACTIVE_SUBSCRIPTION_ANOMALY');
     }
     throw err;
+  }
+
+  private calculateFreeTierPeriod(
+    anchorDate: Date,
+    now: Date,
+  ): { periodStart: Date; periodEnd: Date } {
+    let periodStart = new Date(anchorDate);
+    while (true) {
+      const nextMonth = new Date(periodStart);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      if (nextMonth > now) {
+        return { periodStart, periodEnd: nextMonth };
+      }
+      periodStart = nextMonth;
+    }
   }
 }

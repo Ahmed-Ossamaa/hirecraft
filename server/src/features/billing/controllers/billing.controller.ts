@@ -8,8 +8,10 @@ import {
   ParseUUIDPipe,
   BadRequestException,
 } from '@nestjs/common';
-import { SubscriptionsService } from '../subscriptions.service';
+import { SubscriptionsService } from '../services/subscriptions.service';
 import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
+import { ConfirmCheckoutDto } from '../dto/confirm-checkout.dto';
+import { ChangePlanDto, ChangePlanResponseDto } from '../dto/change-plan.dto';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -109,5 +111,55 @@ export class BillingController {
       dto.idempotencyKey,
     );
     return { url };
+  }
+
+  @Post('checkout/confirm')
+  @ApiOperation({
+    summary: 'Confirm and activate checkout session on success redirect',
+  })
+  @ApiStandardResponse(CurrentSubscriptionDto)
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the updated subscription state after reconciliation.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Checkout session is invalid or not paid.',
+  })
+  async confirmCheckout(
+    @Body() dto: ConfirmCheckoutDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.subscriptionsService.confirmCheckoutSession(
+      dto.sessionId,
+      userId,
+    );
+  }
+
+  @Post('subscription/change-plan')
+  @ApiOperation({
+    summary:
+      'Change subscription plan: immediate upgrade or scheduled downgrade',
+  })
+  @ApiStandardResponse(ChangePlanResponseDto)
+  @ApiResponse({
+    status: 200,
+    description:
+      'Plan change processed: returns action (CHECKOUT, UPGRADED, or DOWNGRADE_SCHEDULED)',
+  })
+  async changePlan(
+    @Body() dto: ChangePlanDto,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('companyId') companyId?: string,
+  ) {
+    if (!companyId) {
+      throw new BadRequestException('User is not associated with a company.');
+    }
+    return this.subscriptionsService.changeSubscriptionPlan(
+      companyId,
+      dto.planId,
+      userId,
+      dto.idempotencyKey,
+    );
   }
 }

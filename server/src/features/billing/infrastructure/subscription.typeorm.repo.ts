@@ -87,6 +87,20 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
     return this.mapToDomain(saved);
   }
 
+  async findExpiredActiveSubscriptions(
+    now: Date,
+    tx?: EntityManager,
+  ): Promise<Subscription[]> {
+    const manager = tx || this.repository.manager;
+    const ormEntities = await manager
+      .createQueryBuilder(SubscriptionOrmEntity, 'sub')
+      .where('sub.status = :status', { status: SubscriptionStatus.ACTIVE })
+      .andWhere('sub.currentPeriodEnd IS NOT NULL')
+      .andWhere('sub.currentPeriodEnd <= :now', { now })
+      .getMany();
+    return ormEntities.map((e) => this.mapToDomain(e));
+  }
+
   private mapToDomain(ormEntity: SubscriptionOrmEntity): Subscription {
     const domain = new Subscription();
     Object.assign(domain, ormEntity);
