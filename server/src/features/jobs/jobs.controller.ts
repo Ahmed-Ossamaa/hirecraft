@@ -27,6 +27,7 @@ import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.de
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Job } from './domain/job.entity';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { UpdateJobStatusDto } from './dto/update-job-status.dto';
 import { JobWithStatsDto } from './dto/job-with-stats.dto';
 
 @ApiTags('Jobs')
@@ -37,11 +38,13 @@ export class JobsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
-  @ApiOperation({ summary: 'Create a new job posting for a company' })
+  @ApiOperation({
+    summary: 'Create a new job posting for a company (always created as DRAFT)',
+  })
   @ApiStandardResponse(Job)
   @ApiResponse({
     status: 201,
-    description: 'Job created successfully.',
+    description: 'Job draft created successfully.',
   })
   @ApiResponse({
     status: 403,
@@ -116,11 +119,11 @@ export class JobsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserType.EMPLOYER)
-  @ApiOperation({ summary: 'Update a job posting (Employer only)' })
+  @ApiOperation({ summary: 'Update job posting details (Employer only)' })
   @ApiStandardResponse(Job)
   @ApiResponse({
     status: 200,
-    description: 'Job updated successfully.',
+    description: 'Job details updated successfully.',
   })
   async updateJob(
     @Param('id', ParseUUIDPipe) id: string,
@@ -135,6 +138,38 @@ export class JobsController {
       );
     }
     return this.jobsService.updateJob(id, companyId, dto);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({
+    summary: 'Update job publication status (Employer only)',
+    operationId: 'updateJobStatus',
+  })
+  @ApiStandardResponse(Job)
+  @ApiResponse({
+    status: 200,
+    description: 'Job status updated successfully.',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden. Employers cannot manually set CLOSED or lack permission.',
+  })
+  async updateJobStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateJobStatusDto,
+    @CurrentUser('companyId') companyId: string,
+    @CurrentUser('role') role: CompanyRole,
+  ) {
+    if (!companyId) throw new ForbiddenException('No company association.');
+    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
+      throw new ForbiddenException(
+        'You do not have permission to update job postings.',
+      );
+    }
+    return this.jobsService.updateJobStatus(id, companyId, dto.status);
   }
 
   @Delete(':id')

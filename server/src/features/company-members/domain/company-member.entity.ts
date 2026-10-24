@@ -24,6 +24,12 @@ export class CompanyMember {
   status!: CompanyMemberStatus;
 
   @ApiPropertyOptional()
+  deactivationReason?: string | null;
+
+  @ApiPropertyOptional()
+  deactivatedAt?: Date | null;
+
+  @ApiPropertyOptional()
   firstName?: string;
 
   @ApiPropertyOptional()

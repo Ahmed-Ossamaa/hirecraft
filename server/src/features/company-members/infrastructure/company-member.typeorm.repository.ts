@@ -130,13 +130,23 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   async updateStatus(
     userId: string,
     status: CompanyMemberStatus,
+    reason?: string | null,
     tx?: EntityManager,
   ): Promise<boolean> {
     const manager = tx || this.repository.manager;
+    const updateData: Partial<CompanyMemberOrmEntity> = { status };
+    if (status === CompanyMemberStatus.DEACTIVATED) {
+      updateData.deactivationReason = reason ?? 'PLAN_LIMIT_EXCEEDED';
+      updateData.deactivatedAt = new Date();
+    } else if (status === CompanyMemberStatus.ACTIVE) {
+      updateData.deactivationReason = null;
+      updateData.deactivatedAt = null;
+    }
+
     const result = await manager.update(
       CompanyMemberOrmEntity,
       { userId },
-      { status },
+      updateData,
     );
     return (result.affected ?? 0) > 0;
   }
@@ -146,7 +156,12 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     const result = await manager.update(
       CompanyMemberOrmEntity,
       { userId },
-      { status: CompanyMemberStatus.ACTIVE, joinedAt: new Date() },
+      {
+        status: CompanyMemberStatus.ACTIVE,
+        joinedAt: new Date(),
+        deactivationReason: null,
+        deactivatedAt: null,
+      },
     );
     return (result.affected ?? 0) > 0;
   }
@@ -156,19 +171,23 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
    */
   async countActiveAdminsInCompany(
     companyId: string,
-    tx: EntityManager,
+    tx?: EntityManager,
   ): Promise<number> {
-    const admins = await tx
+    const manager = tx || this.repository.manager;
+    const qb = manager
       .createQueryBuilder(CompanyMemberOrmEntity, 'member')
       .select('member.id')
-      .setLock('pessimistic_write')
       .where('member.companyId = :companyId', { companyId })
       .andWhere('member.role = :role', { role: CompanyRole.ADMIN })
       .andWhere('member.status = :status', {
         status: CompanyMemberStatus.ACTIVE,
-      })
-      .getMany();
+      });
 
+    if (tx) {
+      qb.setLock('pessimistic_write');
+    }
+
+    const admins = await qb.getMany();
     return admins.length;
   }
 
@@ -186,6 +205,23 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
         status: CompanyMemberStatus.ACTIVE,
       },
     });
+  }
+
+  /**
+   * Counts the number of reserved seats (ACTIVE + PENDING) in a company.
+   */
+  async countReservedMembersByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    const manager = tx || this.repository.manager;
+    const qb = manager.createQueryBuilder(CompanyMemberOrmEntity, 'member');
+    return qb
+      .where('member.companyId = :companyId', { companyId })
+      .andWhere('member.status IN (:...statuses)', {
+        statuses: [CompanyMemberStatus.ACTIVE, CompanyMemberStatus.PENDING],
+      })
+      .getCount();
   }
 
   /**
@@ -212,6 +248,8 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
       'member.role',
       'member.joinedAt',
       'member.status',
+      'member.deactivationReason',
+      'member.deactivatedAt',
       'user.firstName',
       'user.lastName',
       'user.email',

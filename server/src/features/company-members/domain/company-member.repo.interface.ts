@@ -50,6 +50,7 @@ export interface ICompanyMemberRepository {
   updateStatus(
     userId: string,
     status: CompanyMemberStatus,
+    reason?: string | null,
     tx?: EntityManager,
   ): Promise<boolean>;
 
@@ -60,6 +61,10 @@ export interface ICompanyMemberRepository {
     tx?: EntityManager,
   ): Promise<number>;
   countActiveMembersByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number>;
+  countReservedMembersByCompanyId(
     companyId: string,
     tx?: EntityManager,
   ): Promise<number>;

@@ -10,7 +10,6 @@ import {
   IsArray,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JobStatus } from '../domain/job-status.enum';
 import { JobType } from '../domain/job-type.enum';
 import { ExperienceLevel } from '../domain/exp-level.enum';
 
@@ -43,11 +42,6 @@ export class CreateJobDto {
   @IsNotEmpty()
   experienceLevel!: ExperienceLevel;
 
-  @ApiPropertyOptional({ enum: JobStatus, default: JobStatus.DRAFT })
-  @IsEnum(JobStatus)
-  @IsOptional()
-  status?: JobStatus;
-
   @ApiPropertyOptional({ example: 3 })
   @IsInt()
   @Min(0)
@@ -68,7 +62,7 @@ export class CreateJobDto {
   @IsOptional()
   jobType?: JobType;
 
-  @ApiProperty({ example: ' Egypt' })
+  @ApiProperty({ example: 'Egypt' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { CompanyMembersService } from './company-members.service';
 import { CompanyMembersController } from './company-members.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -16,7 +16,7 @@ import { SubscriptionLimitsModule } from '../billing/subscription-limits/subscri
     MailModule,
     UsersModule,
     CompaniesModule,
-    SubscriptionLimitsModule,
+    forwardRef(() => SubscriptionLimitsModule),
   ],
   controllers: [CompanyMembersController],
   providers: [

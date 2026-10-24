@@ -163,4 +163,14 @@ export class CompaniesService {
 
     return company;
   }
+
+  async updatePaymentCustomerIdIfNull(
+    companyId: string,
+    customerId: string,
+  ): Promise<boolean> {
+    return this.companyRepository.updatePaymentCustomerIdIfNull(
+      companyId,
+      customerId,
+    );
+  }
 }

@@ -32,6 +32,7 @@ import { InviteMemberDto } from './dto/invite-member.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
+import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 
 @ApiTags('Company Members')
 @ApiBearerAuth()
@@ -89,11 +90,11 @@ export class CompanyMembersController {
   }
 
   @Patch(':userId/role')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Roles(UserType.EMPLOYER, UserType.PLATFORM_ADMIN)
   @ApiOperation({ summary: "Update a member's role in their active company" })
+  @ApiStandardResponse(CompanyMember)
   @ApiResponse({
-    status: 204,
+    status: 200,
     description: 'Member role updated successfully.',
   })
   @ApiResponse({
@@ -164,7 +165,7 @@ export class CompanyMembersController {
       );
     }
 
-    await this.companyMembersService.suspendMember(targetUserId);
+    await this.companyMembersService.suspendMember(targetUserId, companyId);
   }
 
   @Post(':userId/activate')
@@ -186,6 +187,6 @@ export class CompanyMembersController {
       );
     }
 
-    await this.companyMembersService.activateMember(targetUserId);
+    await this.companyMembersService.activateMember(targetUserId, companyId);
   }
 }

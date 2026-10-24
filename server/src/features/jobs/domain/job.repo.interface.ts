@@ -24,6 +24,8 @@ export type CreateJobParams = {
   status?: JobStatus;
   jobType?: JobType;
   salaryRange?: string;
+  publishedAt?: Date | null;
+  expiresAt?: Date | null;
 };
 
 export type FindJobsFilters = {
@@ -39,9 +41,13 @@ export type FindJobsFilters = {
 
 export interface IJobRepository {
   create(params: CreateJobParams, tx?: EntityManager): Promise<Job>;
-  findById(id: string): Promise<Job | null>;
+  findById(id: string, tx?: EntityManager): Promise<Job | null>;
   exists(id: string, companyId?: string): Promise<boolean>;
   countActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number>;
+  countPublishedActiveByCompanyId(
     companyId: string,
     tx?: EntityManager,
   ): Promise<number>;
@@ -54,6 +60,13 @@ export interface IJobRepository {
     id: string,
     params: Partial<CreateJobParams>,
     companyId?: string,
+    tx?: EntityManager,
   ): Promise<Job | null>;
   delete(id: string): Promise<boolean>;
+  closeExpiredJobs(now: Date, tx?: EntityManager): Promise<number>;
+  closeExcessActiveJobs(
+    companyId: string,
+    keepCount: number,
+    tx: EntityManager,
+  ): Promise<number>;
 }

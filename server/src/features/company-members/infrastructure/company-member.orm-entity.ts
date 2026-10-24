@@ -42,6 +42,12 @@ export class CompanyMemberOrmEntity {
   })
   status!: CompanyMemberStatus;
 
+  @Column({ type: 'varchar', nullable: true })
+  deactivationReason?: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deactivatedAt?: Date | null;
+
   @ManyToOne(() => UserOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user?: UserOrmEntity;
