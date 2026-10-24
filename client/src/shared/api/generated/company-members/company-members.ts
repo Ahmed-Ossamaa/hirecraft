@@ -28,6 +28,7 @@ import type {
   GetMembers200,
   GetMembersParams,
   InviteMemberDto,
+  UpdateMemberRole200,
   UpdateMemberRoleDto
 } from '.././model';
 
@@ -204,7 +205,7 @@ export const updateMemberRole = (
  options?: SecondParameter<typeof customAxiosInstance>,) => {
       
       
-      return customAxiosInstance<void>(
+      return customAxiosInstance<UpdateMemberRole200>(
       {url: `/api/v1/company-members/${userId}/role`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateMemberRoleDto

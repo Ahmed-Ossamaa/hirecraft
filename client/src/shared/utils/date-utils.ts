@@ -43,3 +43,13 @@ export function formatTimeAgo(dateInput: string | Date | number | undefined | nu
   const years = Math.floor(days / 365.25);
   return `${years}y ago`;
 }
+
+
+  export function formatDate (dateStr?: string | null) {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };

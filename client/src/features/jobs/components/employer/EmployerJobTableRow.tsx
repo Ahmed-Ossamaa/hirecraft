@@ -3,7 +3,7 @@ import Link from "next/link";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui";
 import { MdPeopleOutline } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { JobActionMenu } from "./JobActionMenu";
 
 interface EmployerJobTableRowProps {
@@ -82,7 +82,10 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
       <td className="px-5 py-3.5 align-middle text-right">
         <div className="flex items-center justify-end gap-2">
           <Link href={`/dashboard/company/jobs/${job.id}/applicants`}>
-            <Button size="sm" leftIcon={<MdPeopleOutline className="text-xs" />}>
+            <Button
+              size="sm"
+              leftIcon={<MdPeopleOutline className="text-xs" />}
+            >
               Applicants
             </Button>
           </Link>

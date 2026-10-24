@@ -34,6 +34,25 @@ export const useUpdateMemberRole = () => {
 
         return { previousQueries };
       },
+      onSuccess: (response, variables) => {
+        if (response?.data) {
+          queryClient.setQueriesData(
+            { queryKey: getGetMembersQueryKey() },
+            (oldData: any) => {
+              if (!oldData?.data?.data) return oldData;
+              return {
+                ...oldData,
+                data: {
+                  ...oldData.data,
+                  data: oldData.data.data.map((m: any) =>
+                    m.userId === variables.userId ? { ...m, ...response.data } : m
+                  ),
+                },
+              };
+            }
+          );
+        }
+      },
       onError: (_err, _variables, context) => {
         if (context?.previousQueries) {
           context.previousQueries.forEach(([queryKey, oldData]: [any, any]) => {

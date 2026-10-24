@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui";
 import { MdDeleteOutline } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { MemberRoleIcon } from "./MemberRoleIcon";
 
 interface MemberTableRowProps {
@@ -52,8 +52,10 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
           <MemberRoleIcon role={member.role} />
           <select
             value={member.role}
-            onChange={(e) => onRoleChange(member.userId, e.target.value as CompanyMemberRole)}
-            disabled={isMe || !isCurrentUserAdmin || member.status !== 'ACTIVE'}
+            onChange={(e) =>
+              onRoleChange(member.userId, e.target.value as CompanyMemberRole)
+            }
+            disabled={isMe || !isCurrentUserAdmin || member.status !== "ACTIVE"}
             className="bg-transparent border-none outline-none cursor-pointer text-foreground font-medium disabled:cursor-not-allowed"
           >
             <option value="ADMIN" className="bg-card text-foreground">
@@ -94,7 +96,11 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
                 variant="ghost"
                 onClick={() => onRemove(member.userId, memberName)}
                 className="w-8 h-8 p-0 text-red-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg inline-flex items-center justify-center shrink-0"
-                title={currentStatus === "PENDING" ? "Cancel Invite" : "Remove Permanently"}
+                title={
+                  currentStatus === "PENDING"
+                    ? "Cancel Invite"
+                    : "Remove Permanently"
+                }
               >
                 <MdDeleteOutline className="text-lg" />
               </Button>

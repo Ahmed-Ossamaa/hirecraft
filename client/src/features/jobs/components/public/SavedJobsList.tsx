@@ -17,7 +17,7 @@ import {
   useToggleSaveJob,
 } from "@/features/jobs/api/useSavedJobs";
 import { Button, Pagination, EmptyState } from "@/shared/components/ui";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 import type { SavedJobResponseDto } from "@/shared/api/generated/model";
 
 export const SavedJobsList: React.FC = () => {

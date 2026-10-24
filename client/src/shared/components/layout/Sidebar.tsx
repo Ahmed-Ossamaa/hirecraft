@@ -14,6 +14,7 @@ import {
   MdChevronRight,
   MdSquareFoot,
   MdSettings,
+  MdWorkspacePremium,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { UserUserType } from "@/shared/api/generated/model";
@@ -58,6 +59,11 @@ const employerNav: NavItem[] = [
     label: "Company",
     href: "/dashboard/company",
     icon: <MdBusiness className="text-lg" />,
+  },
+  {
+    label: "Plans & Billing",
+    href: "/dashboard/company/billing",
+    icon: <MdWorkspacePremium className="text-lg" />,
   },
   {
     label: "Team",

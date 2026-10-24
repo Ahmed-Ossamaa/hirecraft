@@ -3,7 +3,7 @@ import type {
   EmployerApplicationResponseDto,
   EmployerApplicationResponseDtoStatus,
 } from "@/shared/api/generated/model";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { MdStar, MdStarBorder, MdArchive, MdUnarchive } from "react-icons/md";
 import Image from "next/image";
 

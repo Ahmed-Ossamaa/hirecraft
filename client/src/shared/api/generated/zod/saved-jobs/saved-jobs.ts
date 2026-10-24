@@ -46,6 +46,8 @@ export const saveJobResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional().describe('The associated job details with company information')
@@ -116,6 +118,8 @@ export const getSavedJobsResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional().describe('The associated job details with company information')

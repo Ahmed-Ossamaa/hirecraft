@@ -1,6 +1,6 @@
-import React from 'react';
-import { cn } from '@/shared/lib/utils';
-import { FiChevronDown } from 'react-icons/fi';
+import React from "react";
+import { cn } from "@/shared/utils/utils";
+import { FiChevronDown } from "react-icons/fi";
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -22,13 +22,23 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             className={cn(
               "w-full appearance-none bg-input border rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-foreground focus:ring-1 focus:outline-none cursor-pointer transition",
-              error ? ["border-red-500/50", "focus:ring-red-500/50"] : ["border-border", "focus:border-primary", "focus:ring-primary"],
-              className
+              error
+                ? ["border-red-500/50", "focus:ring-red-500/50"]
+                : [
+                    "border-border",
+                    "focus:border-primary",
+                    "focus:ring-primary",
+                  ],
+              className,
             )}
             {...props}
           >
             {options.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-card text-foreground">
+              <option
+                key={opt.value}
+                value={opt.value}
+                className="bg-card text-foreground"
+              >
                 {opt.label}
               </option>
             ))}
@@ -40,8 +50,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
-Select.displayName = 'Select';
-
+Select.displayName = "Select";
