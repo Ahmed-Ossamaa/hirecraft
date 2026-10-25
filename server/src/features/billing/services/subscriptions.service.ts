@@ -3,11 +3,9 @@ import {
   ConflictException,
   Logger,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
   InternalServerErrorException,
   Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { DataSource, EntityManager, MoreThan, In } from 'typeorm';
 import { ProcessedWebhookOrmEntity } from '../infrastructure/processed-webhook.orm-entity';
@@ -23,12 +21,9 @@ import {
 import { SUBSCRIPTION_REPOSITORY } from '../domain/subscription.repo.interface';
 import type { ISubscriptionRepository } from '../domain/subscription.repo.interface';
 import { CompaniesService } from '@/features/companies/companies.service';
-import { CompanyMembersService } from '@/features/company-members/company-members.service';
 import { Company } from '@/features/companies/domain/company.entity';
-import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
 import { Subscription } from '../domain/subscription.entity';
 import { SubscriptionStatus } from '../domain/subscription-status.enum';
-import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 import { Plan } from '@/features/plans/domain/plan.entity';
@@ -44,7 +39,12 @@ import {
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SubscriptionCreatedEvent } from '@/integrations/mail/mail.events';
+import {
+  SubscriptionCreatedEvent,
+  SubscriptionCancellationScheduledEvent,
+  SubscriptionDowngradeScheduledEvent,
+  SubscriptionExpiredEvent,
+} from '@/integrations/mail/mail.events';
 import * as crypto from 'crypto';
 @Injectable()
 export class SubscriptionsService {
@@ -54,8 +54,6 @@ export class SubscriptionsService {
     @Inject(SUBSCRIPTION_REPOSITORY)
     private readonly subscriptionRepo: ISubscriptionRepository,
     private readonly companiesService: CompaniesService,
-    @Inject(forwardRef(() => CompanyMembersService))
-    private readonly companyMembersService: CompanyMembersService,
     @Inject(PAYMENT_PROVIDER)
     private readonly paymentProvider: PaymentProvider,
     private readonly dataSource: DataSource,
@@ -73,14 +71,14 @@ export class SubscriptionsService {
   async changeSubscriptionPlan(
     companyId: string,
     targetPlanId: PlanId,
-    userId: string,
+    userEmail?: string,
     idempotencyKey?: string,
   ): Promise<{
     action: 'CHECKOUT' | 'UPGRADED' | 'DOWNGRADE_SCHEDULED';
     url?: string | null;
     subscription?: CurrentSubscriptionDto;
   }> {
-    await this.getCompanyWithAdminCheck(companyId, userId);
+    const company = await this.companiesService.getCompanyById(companyId);
 
     const targetPlan = this.plansService.getPlanById(targetPlanId);
 
@@ -89,7 +87,7 @@ export class SubscriptionsService {
       SubscriptionStatus.ACTIVE,
     );
 
-    // 1. Initial subscription from Free Tier
+    // already on free plan
     if (!activeSub || !activeSub.providerSubId) {
       if (targetPlan.isFree) {
         throw new BadRequestException('Company is already on the Free plan.');
@@ -97,13 +95,13 @@ export class SubscriptionsService {
       const url = await this.createCheckoutSession(
         companyId,
         targetPlanId,
-        userId,
+        userEmail,
         idempotencyKey,
       );
       return { action: 'CHECKOUT', url };
     }
 
-    // 2. Already actively on this plan
+    // Already actively on this plan
     if (activeSub.planId === targetPlanId && !activeSub.scheduledPlanId) {
       throw new BadRequestException(
         'Company is already actively subscribed to this plan.',
@@ -112,14 +110,14 @@ export class SubscriptionsService {
 
     const currentPlan = this.plansService.getPlanById(activeSub.planId);
 
-    // 3. Downgrading to Free Tier
+    // Downgrading to Free Tier
     if (targetPlan.isFree) {
-      await this.cancelSubscriptionAtPeriodEnd(companyId, userId);
+      await this.cancelSubscriptionAtPeriodEnd(companyId, userEmail);
       const sub = await this.getSubscriptionForCompany(companyId);
       return { action: 'DOWNGRADE_SCHEDULED', subscription: sub };
     }
 
-    // 4. Compare Tier Levels (Upgrade vs Downgrade)
+    // Compare Tier Levels (Upgrade vs Downgrade)
     const isUpgrade =
       targetPlan.tierLevel > currentPlan.tierLevel ||
       (targetPlan.tierLevel === currentPlan.tierLevel &&
@@ -140,10 +138,13 @@ export class SubscriptionsService {
       activeSub.scheduledPlanId = null;
       await this.subscriptionRepo.save(activeSub);
 
-      await this.notifySubscriptionActivated(
+      const recipientEmail = userEmail || company.email;
+      this.notifySubscriptionActivated(
         companyId,
+        company.name,
         targetPlan.name,
         activeSub.currentPeriodEnd,
+        recipientEmail,
       );
 
       const sub = await this.getSubscriptionForCompany(companyId);
@@ -158,6 +159,21 @@ export class SubscriptionsService {
       activeSub.scheduledPlanId = targetPlan.id;
       await this.subscriptionRepo.save(activeSub);
 
+      const recipientEmail = userEmail || company.email;
+      if (recipientEmail) {
+        this.eventEmitter.emit(
+          'subscription.downgrade_scheduled',
+          new SubscriptionDowngradeScheduledEvent(
+            recipientEmail,
+            company.name,
+            currentPlan.name,
+            targetPlan.name,
+            activeSub.currentPeriodEnd,
+            company.name,
+          ),
+        );
+      }
+
       const sub = await this.getSubscriptionForCompany(companyId);
       return { action: 'DOWNGRADE_SCHEDULED', subscription: sub };
     }
@@ -170,13 +186,10 @@ export class SubscriptionsService {
   async createCheckoutSession(
     companyId: string,
     planId: PlanId,
-    userId: string,
+    userEmail?: string,
     idempotencyKey?: string,
   ): Promise<string> {
-    const { company, adminMember } = await this.getCompanyWithAdminCheck(
-      companyId,
-      userId,
-    );
+    const company = await this.companiesService.getCompanyById(companyId);
 
     const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
       companyId,
@@ -187,7 +200,7 @@ export class SubscriptionsService {
       const result = await this.changeSubscriptionPlan(
         companyId,
         planId,
-        userId,
+        userEmail,
         idempotencyKey,
       );
       return result.url || '';
@@ -197,7 +210,7 @@ export class SubscriptionsService {
 
     const customerId = await this.getOrCreatePaymentCustomer(
       company,
-      adminMember.user?.email,
+      userEmail,
     );
 
     const sessionIdempotencyKey = idempotencyKey || crypto.randomUUID();
@@ -227,7 +240,7 @@ export class SubscriptionsService {
    */
   async confirmCheckoutSession(
     sessionId: string,
-    userId: string,
+    userEmail?: string,
   ): Promise<CurrentSubscriptionDto> {
     try {
       const sessionDetails =
@@ -250,7 +263,7 @@ export class SubscriptionsService {
         );
       }
 
-      await this.getCompanyWithAdminCheck(companyId, userId);
+      const company = await this.companiesService.getCompanyById(companyId);
 
       const paymentSub = await this.paymentProvider.retrieveSubscription(
         sessionDetails.subscriptionId,
@@ -282,10 +295,13 @@ export class SubscriptionsService {
       }
 
       if (notificationData) {
-        await this.notifySubscriptionActivated(
+        const recipientEmail = userEmail || company.email;
+        this.notifySubscriptionActivated(
           notificationData.companyId,
+          company.name,
           notificationData.planName,
           notificationData.currentPeriodEnd,
+          recipientEmail,
         );
       }
 
@@ -482,9 +498,7 @@ export class SubscriptionsService {
    * - Schedules cancellation of an active subscription at the end of the current billing period.
    * - Verifies company admin privileges and requests period-end cancellation with the payment provider.
    */
-  async cancelSubscriptionAtPeriodEnd(companyId: string, userId: string) {
-    await this.getCompanyWithAdminCheck(companyId, userId);
-
+  async cancelSubscriptionAtPeriodEnd(companyId: string, userEmail?: string) {
     const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
       companyId,
       SubscriptionStatus.ACTIVE,
@@ -512,6 +526,25 @@ export class SubscriptionsService {
 
     activeSub.cancelAtPeriodEnd = true;
     await this.subscriptionRepo.save(activeSub);
+
+    const company = await this.companiesService
+      .getCompanyById(companyId)
+      .catch(() => null);
+    const plan = this.plansService.getPlanById(activeSub.planId);
+    const recipientEmail = userEmail || company?.email;
+
+    if (company && recipientEmail) {
+      this.eventEmitter.emit(
+        'subscription.cancellation_scheduled',
+        new SubscriptionCancellationScheduledEvent(
+          recipientEmail,
+          company.name,
+          plan.name,
+          activeSub.currentPeriodEnd,
+          company.name,
+        ),
+      );
+    }
 
     return {
       id: activeSub.id,
@@ -560,36 +593,26 @@ export class SubscriptionsService {
       return this.subscriptionRepo.save(subscription, tx);
     }
     subscription.status = SubscriptionStatus.EXPIRED;
-    return this.subscriptionRepo.save(subscription, tx);
-  }
+    const saved = await this.subscriptionRepo.save(subscription, tx);
 
-  // ----- Private Methods -------
+    const company = await this.companiesService
+      .getCompanyById(subscription.companyId)
+      .catch(() => null);
+    const expiredPlan = this.plansService.getPlanById(subscription.planId);
 
-  /**
-   * - Loads a company by ID and verifies that the specified user is an active admin member.
-   * - Throws NotFoundException if company does not exist or ForbiddenException if user is not an admin.
-   */
-  private async getCompanyWithAdminCheck(
-    companyId: string,
-    userId: string,
-  ): Promise<{
-    company: Company;
-    adminMember: CompanyMember;
-  }> {
-    const company = await this.companiesService.getCompanyById(companyId);
-
-    const member = await this.companyMembersService.checkMembership(
-      userId,
-      companyId,
-    );
-
-    if (!member || member.role !== CompanyRole.ADMIN) {
-      throw new ForbiddenException(
-        'You are not authorized to manage subscriptions for this company.',
+    if (company?.email) {
+      this.eventEmitter.emit(
+        'subscription.expired',
+        new SubscriptionExpiredEvent(
+          company.email,
+          company.name,
+          expiredPlan.name,
+          company.name,
+        ),
       );
     }
 
-    return { company, adminMember: member };
+    return saved;
   }
 
   /**
@@ -636,12 +659,13 @@ export class SubscriptionsService {
       return company.paymentCustomerId;
     }
 
-    if (!userEmail) {
-      throw new BadRequestException('User email is required for billing.');
+    const customerEmail = userEmail || company.email;
+    if (!customerEmail) {
+      throw new BadRequestException('Email is required for billing.');
     }
 
     const customer = await this.paymentProvider.createCustomer(
-      userEmail,
+      customerEmail,
       company.name,
       `create_customer_company_${company.id}`,
     );
@@ -780,11 +804,19 @@ export class SubscriptionsService {
       await queryRunner.commitTransaction();
 
       if (notificationData) {
-        await this.notifySubscriptionActivated(
-          notificationData.companyId,
-          notificationData.planName,
-          notificationData.currentPeriodEnd,
-        );
+        const company = await this.companiesService
+          .getCompanyById(notificationData.companyId)
+          .catch(() => null);
+
+        if (company) {
+          this.notifySubscriptionActivated(
+            notificationData.companyId,
+            company.name,
+            notificationData.planName,
+            notificationData.currentPeriodEnd,
+            company.email,
+          );
+        }
       }
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -828,6 +860,12 @@ export class SubscriptionsService {
     const localStatus = this.mapProviderStatusToLocal(paymentSub.status);
     const plan = this.plansService.getPlanByPaymentPriceId(paymentSub.priceId);
 
+    const localSub = await this.subscriptionRepo.findOneByProviderSubId(
+      paymentSub.id,
+      entityManager,
+    );
+    const previousPlanId = localSub?.planId;
+
     try {
       await this.persistSubscriptionEntity({
         paymentSub,
@@ -839,6 +877,22 @@ export class SubscriptionsService {
       });
 
       if (localStatus === SubscriptionStatus.ACTIVE) {
+        if (previousPlanId && previousPlanId !== plan.id) {
+          const previousPlan = this.plansService.getPlanById(previousPlanId);
+          const isDowngrade =
+            plan.tierLevel < previousPlan.tierLevel ||
+            (plan.tierLevel === previousPlan.tierLevel &&
+              plan.interval === 'month' &&
+              previousPlan.interval === 'year');
+
+          if (isDowngrade) {
+            this.logger.log(
+              `Downgrade detected via provider sync for company ${companyId} (${previousPlan.name} -> ${plan.name}). Emitting subscription.reconcile.`,
+            );
+            this.eventEmitter.emit('subscription.reconcile', { companyId });
+          }
+        }
+
         return {
           companyId,
           planName: plan.name,
@@ -932,40 +986,30 @@ export class SubscriptionsService {
     }
   }
 
-  /**
-   * Resolves the company admin user details and emits the subscription activation event.
-   */
-  private async notifySubscriptionActivated(
+  private notifySubscriptionActivated(
     companyId: string,
+    companyName: string,
     planName: string,
     currentPeriodEnd: Date | null,
-  ): Promise<void> {
-    const company = await this.companiesService
-      .getCompanyById(companyId)
-      .catch(() => null);
-
-    if (!company) return;
-
-    const adminMember =
-      await this.companyMembersService.getActiveAdmin(companyId);
-
-    if (adminMember?.user?.email) {
-      const recipientName =
-        adminMember.user.firstName && adminMember.user.lastName
-          ? `${adminMember.user.firstName} ${adminMember.user.lastName}`
-          : company.name;
-
-      this.eventEmitter.emit(
-        'subscription.created',
-        new SubscriptionCreatedEvent(
-          adminMember.user.email,
-          company.name,
-          planName,
-          currentPeriodEnd,
-          recipientName,
-        ),
+    recipientEmail?: string | null,
+  ): void {
+    if (!recipientEmail) {
+      this.logger.warn(
+        `Cannot emit subscription.created event for company ${companyId}: no recipient email available.`,
       );
+      return;
     }
+
+    this.eventEmitter.emit(
+      'subscription.created',
+      new SubscriptionCreatedEvent(
+        recipientEmail,
+        companyName,
+        planName,
+        currentPeriodEnd,
+        companyName,
+      ),
+    );
   }
 
   /**

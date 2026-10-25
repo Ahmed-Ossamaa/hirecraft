@@ -9,14 +9,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionsService } from './subscriptions.service';
 import { SUBSCRIPTION_REPOSITORY } from '../domain/subscription.repo.interface';
 import { CompaniesService } from '@/features/companies/companies.service';
-import { CompanyMembersService } from '@/features/company-members/company-members.service';
 import { DataSource } from 'typeorm';
-import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
-import {
-  ForbiddenException,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   PAYMENT_PROVIDER,
   PaymentProvider,
@@ -27,13 +21,18 @@ import { SubscriptionStatus } from '../domain/subscription-status.enum';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import {
+  SubscriptionCreatedEvent,
+  SubscriptionCancellationScheduledEvent,
+  SubscriptionDowngradeScheduledEvent,
+  SubscriptionExpiredEvent,
+} from '@/integrations/mail/mail.events';
 
 describe('SubscriptionsService', () => {
   let service: SubscriptionsService;
   let paymentProvider: jest.Mocked<PaymentProvider>;
   let subscriptionRepo: any;
   let companiesService: any;
-  let companyMembersService: any;
   let dataSource: any;
   let plansService: jest.Mocked<PlansService>;
   let eventEmitter: any;
@@ -62,11 +61,6 @@ describe('SubscriptionsService', () => {
     companiesService = {
       getCompanyById: jest.fn(),
       updatePaymentCustomerIdIfNull: jest.fn().mockResolvedValue(true),
-    };
-
-    companyMembersService = {
-      checkMembership: jest.fn(),
-      getActiveAdmin: jest.fn(),
     };
 
     plansService = {
@@ -111,10 +105,6 @@ describe('SubscriptionsService', () => {
           provide: CompaniesService,
           useValue: companiesService,
         },
-        {
-          provide: CompanyMembersService,
-          useValue: companyMembersService,
-        },
         { provide: DataSource, useValue: dataSource },
         { provide: PlansService, useValue: plansService },
         { provide: PAYMENT_PROVIDER, useValue: paymentProvider },
@@ -130,48 +120,17 @@ describe('SubscriptionsService', () => {
   });
 
   describe('createCheckoutSession', () => {
-    it('non-admin cannot create checkout', async () => {
-      plansService.getPlanById.mockReturnValue({
-        id: PlanId.PRO_MONTHLY,
-        isFree: false,
-        paymentPriceId: 'price_pro_123',
-      } as any);
-
-      companiesService.getCompanyById.mockResolvedValue({
-        id: 'comp_1',
-        name: 'Test Company',
-      });
-      companyMembersService.checkMembership.mockResolvedValue({
-        userId: 'user_1',
-        companyId: 'comp_1',
-        role: CompanyRole.STAFF,
-      });
-
-      await expect(
-        service.createCheckoutSession('comp_1', PlanId.PRO_MONTHLY, 'user_1'),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
     it('invalid plan is rejected', async () => {
       companiesService.getCompanyById.mockResolvedValue({
         id: 'comp_1',
         name: 'Test Company',
-      });
-      companyMembersService.checkMembership.mockResolvedValue({
-        userId: 'user_1',
-        companyId: 'comp_1',
-        role: CompanyRole.ADMIN,
       });
 
       plansService.getPlanById.mockImplementation(() => {
         throw new NotFoundException();
       });
       await expect(
-        service.createCheckoutSession(
-          'comp_1',
-          'invalid_price' as PlanId,
-          'user_1',
-        ),
+        service.createCheckoutSession('comp_1', 'invalid_price' as PlanId),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -180,11 +139,6 @@ describe('SubscriptionsService', () => {
         id: 'comp_1',
         name: 'Test Company',
       });
-      companyMembersService.checkMembership.mockResolvedValue({
-        userId: 'user_1',
-        companyId: 'comp_1',
-        role: CompanyRole.ADMIN,
-      });
 
       plansService.getPlanById.mockReturnValue({
         isFree: true,
@@ -192,7 +146,7 @@ describe('SubscriptionsService', () => {
       } as any);
 
       await expect(
-        service.createCheckoutSession('comp_1', PlanId.FREE_MONTHLY, 'user_1'),
+        service.createCheckoutSession('comp_1', PlanId.FREE_MONTHLY),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -208,12 +162,6 @@ describe('SubscriptionsService', () => {
         name: 'Test Company',
         paymentCustomerId: 'cus_123',
       });
-      companyMembersService.checkMembership.mockResolvedValue({
-        userId: 'user_1',
-        companyId: 'comp_1',
-        role: CompanyRole.ADMIN,
-        user: { email: 'admin@test.com' },
-      });
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(null);
       paymentProvider.createCheckoutSession.mockResolvedValue({
         url: 'http://checkout.stripe.com/123',
@@ -222,7 +170,7 @@ describe('SubscriptionsService', () => {
       const url = await service.createCheckoutSession(
         'comp_1',
         PlanId.PRO_MONTHLY,
-        'user_1',
+        'admin@test.com',
         'idem_key_123',
       );
 
@@ -237,17 +185,6 @@ describe('SubscriptionsService', () => {
   });
 
   describe('changeSubscriptionPlan', () => {
-    const adminUser = {
-      userId: 'user_admin',
-      companyId: 'comp_1',
-      role: CompanyRole.ADMIN,
-      user: {
-        email: 'admin@company.com',
-        firstName: 'Admin',
-        lastName: 'User',
-      },
-    };
-
     const companyData = {
       id: 'comp_1',
       name: 'Acme Corp',
@@ -284,8 +221,6 @@ describe('SubscriptionsService', () => {
 
     it('immediate upgrade charges full price, resets cycle to now, and saves updated plan', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
-      companyMembersService.checkMembership.mockResolvedValue(adminUser);
-      companyMembersService.getActiveAdmin.mockResolvedValue(adminUser);
 
       const activeSub = {
         id: 'sub_rec_1',
@@ -323,7 +258,7 @@ describe('SubscriptionsService', () => {
       const result = await service.changeSubscriptionPlan(
         'comp_1',
         PlanId.PRO_MONTHLY,
-        'user_admin',
+        'admin@company.com',
       );
 
       expect(paymentProvider.upgradeSubscription).toHaveBeenCalledWith(
@@ -341,7 +276,13 @@ describe('SubscriptionsService', () => {
       );
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'subscription.created',
-        expect.anything(),
+        new SubscriptionCreatedEvent(
+          'admin@company.com',
+          'Acme Corp',
+          'Pro Monthly',
+          newEnd,
+          'Acme Corp',
+        ),
       );
       expect(result.action).toBe('UPGRADED');
       expect(result.subscription?.planId).toBe(PlanId.PRO_MONTHLY);
@@ -349,7 +290,6 @@ describe('SubscriptionsService', () => {
 
     it('scheduled downgrade keeps current tier and sets scheduledPlanId for period end', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
-      companyMembersService.checkMembership.mockResolvedValue(adminUser);
 
       const activeSub = {
         id: 'sub_rec_1',
@@ -377,7 +317,7 @@ describe('SubscriptionsService', () => {
       const result = await service.changeSubscriptionPlan(
         'comp_1',
         PlanId.STARTER_MONTHLY,
-        'user_admin',
+        'admin@company.com',
       );
 
       expect(paymentProvider.scheduleDowngrade).toHaveBeenCalledWith(
@@ -394,11 +334,14 @@ describe('SubscriptionsService', () => {
       expect(result.action).toBe('DOWNGRADE_SCHEDULED');
       expect(result.subscription?.planId).toBe(PlanId.PRO_MONTHLY);
       expect(result.subscription?.scheduledPlanId).toBe(PlanId.STARTER_MONTHLY);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'subscription.downgrade_scheduled',
+        expect.any(SubscriptionDowngradeScheduledEvent),
+      );
     });
 
     it('downgrade to Free schedules cancellation at period end', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
-      companyMembersService.checkMembership.mockResolvedValue(adminUser);
 
       const activeSub = {
         id: 'sub_rec_1',
@@ -427,7 +370,7 @@ describe('SubscriptionsService', () => {
       const result = await service.changeSubscriptionPlan(
         'comp_1',
         PlanId.FREE_MONTHLY,
-        'user_admin',
+        'admin@company.com',
       );
 
       expect(
@@ -435,11 +378,14 @@ describe('SubscriptionsService', () => {
       ).toHaveBeenCalledWith('sub_stripe_1');
       expect(result.action).toBe('DOWNGRADE_SCHEDULED');
       expect(activeSub.cancelAtPeriodEnd).toBe(true);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'subscription.cancellation_scheduled',
+        expect.any(SubscriptionCancellationScheduledEvent),
+      );
     });
 
     it('changing plan from Free tier creates checkout session', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
-      companyMembersService.checkMembership.mockResolvedValue(adminUser);
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(null);
 
       plansService.getPlanById.mockReturnValue(proPlan as any);
@@ -450,7 +396,7 @@ describe('SubscriptionsService', () => {
       const result = await service.changeSubscriptionPlan(
         'comp_1',
         PlanId.PRO_MONTHLY,
-        'user_admin',
+        'admin@company.com',
       );
 
       expect(result.action).toBe('CHECKOUT');
@@ -459,7 +405,6 @@ describe('SubscriptionsService', () => {
 
     it('requesting already active plan throws BadRequestException', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
-      companyMembersService.checkMembership.mockResolvedValue(adminUser);
 
       const activeSub = {
         id: 'sub_rec_1',
@@ -477,7 +422,7 @@ describe('SubscriptionsService', () => {
         service.changeSubscriptionPlan(
           'comp_1',
           PlanId.PRO_MONTHLY,
-          'user_admin',
+          'admin@company.com',
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -541,6 +486,145 @@ describe('SubscriptionsService', () => {
         BadRequestException,
       );
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
+    });
+
+    it('emits subscription.reconcile immediately when webhook detects plan downgrade', async () => {
+      const processedRepo = { insert: jest.fn().mockResolvedValue(true) };
+      queryRunner.manager.getRepository.mockImplementation((entity: any) => {
+        if (entity.name === 'ProcessedWebhookOrmEntity') return processedRepo;
+        return subscriptionRepo;
+      });
+
+      const event = {
+        id: 'evt_downgrade',
+        type: PaymentEventType.SUBSCRIPTION_UPDATED,
+        subscriptionId: 'sub_downgrade',
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_downgrade',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue({
+        id: 'sub_downgrade',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+      });
+
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.PRO_MONTHLY,
+        name: 'Pro Monthly',
+        tierLevel: 2,
+        interval: 'month',
+      } as any);
+
+      await service.handlePaymentWebhook(event);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
+        companyId: 'comp_1',
+      });
+      expect(queryRunner.commitTransaction).toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelSubscriptionAtPeriodEnd', () => {
+    it('cancels active subscription at period end and emits cancellation scheduled event', async () => {
+      companiesService.getCompanyById.mockResolvedValue({
+        id: 'comp_1',
+        name: 'Acme Corp',
+        email: 'info@acme.com',
+      });
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.PRO_MONTHLY,
+        name: 'Pro Monthly',
+      } as any);
+
+      const activeSub = {
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+        providerSubId: 'sub_stripe_1',
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodEnd: new Date('2026-11-25'),
+        cancelAtPeriodEnd: false,
+      };
+
+      subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
+      paymentProvider.cancelSubscriptionAtPeriodEnd.mockResolvedValue(
+        undefined as any,
+      );
+
+      const result = await service.cancelSubscriptionAtPeriodEnd(
+        'comp_1',
+        'admin@acme.com',
+      );
+
+      expect(
+        paymentProvider.cancelSubscriptionAtPeriodEnd,
+      ).toHaveBeenCalledWith('sub_stripe_1');
+      expect(activeSub.cancelAtPeriodEnd).toBe(true);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'subscription.cancellation_scheduled',
+        new SubscriptionCancellationScheduledEvent(
+          'admin@acme.com',
+          'Acme Corp',
+          'Pro Monthly',
+          activeSub.currentPeriodEnd,
+          'Acme Corp',
+        ),
+      );
+      expect(result.cancelAtPeriodEnd).toBe(true);
+    });
+  });
+
+  describe('markSubscriptionExpired', () => {
+    it('emits subscription.expired when marking subscription expired', async () => {
+      companiesService.getCompanyById.mockResolvedValue({
+        id: 'comp_1',
+        name: 'Acme Corp',
+        email: 'billing@acme.com',
+      });
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.PRO_MONTHLY,
+        name: 'Pro Monthly',
+      } as any);
+
+      const expiredSub = {
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
+        scheduledPlanId: null,
+      } as any;
+
+      subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
+
+      const result = await service.markSubscriptionExpired(expiredSub);
+
+      expect(result.status).toBe(SubscriptionStatus.EXPIRED);
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'subscription.expired',
+        new SubscriptionExpiredEvent(
+          'billing@acme.com',
+          'Acme Corp',
+          'Pro Monthly',
+          'Acme Corp',
+        ),
+      );
     });
   });
 });
