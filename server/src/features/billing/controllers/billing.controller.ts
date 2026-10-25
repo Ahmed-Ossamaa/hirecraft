@@ -19,6 +19,9 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { CompanyRoleGuard } from '@/common/guards/company-role.guard';
+import { RequireCompanyRole } from '@/common/decorators/company-role.decorator';
+import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
@@ -30,7 +33,7 @@ import { CheckoutSessionResponseDto } from '../dto/checkout-session-response.dto
 
 @ApiTags('Billing')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyRoleGuard)
 @Controller('billing')
 export class BillingController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
@@ -56,6 +59,7 @@ export class BillingController {
   }
 
   @Post('subscription/cancel')
+  @RequireCompanyRole(CompanyRole.ADMIN)
   @ResponseMessage(
     'Subscription has been scheduled for cancellation at the end of the billing period.',
   )
@@ -79,19 +83,20 @@ export class BillingController {
     description: 'User is not an ADMIN of the company.',
   })
   async cancelSubscription(
-    @CurrentUser('id') userId: string,
     @CurrentUser('companyId') companyId?: string,
+    @CurrentUser('email') userEmail?: string,
   ) {
     if (!companyId) {
       throw new BadRequestException('User is not associated with a company.');
     }
     return this.subscriptionsService.cancelSubscriptionAtPeriodEnd(
       companyId,
-      userId,
+      userEmail,
     );
   }
 
   @Post('checkout/company/:companyId')
+  @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({ summary: 'Create a checkout session for a company' })
   @ApiStandardResponse(CheckoutSessionResponseDto)
   @ApiResponse({ status: 201, description: 'Returns the Stripe checkout URL.' })
@@ -102,18 +107,19 @@ export class BillingController {
   async createCheckoutSession(
     @Param('companyId', ParseUUIDPipe) companyId: string,
     @Body() dto: CreateCheckoutSessionDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('email') userEmail?: string,
   ) {
     const url = await this.subscriptionsService.createCheckoutSession(
       companyId,
       dto.planId,
-      userId,
+      userEmail,
       dto.idempotencyKey,
     );
     return { url };
   }
 
   @Post('checkout/confirm')
+  @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({
     summary: 'Confirm and activate checkout session on success redirect',
   })
@@ -128,15 +134,16 @@ export class BillingController {
   })
   async confirmCheckout(
     @Body() dto: ConfirmCheckoutDto,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('email') userEmail?: string,
   ) {
     return this.subscriptionsService.confirmCheckoutSession(
       dto.sessionId,
-      userId,
+      userEmail,
     );
   }
 
   @Post('subscription/change-plan')
+  @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({
     summary:
       'Change subscription plan: immediate upgrade or scheduled downgrade',
@@ -149,8 +156,8 @@ export class BillingController {
   })
   async changePlan(
     @Body() dto: ChangePlanDto,
-    @CurrentUser('id') userId: string,
     @CurrentUser('companyId') companyId?: string,
+    @CurrentUser('email') userEmail?: string,
   ) {
     if (!companyId) {
       throw new BadRequestException('User is not associated with a company.');
@@ -158,7 +165,7 @@ export class BillingController {
     return this.subscriptionsService.changeSubscriptionPlan(
       companyId,
       dto.planId,
-      userId,
+      userEmail,
       dto.idempotencyKey,
     );
   }
