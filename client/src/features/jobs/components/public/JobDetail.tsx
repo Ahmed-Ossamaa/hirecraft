@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import {
   MdLocationOn,
@@ -20,8 +22,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { useSavedJobs, useToggleSaveJob } from "../api/useSavedJobs";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import {
+  useSavedJobs,
+  useToggleSaveJob,
+} from "@/features/jobs/api/useSavedJobs";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 
 interface JobDetailProps {
   job: Job | null;

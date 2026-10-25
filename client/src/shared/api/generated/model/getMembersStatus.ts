@@ -14,4 +14,5 @@ export const GetMembersStatus = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   SUSPENDED: 'SUSPENDED',
+  DEACTIVATED: 'DEACTIVATED',
 } as const;

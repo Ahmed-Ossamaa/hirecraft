@@ -17,6 +17,10 @@ export interface CompanyMember {
   role: CompanyMemberRole;
   joinedAt: string;
   status: CompanyMemberStatus;
+  /** @nullable */
+  deactivationReason?: string | null;
+  /** @nullable */
+  deactivatedAt?: string | null;
   firstName?: string;
   lastName?: string;
   email?: string;

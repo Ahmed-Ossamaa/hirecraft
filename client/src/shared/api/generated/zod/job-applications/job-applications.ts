@@ -137,7 +137,8 @@ export const getJobApplicationStatsResponse = zod.object({
   "data": zod.object({
   "total": zod.number().describe('Total applications for this job (including archived)'),
   "pending": zod.number().describe('Active applications pending review'),
-  "inProgress": zod.number().describe('Active applications in progress (shortlisted, scheduled, offered)'),
+  "inProgress": zod.number().describe('Active applications in progress (shortlisted or interview scheduled)'),
+  "offers": zod.number().describe('Active applications in offers stage (offered, offer accepted, or offer declined)'),
   "offersAccepted": zod.number().describe('Active applications with offer accepted')
 }).optional()
 }))

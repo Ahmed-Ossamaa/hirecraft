@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/shared/lib/utils';
+import React from "react";
+import { cn } from "@/shared/utils/utils";
 
 export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -8,7 +8,12 @@ export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElemen
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, ...props }, ref) => {
     return (
-      <label className={cn("flex items-center gap-2.5 cursor-pointer text-text-secondary select-none", className)}>
+      <label
+        className={cn(
+          "flex items-center gap-2.5 cursor-pointer text-text-secondary select-none",
+          className,
+        )}
+      >
         <input
           ref={ref}
           type="checkbox"
@@ -18,8 +23,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <span className="text-xs">{label}</span>
       </label>
     );
-  }
+  },
 );
 
-Checkbox.displayName = 'Checkbox';
-
+Checkbox.displayName = "Checkbox";

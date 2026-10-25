@@ -1,3 +1,5 @@
+export const PAYMENT_PROVIDER = Symbol('PAYMENT_PROVIDER');
+
 export enum PaymentSubscriptionStatus {
   ACTIVE = 'ACTIVE',
   CANCELED = 'CANCELED',
@@ -34,7 +36,22 @@ export interface PaymentEvent {
   clientReferenceId?: string;
 }
 
-export const PAYMENT_PROVIDER = Symbol('PAYMENT_PROVIDER');
+export interface PaymentPriceDetails {
+  priceId: string;
+  unitAmount: number;
+  currency: string;
+  interval: 'month' | 'year';
+  productName?: string;
+  active: boolean;
+}
+
+export interface CheckoutSessionDetails {
+  sessionId: string;
+  paymentStatus: string;
+  subscriptionId?: string;
+  companyId?: string;
+  customerId?: string;
+}
 
 export interface PaymentProvider {
   createCustomer(
@@ -52,14 +69,28 @@ export interface PaymentProvider {
     idempotencyKey?: string;
   }): Promise<{ url: string | null }>;
 
+  retrieveCheckoutSession(sessionId: string): Promise<CheckoutSessionDetails>;
+
   retrieveSubscription(subscriptionId: string): Promise<PaymentSubscription>;
 
   cancelSubscriptionAtPeriodEnd(
     subscriptionId: string,
   ): Promise<PaymentSubscription>;
 
+  upgradeSubscription(
+    subscriptionId: string,
+    newPriceId: string,
+  ): Promise<PaymentSubscription>;
+
+  scheduleDowngrade(
+    subscriptionId: string,
+    newPriceId: string,
+  ): Promise<PaymentSubscription>;
+
   verifyWebhook(params: {
     payload: Buffer;
     headers: Record<string, string | string[] | undefined>;
   }): PaymentEvent | null;
+
+  getPrices(): Promise<Map<string, PaymentPriceDetails>>;
 }

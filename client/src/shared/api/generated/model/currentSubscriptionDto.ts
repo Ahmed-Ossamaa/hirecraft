@@ -8,6 +8,9 @@
 import type { CurrentSubscriptionDtoPlanId } from './currentSubscriptionDtoPlanId';
 import type { Plan } from './plan';
 import type { CurrentSubscriptionDtoStatus } from './currentSubscriptionDtoStatus';
+import type { CurrentSubscriptionDtoScheduledPlanId } from './currentSubscriptionDtoScheduledPlanId';
+import type { CurrentSubscriptionDtoScheduledPlan } from './currentSubscriptionDtoScheduledPlan';
+import type { SubscriptionUsageDto } from './subscriptionUsageDto';
 
 export interface CurrentSubscriptionDto {
   /** @nullable */
@@ -21,4 +24,9 @@ export interface CurrentSubscriptionDto {
   /** @nullable */
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd: boolean;
+  /** @nullable */
+  scheduledPlanId?: CurrentSubscriptionDtoScheduledPlanId;
+  /** @nullable */
+  scheduledPlan?: CurrentSubscriptionDtoScheduledPlan;
+  usage?: SubscriptionUsageDto;
 }

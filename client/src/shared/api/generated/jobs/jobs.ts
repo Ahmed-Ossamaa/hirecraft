@@ -33,7 +33,9 @@ import type {
   GetCompanyJobsParams,
   GetJobById200,
   UpdateJob200,
-  UpdateJobDto
+  UpdateJobDto,
+  UpdateJobStatus200,
+  UpdateJobStatusDto
 } from '.././model';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -44,7 +46,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Create a new job posting for a company
+ * @summary Create a new job posting for a company (always created as DRAFT)
  */
 export const createJob = (
     createJobDto: CreateJobDto,
@@ -92,7 +94,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateJobMutationError = void
 
     /**
- * @summary Create a new job posting for a company
+ * @summary Create a new job posting for a company (always created as DRAFT)
  */
 export const useCreateJob = <TError = void,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createJob>>, TError,{data: CreateJobDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -386,7 +388,7 @@ export function useGetJobById<TData = Awaited<ReturnType<typeof getJobById>>, TE
 
 
 /**
- * @summary Update a job posting (Employer only)
+ * @summary Update job posting details (Employer only)
  */
 export const updateJob = (
     id: string,
@@ -434,7 +436,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateJobMutationError = unknown
 
     /**
- * @summary Update a job posting (Employer only)
+ * @summary Update job posting details (Employer only)
  */
 export const useUpdateJob = <TError = unknown,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJob>>, TError,{id: string;data: UpdateJobDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
@@ -446,6 +448,70 @@ export const useUpdateJob = <TError = unknown,
       > => {
 
       const mutationOptions = getUpdateJobMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Update job publication status (Employer only)
+ */
+export const updateJobStatus = (
+    id: string,
+    updateJobStatusDto: UpdateJobStatusDto,
+ options?: SecondParameter<typeof customAxiosInstance>,) => {
+      
+      
+      return customAxiosInstance<UpdateJobStatus200>(
+      {url: `/api/v1/jobs/${id}/status`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateJobStatusDto
+    },
+      options);
+    }
+  
+
+
+export const getUpdateJobStatusMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext> => {
+
+const mutationKey = ['updateJobStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJobStatus>>, {id: string;data: UpdateJobStatusDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateJobStatus(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateJobStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateJobStatus>>>
+    export type UpdateJobStatusMutationBody = UpdateJobStatusDto
+    export type UpdateJobStatusMutationError = void
+
+    /**
+ * @summary Update job publication status (Employer only)
+ */
+export const useUpdateJobStatus = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateJobStatus>>,
+        TError,
+        {id: string;data: UpdateJobStatusDto},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateJobStatusMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

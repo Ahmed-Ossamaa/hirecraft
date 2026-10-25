@@ -18,7 +18,17 @@ export const getPlansResponse = zod.object({
 })
 }).and(zod.object({
   "data": zod.array(zod.object({
-
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
 })).optional()
 }))
 

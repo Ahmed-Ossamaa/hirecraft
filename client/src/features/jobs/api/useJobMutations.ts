@@ -2,6 +2,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { 
   useCreateJob as useOrvalCreateJob, 
   useUpdateJob as useOrvalUpdateJob, 
+  useUpdateJobStatus as useOrvalUpdateJobStatus,
   getGetCompanyJobsQueryKey,
   getGetJobByIdQueryKey,
 } from "@/shared/api/generated/jobs/jobs";
@@ -44,22 +45,10 @@ export const useUpdateJob = () => {
           if (!oldData?.data?.data) return;
 
           const params = queryKey[1] as any;
-          let newDataArray = oldData.data.data;
-
-          if (
-            variables.data.status &&
-            params?.status &&
-            params.status !== "ALL" &&
-            params.status !== variables.data.status
-          ) {
-            // Remove if it no longer matches the tab's status filter
-            newDataArray = newDataArray.filter((j: any) => j.id !== variables.id);
-          } else {
-            // Update in place if present
-            newDataArray = newDataArray.map((j: any) =>
-              j.id === variables.id ? { ...j, ...variables.data } : j
-            );
-          }
+          // Update in place if present
+          const newDataArray = oldData.data.data.map((j: any) =>
+            j.id === variables.id ? { ...j, ...variables.data } : j
+          );
 
           queryClient.setQueryData(queryKey, {
             ...oldData,
@@ -110,6 +99,24 @@ export const useUpdateJob = () => {
         }
 
         // Invalidate company-job lists to ensure counts, pagination & sorting consistency
+        queryClient.invalidateQueries({ queryKey: getGetCompanyJobsQueryKey() });
+      },
+    },
+  });
+};
+
+export const useUpdateJobStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useOrvalUpdateJobStatus({
+    mutation: {
+      onSuccess: (response, variables) => {
+        if (response?.data) {
+          queryClient.setQueryData(
+            getGetJobByIdQueryKey(variables.id),
+            response,
+          );
+        }
         queryClient.invalidateQueries({ queryKey: getGetCompanyJobsQueryKey() });
       },
     },

@@ -22,12 +22,41 @@ export const getSubscriptionResponse = zod.object({
   "companyId": zod.string(),
   "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
   "plan": zod.object({
-
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
 }),
   "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
   "currentPeriodStart": zod.string().datetime({}).nullish(),
   "currentPeriodEnd": zod.string().datetime({}).nullish(),
-  "cancelAtPeriodEnd": zod.boolean()
+  "cancelAtPeriodEnd": zod.boolean(),
+  "scheduledPlanId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).nullish(),
+  "scheduledPlan": zod.object({
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
+}).nullish(),
+  "usage": zod.object({
+  "activeJobs": zod.number().describe('Number of currently active published jobs'),
+  "jobPostingsUsed": zod.number().describe('Number of job posting credits used in current billing cycle'),
+  "teamMembersCount": zod.number().describe('Total active and pending team member seats')
+}).optional()
 }).optional()
 }))
 
@@ -67,6 +96,123 @@ export const createCheckoutSessionResponse = zod.object({
 }).and(zod.object({
   "data": zod.object({
   "url": zod.string()
+}).optional()
+}))
+
+/**
+ * @summary Confirm and activate checkout session on success redirect
+ */
+export const confirmCheckoutBody = zod.object({
+  "sessionId": zod.string().describe('The Stripe checkout session ID to confirm and reconcile')
+})
+
+export const confirmCheckoutResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "id": zod.string().nullish(),
+  "companyId": zod.string(),
+  "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "plan": zod.object({
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
+}),
+  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "currentPeriodStart": zod.string().datetime({}).nullish(),
+  "currentPeriodEnd": zod.string().datetime({}).nullish(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "scheduledPlanId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).nullish(),
+  "scheduledPlan": zod.object({
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
+}).nullish(),
+  "usage": zod.object({
+  "activeJobs": zod.number().describe('Number of currently active published jobs'),
+  "jobPostingsUsed": zod.number().describe('Number of job posting credits used in current billing cycle'),
+  "teamMembersCount": zod.number().describe('Total active and pending team member seats')
+}).optional()
+}).optional()
+}))
+
+/**
+ * @summary Change subscription plan: immediate upgrade or scheduled downgrade
+ */
+export const changePlanBody = zod.object({
+  "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).describe('Target plan ID to upgrade, downgrade, or subscribe to'),
+  "idempotencyKey": zod.string().optional().describe('Idempotency key for request')
+})
+
+export const changePlanResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "action": zod.enum(['CHECKOUT', 'UPGRADED', 'DOWNGRADE_SCHEDULED']).describe('The resulting action taken for the plan change request'),
+  "url": zod.string().nullish().describe('Checkout URL if initial subscription from free tier'),
+  "subscription": zod.object({
+  "id": zod.string().nullish(),
+  "companyId": zod.string(),
+  "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "plan": zod.object({
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
+}),
+  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "currentPeriodStart": zod.string().datetime({}).nullish(),
+  "currentPeriodEnd": zod.string().datetime({}).nullish(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "scheduledPlanId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).nullish(),
+  "scheduledPlan": zod.object({
+  "id": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']),
+  "name": zod.string(),
+  "interval": zod.enum(['month', 'year']),
+  "price": zod.number().describe('Plan price in major units (0 for free tier)'),
+  "currency": zod.string().describe('Currency code'),
+  "paymentPriceId": zod.string().nullable(),
+  "limits": zod.object({
+  "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
+  "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
+  "maxUsers": zod.number().describe('Maximum team member seats')
+})
+}).nullish(),
+  "usage": zod.object({
+  "activeJobs": zod.number().describe('Number of currently active published jobs'),
+  "jobPostingsUsed": zod.number().describe('Number of job posting credits used in current billing cycle'),
+  "teamMembersCount": zod.number().describe('Total active and pending team member seats')
+}).optional()
+}).optional().describe('Updated subscription state if in-place upgrade or scheduled downgrade')
 }).optional()
 }))
 

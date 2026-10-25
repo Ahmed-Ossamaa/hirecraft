@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Job } from "@/shared/api/generated/model";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 
 interface PublicJobCardProps {
   job: Job;

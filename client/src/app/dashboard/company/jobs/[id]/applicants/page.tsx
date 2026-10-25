@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { JobApplicantsView } from '@/features/jobs/components/JobApplicantsView';
+import { JobApplicantsView } from '@/features/jobs/components/applicants/JobApplicantsView';
 
 export const metadata: Metadata = {
   title: 'Job Applicants | Technically',

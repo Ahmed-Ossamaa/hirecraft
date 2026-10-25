@@ -45,8 +45,16 @@ export class JobTypeormRepository implements IJobRepository {
         { search },
       );
     }
-    if (filters?.status)
-      qb.andWhere('job.status = :status', { status: filters.status });
+    if (filters?.status) {
+      if (filters.status === JobStatus.PUBLISHED) {
+        qb.andWhere('job.status = :status AND job.expiresAt > :now', {
+          status: filters.status,
+          now: new Date(),
+        });
+      } else {
+        qb.andWhere('job.status = :status', { status: filters.status });
+      }
+    }
     if (filters?.companyId)
       qb.andWhere('job.companyId = :companyId', {
         companyId: filters.companyId,
@@ -104,9 +112,10 @@ export class JobTypeormRepository implements IJobRepository {
     };
   }
 
-  async findById(id: string): Promise<Job | null> {
-    const job = await this.repository
-      .createQueryBuilder('job')
+  async findById(id: string, tx?: EntityManager): Promise<Job | null> {
+    const manager = tx || this.repository.manager;
+    const job = await manager
+      .createQueryBuilder(JobOrmEntity, 'job')
       .where('job.id = :id', { id })
       .leftJoin('job.company', 'company')
       .addSelect(['company.name', 'company.logoUrl'])
@@ -136,6 +145,19 @@ export class JobTypeormRepository implements IJobRepository {
     });
   }
 
+  async countPublishedActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    const manager = tx || this.repository.manager;
+    const qb = manager.createQueryBuilder(JobOrmEntity, 'job');
+    return qb
+      .where('job.companyId = :companyId', { companyId })
+      .andWhere('job.status = :status', { status: JobStatus.PUBLISHED })
+      .andWhere('job.expiresAt > :now', { now: new Date() })
+      .getCount();
+  }
+
   async update(id: string, params: Partial<CreateJobParams>): Promise<void> {
     await this.repository.update(id, params);
   }
@@ -144,8 +166,10 @@ export class JobTypeormRepository implements IJobRepository {
     id: string,
     params: Partial<CreateJobParams>,
     companyId?: string,
+    tx?: EntityManager,
   ): Promise<Job | null> {
-    const qb = this.repository
+    const manager = tx || this.repository.manager;
+    const qb = manager
       .createQueryBuilder()
       .update(JobOrmEntity)
       .set(params)
@@ -160,6 +184,51 @@ export class JobTypeormRepository implements IJobRepository {
     const rawRows = result.raw as Record<string, any>[];
     if (!rawRows || !rawRows[0]) return null;
     return this.mapToDomain(rawRows[0] as JobOrmEntity);
+  }
+
+  async closeExpiredJobs(now: Date, tx?: EntityManager): Promise<number> {
+    const manager = tx || this.repository.manager;
+    const result = await manager
+      .createQueryBuilder()
+      .update(JobOrmEntity)
+      .set({ status: JobStatus.CLOSED })
+      .where('status = :status', { status: JobStatus.PUBLISHED })
+      .andWhere('expiresAt <= :now', { now })
+      .execute();
+
+    return result.affected ?? 0;
+  }
+
+  async closeExcessActiveJobs(
+    companyId: string,
+    keepCount: number,
+    tx: EntityManager,
+  ): Promise<number> {
+    const activeJobs = await tx
+      .createQueryBuilder(JobOrmEntity, 'job')
+      .where('job.companyId = :companyId', { companyId })
+      .andWhere('job.status = :status', { status: JobStatus.PUBLISHED })
+      .andWhere('job.expiresAt > :now', { now: new Date() })
+      .orderBy('job.publishedAt', 'DESC')
+      .addOrderBy('job.createdAt', 'DESC')
+      .addOrderBy('job.id', 'DESC')
+      .getMany();
+
+    if (activeJobs.length <= keepCount) {
+      return 0;
+    }
+
+    const jobsToClose = activeJobs.slice(keepCount);
+    const idsToClose = jobsToClose.map((j) => j.id);
+
+    const result = await tx
+      .createQueryBuilder()
+      .update(JobOrmEntity)
+      .set({ status: JobStatus.CLOSED })
+      .whereInIds(idsToClose)
+      .execute();
+
+    return result.affected ?? 0;
   }
 
   async delete(id: string): Promise<boolean> {

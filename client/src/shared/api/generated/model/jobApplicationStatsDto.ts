@@ -11,8 +11,10 @@ export interface JobApplicationStatsDto {
   total: number;
   /** Active applications pending review */
   pending: number;
-  /** Active applications in progress (shortlisted, scheduled, offered) */
+  /** Active applications in progress (shortlisted or interview scheduled) */
   inProgress: number;
+  /** Active applications in offers stage (offered, offer accepted, or offer declined) */
+  offers: number;
   /** Active applications with offer accepted */
   offersAccepted: number;
 }

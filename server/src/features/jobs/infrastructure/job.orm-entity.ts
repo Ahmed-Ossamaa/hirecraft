@@ -70,6 +70,12 @@ export class JobOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   salaryRange?: string;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  publishedAt?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  expiresAt?: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

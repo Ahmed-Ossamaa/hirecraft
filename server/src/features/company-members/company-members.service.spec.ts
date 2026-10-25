@@ -13,6 +13,7 @@ import { UserType } from '../users/domain/user-type.enum';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CompanyMember } from './domain/company-member.entity';
 import { CompanyMemberStatus } from './domain/company-member-status.enum';
+import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
 describe('CompanyMembersService', () => {
   let service: CompanyMembersService;
@@ -60,6 +61,10 @@ describe('CompanyMembersService', () => {
         { provide: CompaniesService, useValue: {} },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: DataSource, useValue: dataSourceMock },
+        {
+          provide: SubscriptionLimitsService,
+          useValue: { assertCanAddTeamMember: jest.fn() },
+        },
       ],
     }).compile();
 

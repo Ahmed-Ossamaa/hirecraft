@@ -5,5 +5,19 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { PlanId } from './planId';
+import type { PlanInterval } from './planInterval';
+import type { PlanLimits } from './planLimits';
 
-export interface Plan { [key: string]: unknown }
+export interface Plan {
+  id: PlanId;
+  name: string;
+  interval: PlanInterval;
+  /** Plan price in major units (0 for free tier) */
+  price: number;
+  /** Currency code */
+  currency: string;
+  /** @nullable */
+  paymentPriceId: string | null;
+  limits: PlanLimits;
+}

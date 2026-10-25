@@ -4,6 +4,8 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
+  forwardRef,
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -29,6 +31,7 @@ import appConfig from '@/config/app.config';
 import { CompanyRole } from './domain/company-role.enum';
 import { CompanyMemberStatus } from './domain/company-member-status.enum';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
+import { CompanyMemberOrmEntity } from './infrastructure/company-member.orm-entity';
 
 @Injectable()
 export class CompanyMembersService {
@@ -41,6 +44,7 @@ export class CompanyMembersService {
     private readonly companiesService: CompaniesService,
     private readonly eventEmitter: EventEmitter2,
     private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => SubscriptionLimitsService))
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
   ) {}
 
@@ -51,15 +55,76 @@ export class CompanyMembersService {
     return this.companyMemberRepository.create(params, tx);
   }
 
-  async activateMember(userId: string): Promise<void> {
-    await this.companyMemberRepository.updateStatus(
-      userId,
-      CompanyMemberStatus.ACTIVE,
-    );
+  async activateMember(userId: string, companyId: string): Promise<void> {
+    await this.dataSource.transaction(async (tx) => {
+      const membership =
+        await this.companyMemberRepository.findByUserIdAndCompanyId(
+          userId,
+          companyId,
+        );
+
+      if (!membership) {
+        throw new NotFoundException('Member not found in this company.');
+      }
+
+      if (membership.status === CompanyMemberStatus.ACTIVE) {
+        return;
+      }
+
+      if (
+        membership.status !== CompanyMemberStatus.SUSPENDED &&
+        membership.status !== CompanyMemberStatus.DEACTIVATED
+      ) {
+        throw new BadRequestException(
+          'Only suspended or deactivated members can be activated.',
+        );
+      }
+
+      await this.subscriptionLimitsService.lockCompany(companyId, tx);
+      await this.subscriptionLimitsService.checkCompanyMemberActiveLimit(
+        companyId,
+        tx,
+      );
+
+      await this.companyMemberRepository.updateStatus(
+        userId,
+        CompanyMemberStatus.ACTIVE,
+        null,
+        tx,
+      );
+    });
   }
 
   async acceptInvite(userId: string): Promise<void> {
-    await this.companyMemberRepository.acceptInvite(userId);
+    await this.dataSource.transaction(async (tx) => {
+      const membership =
+        await this.companyMemberRepository.findByUserId(userId);
+
+      if (!membership) {
+        throw new NotFoundException('Company membership not found.');
+      }
+
+      if (membership.status === CompanyMemberStatus.ACTIVE) {
+        return;
+      }
+
+      if (membership.status !== CompanyMemberStatus.PENDING) {
+        throw new ForbiddenException(
+          'Invalid membership status to accept invitation.',
+        );
+      }
+
+      await this.subscriptionLimitsService.lockCompany(
+        membership.companyId,
+        tx,
+      );
+      await this.subscriptionLimitsService.checkCompanyMemberActiveLimit(
+        membership.companyId,
+        tx,
+      );
+
+      await this.companyMemberRepository.acceptInvite(userId, tx);
+    });
   }
 
   async getMembershipByUserId(userId: string): Promise<CompanyMember | null> {
@@ -97,14 +162,38 @@ export class CompanyMembersService {
     }
   }
 
-  async suspendMember(userId: string): Promise<void> {
-    const success = await this.companyMemberRepository.updateStatus(
-      userId,
-      CompanyMemberStatus.SUSPENDED,
-    );
-    if (!success) {
-      throw new NotFoundException('Member not found.');
-    }
+  async suspendMember(userId: string, companyId: string): Promise<void> {
+    await this.dataSource.transaction(async (tx) => {
+      const membership =
+        await this.companyMemberRepository.findByUserIdAndCompanyId(
+          userId,
+          companyId,
+        );
+
+      if (!membership) {
+        throw new NotFoundException('Member not found in this company.');
+      }
+
+      if (membership.role === CompanyRole.ADMIN) {
+        const activeAdminsCount =
+          await this.companyMemberRepository.countActiveAdminsInCompany(
+            companyId,
+            tx,
+          );
+        if (activeAdminsCount <= 1) {
+          throw new ForbiddenException(
+            'Cannot suspend the last active admin of a company.',
+          );
+        }
+      }
+
+      await this.companyMemberRepository.updateStatus(
+        userId,
+        CompanyMemberStatus.SUSPENDED,
+        null,
+        tx,
+      );
+    });
   }
 
   async updateMemberRole(
@@ -115,7 +204,7 @@ export class CompanyMembersService {
     callerCompanyId?: string,
     callerRole?: CompanyRole,
   ): Promise<CompanyMember> {
-    return this.dataSource.transaction(async (tx) => {
+    return await this.dataSource.transaction(async (tx) => {
       const activeMember =
         await this.companyMemberRepository.findActiveByUserId(targetUserId, tx);
 
@@ -160,17 +249,18 @@ export class CompanyMembersService {
         }
       }
 
-      const updatedMember = await this.companyMemberRepository.updateRole(
+      const updated = await this.companyMemberRepository.updateRole(
         targetUserId,
         newRole,
         tx,
       );
 
-      if (!updatedMember) {
+      if (!updated) {
         throw new NotFoundException('Active company membership not found.');
       }
 
-      return updatedMember;
+      activeMember.role = newRole;
+      return activeMember;
     });
   }
 
@@ -192,14 +282,8 @@ export class CompanyMembersService {
     const { finalUser, finalInviteToken } = await this.dataSource.transaction(
       async (tx) => {
         await this.subscriptionLimitsService.lockCompany(companyId, tx);
-        const currentCount =
-          await this.companyMemberRepository.countActiveMembersByCompanyId(
-            companyId,
-            tx,
-          );
-        await this.subscriptionLimitsService.checkCompanyMemberLimit(
+        await this.subscriptionLimitsService.checkCompanyMemberReservationLimit(
           companyId,
-          currentCount,
           tx,
         );
 
@@ -305,5 +389,91 @@ export class CompanyMembersService {
     await this.usersService.saveInviteToken(user.id, hash, expiresAt, tx);
 
     return { user, inviteToken: token };
+  }
+
+  /**
+   * Reconciles company members down to the allowed maxUsers capacity:
+   * 1. Cancels/deletes excess pending invitations first if ACTIVE + PENDING > maxUsers.
+   * 2. Deactivates excess active members if ACTIVE > maxUsers, prioritizing non-admins first
+   *    and never deactivating the last active admin.
+   */
+  async reconcileExcessMembers(
+    companyId: string,
+    maxUsers: number,
+    tx: EntityManager,
+  ): Promise<{ revokedPending: number; deactivatedActive: number }> {
+    const memberRepo = tx.getRepository(CompanyMemberOrmEntity);
+
+    const allMembers = await memberRepo.find({
+      where: { companyId },
+      order: { joinedAt: 'DESC', createdAt: 'DESC' },
+    });
+
+    const pendingMembers = allMembers.filter(
+      (m) => m.status === CompanyMemberStatus.PENDING,
+    );
+    const activeMembers = allMembers.filter(
+      (m) => m.status === CompanyMemberStatus.ACTIVE,
+    );
+
+    let revokedPending = 0;
+    let deactivatedActive = 0;
+
+    // Cancel excess pending invitations first
+    const totalReserved = activeMembers.length + pendingMembers.length;
+    if (totalReserved > maxUsers && pendingMembers.length > 0) {
+      const excessPendingCount = Math.min(
+        totalReserved - maxUsers,
+        pendingMembers.length,
+      );
+      const pendingToRevoke = pendingMembers.slice(0, excessPendingCount);
+      for (const pending of pendingToRevoke) {
+        await memberRepo.delete(pending.id);
+        revokedPending++;
+      }
+    }
+
+    // Deactivate excess active members if still over limit
+    if (activeMembers.length > maxUsers) {
+      const excessActiveCount = activeMembers.length - maxUsers;
+
+      const nonAdmins = activeMembers.filter(
+        (m) => m.role !== CompanyRole.ADMIN,
+      );
+      const admins = activeMembers.filter((m) => m.role === CompanyRole.ADMIN);
+
+      const toDeactivate: CompanyMemberOrmEntity[] = [];
+
+      for (const member of nonAdmins) {
+        if (toDeactivate.length < excessActiveCount) {
+          toDeactivate.push(member);
+        }
+      }
+
+      // If we still need to deactivate and have more than 1 admin, deactivate newer admins
+      if (toDeactivate.length < excessActiveCount && admins.length > 1) {
+        // admins is ordered joinedAt DESC, last one is the oldest admin
+        const adminsCanDeactivate = admins.slice(0, admins.length - 1);
+        for (const admin of adminsCanDeactivate) {
+          if (toDeactivate.length < excessActiveCount) {
+            toDeactivate.push(admin);
+          }
+        }
+      }
+
+      for (const member of toDeactivate) {
+        member.status = CompanyMemberStatus.DEACTIVATED;
+        member.deactivationReason = 'PLAN_LIMIT_EXCEEDED';
+        member.deactivatedAt = new Date();
+        await memberRepo.save(member);
+        deactivatedActive++;
+      }
+    }
+
+    return { revokedPending, deactivatedActive };
+  }
+
+  async getActiveAdmin(companyId: string): Promise<CompanyMember | null> {
+    return this.companyMemberRepository.findActiveAdminByCompanyId(companyId);
   }
 }

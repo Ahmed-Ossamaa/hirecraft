@@ -9,11 +9,11 @@ import * as zod from 'zod';
 
 
 /**
- * @summary Create a new job posting for a company
+ * @summary Create a new job posting for a company (always created as DRAFT)
  */
 export const createJobBodyTitleMax = 255;
 
-export const createJobBodyStatusDefault = "DRAFT";export const createJobBodyYearsOfExperienceMin = 0;
+export const createJobBodyYearsOfExperienceMin = 0;
 
 export const createJobBodyJobTypeDefault = "FULL_TIME";export const createJobBodyCountryMax = 100;
 
@@ -29,7 +29,6 @@ export const createJobBody = zod.object({
   "machineCategoryId": zod.string().uuid(),
   "machineId": zod.string().uuid(),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
-  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).default(createJobBodyStatusDefault),
   "yearsOfExperience": zod.number().min(createJobBodyYearsOfExperienceMin).optional(),
   "requirements": zod.array(zod.string()).optional(),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).default(createJobBodyJobTypeDefault),
@@ -64,6 +63,8 @@ export const createJobResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -132,6 +133,8 @@ export const findAllResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 })).optional()
@@ -202,6 +205,8 @@ export const getCompanyJobsResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 })).optional()
@@ -241,13 +246,15 @@ export const getJobByIdResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
 }))
 
 /**
- * @summary Update a job posting (Employer only)
+ * @summary Update job posting details (Employer only)
  */
 export const updateJobParams = zod.object({
   "id": zod.string()
@@ -255,7 +262,7 @@ export const updateJobParams = zod.object({
 
 export const updateJobBodyTitleMax = 255;
 
-export const updateJobBodyStatusDefault = "DRAFT";export const updateJobBodyYearsOfExperienceMin = 0;
+export const updateJobBodyYearsOfExperienceMin = 0;
 
 export const updateJobBodyJobTypeDefault = "FULL_TIME";export const updateJobBodyCountryMax = 100;
 
@@ -271,7 +278,6 @@ export const updateJobBody = zod.object({
   "machineCategoryId": zod.string().uuid().optional(),
   "machineId": zod.string().uuid().optional(),
   "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional(),
-  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).default(updateJobBodyStatusDefault),
   "yearsOfExperience": zod.number().min(updateJobBodyYearsOfExperienceMin).optional(),
   "requirements": zod.array(zod.string()).optional(),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).default(updateJobBodyJobTypeDefault),
@@ -306,6 +312,52 @@ export const updateJobResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({})
+}).optional()
+}))
+
+/**
+ * @summary Update job publication status (Employer only)
+ */
+export const updateJobStatusParams = zod.object({
+  "id": zod.string()
+})
+
+export const updateJobStatusBody = zod.object({
+  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).describe('New status for the job posting')
+})
+
+export const updateJobStatusResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "authorId": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "machineCategoryId": zod.string(),
+  "machineId": zod.string(),
+  "companyName": zod.string().optional(),
+  "companyLogo": zod.string().optional(),
+  "machineNameEn": zod.string().optional(),
+  "machineNameAr": zod.string().optional(),
+  "country": zod.string(),
+  "city": zod.string(),
+  "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
+  "yearsOfExperience": zod.number().optional(),
+  "requirements": zod.array(zod.string()).optional(),
+  "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
+  "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
+  "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()

@@ -25,10 +25,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminUpdateJobStatus200,
   GetAdminJobById200,
   GetAdminJobs200,
   GetAdminJobsParams,
-  UpdateJobStatus200,
   UpdateJobStatusDto
 } from '.././model';
 
@@ -288,13 +288,13 @@ export function useGetAdminJobById<TData = Awaited<ReturnType<typeof getAdminJob
 /**
  * @summary Update job status (e.g. PUBLISHED, DRAFT, CLOSED) (Admin only)
  */
-export const updateJobStatus = (
+export const adminUpdateJobStatus = (
     id: string,
     updateJobStatusDto: UpdateJobStatusDto,
  options?: SecondParameter<typeof customAxiosInstance>,) => {
       
       
-      return customAxiosInstance<UpdateJobStatus200>(
+      return customAxiosInstance<AdminUpdateJobStatus200>(
       {url: `/api/v1/admin/jobs/${id}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateJobStatusDto
@@ -304,11 +304,11 @@ export const updateJobStatus = (
   
 
 
-export const getUpdateJobStatusMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext> => {
+export const getAdminUpdateJobStatusMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminUpdateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext> => {
 
-const mutationKey = ['updateJobStatus'];
+const mutationKey = ['adminUpdateJobStatus'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -318,10 +318,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJobStatus>>, {id: string;data: UpdateJobStatusDto}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminUpdateJobStatus>>, {id: string;data: UpdateJobStatusDto}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateJobStatus(id,data,requestOptions)
+          return  adminUpdateJobStatus(id,data,requestOptions)
         }
 
         
@@ -329,23 +329,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateJobStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateJobStatus>>>
-    export type UpdateJobStatusMutationBody = UpdateJobStatusDto
-    export type UpdateJobStatusMutationError = void
+    export type AdminUpdateJobStatusMutationResult = NonNullable<Awaited<ReturnType<typeof adminUpdateJobStatus>>>
+    export type AdminUpdateJobStatusMutationBody = UpdateJobStatusDto
+    export type AdminUpdateJobStatusMutationError = void
 
     /**
  * @summary Update job status (e.g. PUBLISHED, DRAFT, CLOSED) (Admin only)
  */
-export const useUpdateJobStatus = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+export const useAdminUpdateJobStatus = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminUpdateJobStatus>>, TError,{id: string;data: UpdateJobStatusDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateJobStatus>>,
+        Awaited<ReturnType<typeof adminUpdateJobStatus>>,
         TError,
         {id: string;data: UpdateJobStatusDto},
         TContext
       > => {
 
-      const mutationOptions = getUpdateJobStatusMutationOptions(options);
+      const mutationOptions = getAdminUpdateJobStatusMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -29,6 +29,10 @@ export interface Job {
   status: JobStatus;
   jobType?: JobJobType;
   salaryRange?: string;
+  /** @nullable */
+  publishedAt?: string | null;
+  /** @nullable */
+  expiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

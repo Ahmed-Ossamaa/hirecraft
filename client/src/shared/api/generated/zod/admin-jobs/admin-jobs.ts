@@ -72,6 +72,8 @@ export const getAdminJobsResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 })).optional()
@@ -111,6 +113,8 @@ export const getAdminJobByIdResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -119,15 +123,15 @@ export const getAdminJobByIdResponse = zod.object({
 /**
  * @summary Update job status (e.g. PUBLISHED, DRAFT, CLOSED) (Admin only)
  */
-export const updateJobStatusParams = zod.object({
+export const adminUpdateJobStatusParams = zod.object({
   "id": zod.string()
 })
 
-export const updateJobStatusBody = zod.object({
+export const adminUpdateJobStatusBody = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']).describe('New status for the job posting')
 })
 
-export const updateJobStatusResponse = zod.object({
+export const adminUpdateJobStatusResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
 
@@ -153,6 +157,8 @@ export const updateJobStatusResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "publishedAt": zod.string().datetime({}).nullish(),
+  "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()

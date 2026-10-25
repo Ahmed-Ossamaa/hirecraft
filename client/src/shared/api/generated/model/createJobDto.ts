@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { CreateJobDtoExperienceLevel } from './createJobDtoExperienceLevel';
-import type { CreateJobDtoStatus } from './createJobDtoStatus';
 import type { CreateJobDtoJobType } from './createJobDtoJobType';
 
 export interface CreateJobDto {
@@ -16,7 +15,6 @@ export interface CreateJobDto {
   machineCategoryId: string;
   machineId: string;
   experienceLevel: CreateJobDtoExperienceLevel;
-  status?: CreateJobDtoStatus;
   /** @minimum 0 */
   yearsOfExperience?: number;
   requirements?: string[];

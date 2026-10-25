@@ -11,6 +11,7 @@ export class Subscription {
   currentPeriodStart!: Date;
   currentPeriodEnd!: Date;
   cancelAtPeriodEnd!: boolean;
+  scheduledPlanId?: PlanId | null;
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { JobsView } from "@/features/jobs/components/JobsView";
+import { JobsView } from "@/features/jobs/components/public/JobsView";
 import { getJobs } from "@/features/jobs/api/getJobs";
 import { FindAllParams } from "@/shared/api/generated/model";
 

@@ -20,12 +20,16 @@ import mailConfig from './config/mail.config';
 import stripeConfig from './config/stripe.config';
 import plansConfig from './config/plans.config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { BillingModule } from './features/billing/billing.module';
+import { PlansModule } from './features/plans/plans.module';
+import { SubscriptionLimitsModule } from './features/billing/subscription-limits/subscription-limits.module';
 import { AdminModule } from './features/admin/admin.module';
 import { SavedJobsModule } from './features/saved-jobs/saved-jobs.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -57,6 +61,8 @@ import { SavedJobsModule } from './features/saved-jobs/saved-jobs.module';
     MachinesModule,
     WorkerProfilesModule,
     BillingModule,
+    PlansModule,
+    SubscriptionLimitsModule,
     AdminModule,
     SavedJobsModule,
   ],

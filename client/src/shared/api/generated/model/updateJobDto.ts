@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateJobDtoExperienceLevel } from './updateJobDtoExperienceLevel';
-import type { UpdateJobDtoStatus } from './updateJobDtoStatus';
 import type { UpdateJobDtoJobType } from './updateJobDtoJobType';
 
 export interface UpdateJobDto {
@@ -16,7 +15,6 @@ export interface UpdateJobDto {
   machineCategoryId?: string;
   machineId?: string;
   experienceLevel?: UpdateJobDtoExperienceLevel;
-  status?: UpdateJobDtoStatus;
   /** @minimum 0 */
   yearsOfExperience?: number;
   requirements?: string[];

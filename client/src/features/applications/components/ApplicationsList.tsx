@@ -6,7 +6,7 @@ import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
 import { Button, Pagination, EmptyState } from "@/shared/components/ui";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { CandidateApplicationResponseDto } from "@/shared/api/generated/model";
 
 export const ApplicationsList: React.FC = () => {
@@ -37,7 +37,8 @@ export const ApplicationsList: React.FC = () => {
     );
   }
 
-  const applications: CandidateApplicationResponseDto[] = data?.data?.data || [];
+  const applications: CandidateApplicationResponseDto[] =
+    data?.data?.data || [];
   const totalPages = data?.data?.totalPages || 1;
 
   if (applications.length === 0) {

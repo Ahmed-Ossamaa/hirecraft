@@ -1,10 +1,12 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui";
 import { MdMoreVert } from "react-icons/md";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUpdateJob, useDeleteJob } from "@/features/jobs/api/useJobMutations";
+import { useUpdateJobStatus, useDeleteJob } from "@/features/jobs/api/useJobMutations";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/providers/confirm-provider";
 
@@ -17,9 +19,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
   const [openUpwards, setOpenUpwards] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { confirm } = useConfirm();
-  const updateMutation = useUpdateJob();
+  const updateStatusMutation = useUpdateJobStatus();
   const deleteMutation = useDeleteJob();
 
   useEffect(() => {
@@ -61,14 +62,22 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
 
   const handleStatusChange = async (status: string) => {
     try {
-      await updateMutation.mutateAsync({
+      await updateStatusMutation.mutateAsync({
         id: job.id,
         data: { status: status as any },
       });
-      toast.success(`Job marked as ${status}`);
+      toast.success(
+        status === "PUBLISHED"
+          ? "Job published successfully!"
+          : `Job moved to ${status.toLowerCase()}`,
+      );
       setOpen(false);
-    } catch (error) {
-      toast.error("Failed to update status");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to update status";
+      toast.error(message);
     }
   };
 
@@ -97,6 +106,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
       <Button
         variant="ghost"
         size="sm"
+        aria-label="action menu"
+        title="Action Menu"
         className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted/30 hover:text-foreground"
         onClick={handleToggle}
       >
@@ -126,25 +137,16 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
           {job.status !== "PUBLISHED" && (
             <button
               onClick={() => handleStatusChange("PUBLISHED")}
-              disabled={updateMutation.isPending}
+              disabled={updateStatusMutation.isPending}
               className="block w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
             >
               Publish
             </button>
           )}
-          {job.status !== "CLOSED" && (
-            <button
-              onClick={() => handleStatusChange("CLOSED")}
-              disabled={updateMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-card-hover transition-colors disabled:opacity-50"
-            >
-              Close
-            </button>
-          )}
           {job.status !== "DRAFT" && (
             <button
               onClick={() => handleStatusChange("DRAFT")}
-              disabled={updateMutation.isPending}
+              disabled={updateStatusMutation.isPending}
               className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-card-hover transition-colors disabled:opacity-50"
             >
               Move to Draft

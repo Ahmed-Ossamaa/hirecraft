@@ -76,6 +76,12 @@ export const Navbar: React.FC = () => {
             >
               Companies
             </Link>
+            <Link
+              className="text-muted-foreground hover:text-foreground transition-colors font-body-md text-sm lg:text-body-md cursor-pointer"
+              href="/pricing"
+            >
+              Pricing
+            </Link>
           </nav>
         </div>
 
@@ -190,6 +196,13 @@ export const Navbar: React.FC = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Companies
+            </Link>
+            <Link
+              className="text-foreground hover:text-primary transition-colors font-body-lg text-lg font-medium cursor-pointer"
+              href="/pricing"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Pricing
             </Link>
           </nav>
 

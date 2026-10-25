@@ -1,20 +1,32 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Optional,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import plansConfiguration from '@/config/plans.config';
 import { type ConfigType } from '@nestjs/config';
 import { Plan } from '../domain/plan.entity';
 import { PlanId } from '../domain/plan-id.enum';
+import {
+  PAYMENT_PROVIDER,
+  type PaymentProvider,
+} from '@/integrations/payment/domain/payment-provider.interface';
 
 @Injectable()
 export class PlansService {
-  private readonly plans: Map<PlanId, Plan>;
-  private readonly paymentPriceToPlanId: Map<string, PlanId>;
+  private readonly logger = new Logger(PlansService.name);
+  private readonly plans: Map<PlanId, Plan> = new Map();
+  private readonly paymentPriceToPlanId: Map<string, PlanId> = new Map();
 
   constructor(
     @Inject(plansConfiguration.KEY)
     private readonly plansConfig: ConfigType<typeof plansConfiguration>,
+    @Optional()
+    @Inject(PAYMENT_PROVIDER)
+    private readonly paymentProvider?: PaymentProvider,
   ) {
-    this.plans = new Map();
-    this.paymentPriceToPlanId = new Map();
     this.initializePlans();
   }
 
@@ -26,9 +38,21 @@ export class PlansService {
       name: string,
       interval: 'month' | 'year',
       paymentPriceId: string | null,
-      limits: { maxJobPostings: number; maxUsers: number },
+      limits: {
+        maxJobPostings: number;
+        maxActiveJobs: number;
+        maxUsers: number;
+      },
     ) => {
-      const plan = new Plan(id, name, interval, paymentPriceId, limits);
+      const plan = new Plan(
+        id,
+        name,
+        interval,
+        0,
+        'EGP',
+        paymentPriceId,
+        limits,
+      );
       this.plans.set(id, plan);
       if (paymentPriceId) {
         this.paymentPriceToPlanId.set(paymentPriceId, id);
@@ -37,11 +61,8 @@ export class PlansService {
 
     // Free Tier
     definePlan(PlanId.FREE_MONTHLY, 'Free', 'month', null, {
-      maxJobPostings: 50, // for testing
-      maxUsers: 50,
-    });
-    definePlan(PlanId.FREE_YEARLY, 'Free', 'year', null, {
       maxJobPostings: 1,
+      maxActiveJobs: 1,
       maxUsers: 1,
     });
 
@@ -53,21 +74,25 @@ export class PlansService {
       prices.starterMonthly,
       {
         maxJobPostings: 5,
+        maxActiveJobs: 3,
         maxUsers: 3,
       },
     );
     definePlan(PlanId.STARTER_YEARLY, 'Starter', 'year', prices.starterYearly, {
-      maxJobPostings: 5,
+      maxJobPostings: 60,
+      maxActiveJobs: 3,
       maxUsers: 3,
     });
 
-    // Professional Tier
-    definePlan(PlanId.PRO_MONTHLY, 'Professional', 'month', prices.proMonthly, {
+    // Pro Tier
+    definePlan(PlanId.PRO_MONTHLY, 'Pro', 'month', prices.proMonthly, {
       maxJobPostings: 20,
+      maxActiveJobs: 10,
       maxUsers: 10,
     });
-    definePlan(PlanId.PRO_YEARLY, 'Professional', 'year', prices.proYearly, {
-      maxJobPostings: 20,
+    definePlan(PlanId.PRO_YEARLY, 'Pro', 'year', prices.proYearly, {
+      maxJobPostings: 240,
+      maxActiveJobs: 10,
       maxUsers: 10,
     });
 
@@ -79,6 +104,7 @@ export class PlansService {
       prices.enterpriseMonthly,
       {
         maxJobPostings: 99999,
+        maxActiveJobs: 99999,
         maxUsers: 99999,
       },
     );
@@ -89,6 +115,7 @@ export class PlansService {
       prices.enterpriseYearly,
       {
         maxJobPostings: 99999,
+        maxActiveJobs: 99999,
         maxUsers: 99999,
       },
     );
@@ -114,5 +141,57 @@ export class PlansService {
 
   getPlans(): Plan[] {
     return Array.from(this.plans.values());
+  }
+
+  async getPlansWithPrices(): Promise<Plan[]> {
+    const domainPlans = this.getPlans();
+
+    if (!this.paymentProvider) {
+      return domainPlans;
+    }
+
+    try {
+      const providerPrices = await this.paymentProvider.getPrices();
+      const activeCurrency =
+        Array.from(providerPrices.values())[0]?.currency || 'EGP';
+
+      return domainPlans.map((plan) => {
+        if (!plan.paymentPriceId) {
+          return new Plan(
+            plan.id,
+            plan.name,
+            plan.interval,
+            0,
+            activeCurrency,
+            null,
+            plan.limits,
+          );
+        }
+
+        const priceDetails = providerPrices.get(plan.paymentPriceId);
+        if (!priceDetails) {
+          this.logger.warn(
+            `Price ID ${plan.paymentPriceId} for plan ${plan.id} not found in provider catalog.`,
+          );
+          return plan;
+        }
+
+        return new Plan(
+          plan.id,
+          priceDetails.productName || plan.name,
+          priceDetails.interval || plan.interval,
+          priceDetails.unitAmount,
+          priceDetails.currency,
+          plan.paymentPriceId,
+          plan.limits,
+        );
+      });
+    } catch (error) {
+      this.logger.error(
+        'Failed to retrieve plan prices from payment provider. Falling back to base plans.',
+        error,
+      );
+      return domainPlans;
+    }
   }
 }

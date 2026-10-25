@@ -1,7 +1,11 @@
 import React from "react";
-import { MdLocationOn, MdPrecisionManufacturing, MdAttachMoney } from "react-icons/md";
+import {
+  MdLocationOn,
+  MdPrecisionManufacturing,
+  MdAttachMoney,
+} from "react-icons/md";
 import { Job } from "@/shared/api/generated/model";
-import { formatTimeAgo } from "@/shared/lib/formatTimeAgo";
+import { formatTimeAgo } from "@/shared/utils/date-utils";
 
 interface CompactJobCardProps {
   job: Job;
@@ -9,7 +13,11 @@ interface CompactJobCardProps {
   onClick: () => void;
 }
 
-export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job, isActive, onClick }) => {
+export const CompactJobCard: React.FC<CompactJobCardProps> = ({
+  job,
+  isActive,
+  onClick,
+}) => {
   const postedAgo = formatTimeAgo(job.createdAt);
 
   return (
@@ -22,7 +30,9 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job, isActive, o
       }`}
     >
       <div className="flex justify-between items-start gap-2 mb-2">
-        <h3 className={`font-headline text-base md:text-lg tracking-tight leading-tight ${isActive ? "text-primary" : "text-foreground"}`}>
+        <h3
+          className={`font-headline text-base md:text-lg tracking-tight leading-tight ${isActive ? "text-primary" : "text-foreground"}`}
+        >
           {job.title}
           {job.machineNameEn && (
             <span className="text-sm font-normal text-muted-foreground ml-1.5 font-sans">
@@ -53,7 +63,7 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job, isActive, o
             {job.machineNameEn}
           </span>
         )}
-        
+
         {job.salaryRange && (
           <span className="flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-[11px] font-mono font-semibold text-emerald-800 dark:text-emerald-300 uppercase">
             <MdAttachMoney className="text-xs text-emerald-600 dark:text-emerald-400" />

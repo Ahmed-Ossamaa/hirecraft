@@ -46,3 +46,50 @@ export const getSubscriptionConfirmationHtml = (
   }
   <p>Thank you for choosing Technically!</p>
 `;
+
+export const getSubscriptionCancellationScheduledHtml = (
+  companyName: string,
+  planName: string,
+  currentPeriodEnd: Date | null,
+) => `
+  <h1>Subscription Cancellation Scheduled</h1>
+  <p>Hello,</p>
+  <p>The subscription for <strong>${companyName}</strong> on the <strong>${planName}</strong> plan has been scheduled for cancellation.</p>
+  ${
+    currentPeriodEnd
+      ? `<p>
+          Your plan will remain active until <strong>${new Date(currentPeriodEnd).toLocaleDateString()}</strong>.
+          After this date, your company will transition to the Free plan.
+        </p>`
+      : '<p>Your company will transition to the Free plan at the end of the current billing cycle.</p>'
+  }
+  <p>Thank you for using Technically!</p>
+`;
+
+export const getSubscriptionDowngradeScheduledHtml = (
+  companyName: string,
+  currentPlanName: string,
+  targetPlanName: string,
+  effectiveDate: Date | null,
+) => `
+  <h1>Subscription Downgrade Scheduled</h1>
+  <p>Hello,</p>
+  <p>A plan change for <strong>${companyName}</strong> from <strong>${currentPlanName}</strong> to <strong>${targetPlanName}</strong> has been scheduled.</p>
+  ${
+    effectiveDate
+      ? `<p>You will retain all features and limits of your current plan until <strong>${new Date(effectiveDate).toLocaleDateString()}</strong>, at which point your new plan and limits will take effect.</p>`
+      : '<p>Your new plan will take effect at the end of the current billing cycle.</p>'
+  }
+  <p>Thank you for using Technically!</p>
+`;
+
+export const getSubscriptionExpiredHtml = (
+  companyName: string,
+  planName: string,
+) => `
+  <h1>Subscription Expired</h1>
+  <p>Hello,</p>
+  <p>The <strong>${planName}</strong> subscription for <strong>${companyName}</strong> has ended and your account has transitioned to the Free plan.</p>
+  <p>Your team members and job postings have been adjusted to Free plan limits. You can reactivate or upgrade your subscription at any time from your dashboard.</p>
+  <p>Thank you for choosing Technically!</p>
+`;

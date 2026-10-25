@@ -1,6 +1,6 @@
 import React from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/utils/utils";
 
 export interface PaginationProps {
   currentPage: number;
@@ -34,7 +34,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages
+          totalPages,
         );
       } else {
         pages.push(
@@ -44,7 +44,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           currentPage,
           currentPage + 1,
           "...",
-          totalPages
+          totalPages,
         );
       }
     }
@@ -64,10 +64,11 @@ export const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
         aria-label="Previous Page"
+        title="prev"
         className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition",
+          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition cursor-pointer",
           "border-border bg-card text-foreground hover:bg-card-hover",
-          "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
+          "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card",
         )}
       >
         <FiChevronLeft className="w-4 h-4" />
@@ -94,10 +95,10 @@ export const Pagination: React.FC<PaginationProps> = ({
             onClick={() => onPageChange(page)}
             aria-current={isCurrent ? "page" : undefined}
             className={cn(
-              "w-8 h-8 rounded-lg text-xs font-mono font-medium transition flex items-center justify-center border",
+              "w-8 h-8 rounded-lg text-xs font-mono font-medium transition flex items-center justify-center border cursor-pointer",
               isCurrent
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-card text-foreground border-border hover:bg-card-hover"
+                : "bg-card text-foreground border-border hover:bg-card-hover",
             )}
           >
             {page}
@@ -111,10 +112,11 @@ export const Pagination: React.FC<PaginationProps> = ({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
         aria-label="Next Page"
+        title="next"
         className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition",
+          "flex items-center justify-center w-8 h-8 rounded-lg border text-xs font-medium transition  cursor-pointer",
           "border-border bg-card text-foreground hover:bg-card-hover",
-          "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
+          "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card",
         )}
       >
         <FiChevronRight className="w-4 h-4" />

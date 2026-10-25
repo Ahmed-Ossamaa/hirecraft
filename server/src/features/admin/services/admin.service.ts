@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '@/features/users/users.service';
 import { CompaniesService } from '@/features/companies/companies.service';
 import { JobsService } from '@/features/jobs/jobs.service';
-import { SubscriptionsService } from '@/features/billing/subscriptions.service';
+import { SubscriptionsService } from '@/features/billing/services/subscriptions.service';
 import { PlansService } from '@/features/plans/services/plans.service';
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';

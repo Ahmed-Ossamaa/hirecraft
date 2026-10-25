@@ -11,7 +11,7 @@ import { ApplicationsModule } from '../applications/applications.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([JobOrmEntity]),
-    SubscriptionLimitsModule,
+    forwardRef(() => SubscriptionLimitsModule),
     forwardRef(() => ApplicationsModule),
   ],
   controllers: [JobsController],

@@ -15,8 +15,16 @@ import {
   useUpdateApplicationStatus,
   useUpdateApplicationStar,
   useUpdateApplicationArchive,
-} from "../api/useApplicationMutations";
-import { MdPeople, MdSearch, MdClose, MdPersonOutline } from "react-icons/md";
+} from "@/features/jobs/api/useApplicationMutations";
+import {
+  MdPeople,
+  MdSearch,
+  MdClose,
+  MdPersonOutline,
+  MdArrowUpward,
+  MdArrowDownward,
+  MdStar,
+} from "react-icons/md";
 import {
   Tabs,
   TableSkeleton,
@@ -162,14 +170,21 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
     updateFilters({ order: newOrder, page: 1 });
   };
 
-  const filterTbas = [
+  const filterTabs = [
     { id: "ALL", label: "All" },
     { id: "PENDING", label: "Pending" },
     { id: "SHORTLISTED", label: "Shortlisted" },
     { id: "SCHEDULED", label: "Scheduled" },
     { id: "OFFERED", label: "Offered" },
     { id: "CLOSED", label: "Closed" },
-    { id: "STARRED", label: "Starred ★" },
+    {
+      id: "STARRED",
+      label: (
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+          Starred <MdStar className="text-amber-400 text-sm shrink-0" />
+        </span>
+      ),
+    },
     { id: "ARCHIVED", label: "Archived" },
   ];
   return (
@@ -213,7 +228,7 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
           {/* Filter Tabs & Search */}
           <div className="space-y-4">
             <Tabs
-              tabs={filterTbas}
+              tabs={filterTabs}
               activeTab={currentTab}
               onTabChange={(id) =>
                 updateFilters({ tab: id as GetApplicationsForJobTab })
@@ -310,9 +325,13 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
                         className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
                         onClick={handleToggleSort}
                       >
-                        Applied At
-                        <span className="ml-1 text-primary">
-                          {currentOrder === "ASC" ? " ↑" : " ↓"}
+                        <span className="inline-flex items-center">
+                          Applied At
+                          {currentOrder === "ASC" ? (
+                            <MdArrowUpward className="inline-block ml-1 text-sm text-primary" />
+                          ) : (
+                            <MdArrowDownward className="inline-block ml-1 text-sm text-primary" />
+                          )}
                         </span>
                       </th>
                       <th className="px-5 py-3 font-medium">Status</th>
@@ -354,7 +373,7 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {totalPages >= 1 && (
             <div className="flex justify-center items-center pt-2">
               <Pagination
                 currentPage={currentPage}

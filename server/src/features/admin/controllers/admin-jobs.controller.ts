@@ -68,6 +68,7 @@ export class AdminJobsController {
   @Patch(':id/status')
   @ApiOperation({
     summary: 'Update job status (e.g. PUBLISHED, DRAFT, CLOSED) (Admin only)',
+    operationId: 'adminUpdateJobStatus',
   })
   @ApiStandardResponse(Job)
   @ApiResponse({
@@ -79,7 +80,7 @@ export class AdminJobsController {
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async updateJobStatus(
+  async adminUpdateJobStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateJobStatusDto,
   ) {

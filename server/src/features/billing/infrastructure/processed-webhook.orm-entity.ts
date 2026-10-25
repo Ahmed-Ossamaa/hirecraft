@@ -6,7 +6,7 @@ import {
   Index,
 } from 'typeorm';
 
-import { PaymentProviderName } from '../domain/payment-provider.interface';
+import { PaymentProviderName } from '@/integrations/payment/domain/payment-provider.interface';
 
 @Entity('processed_webhooks')
 @Index('IDX_UNIQUE_PROCESSED_WEBHOOK', ['provider', 'eventId'], {

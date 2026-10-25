@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { JobForm } from '@/features/jobs/components/JobForm';
+import { JobForm } from '@/features/jobs/components/employer/JobForm';
 import { MdAdd } from 'react-icons/md';
 
 export const metadata: Metadata = {

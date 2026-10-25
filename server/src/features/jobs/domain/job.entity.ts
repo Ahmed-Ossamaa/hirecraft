@@ -28,6 +28,9 @@ export class Job {
   jobType?: JobType;
   salaryRange?: string;
 
+  publishedAt?: Date | null;
+  expiresAt?: Date | null;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from 'react';
-import { useGetMyProfile } from '@/shared/api/generated/worker-profiles/worker-profiles';
-import { ProfileForm } from '@/features/worker-profiles/components/ProfileForm';
-import { MachineSkillsList } from '@/features/worker-profiles/components/MachineSkillsList';
-import { BasicInfoForm } from '@/features/users/components/BasicInfoForm';
-import { MdManageAccounts, MdBadge, MdVisibility } from 'react-icons/md';
-import { useAuthStore } from '@/shared/stores/auth-store';
-import { Button, Tabs } from '@/shared/components/ui';
-import Link from 'next/link';
+import { useState } from "react";
+import { useGetMyProfile } from "@/shared/api/generated/worker-profiles/worker-profiles";
+import { ProfileForm } from "@/features/worker-profiles/components/ProfileForm";
+import { MachineSkillsList } from "@/features/worker-profiles/components/MachineSkillsList";
+import { BasicInfoForm } from "@/features/users/components/BasicInfoForm";
+import { MdManageAccounts, MdBadge, MdVisibility } from "react-icons/md";
+import { useAuthStore } from "@/shared/stores/auth-store";
+import { Button, Tabs } from "@/shared/components/ui";
+import Link from "next/link";
 
 export default function WorkerProfilePage() {
   const user = useAuthStore((s) => s.user);
   const { data: profileResponse, isLoading } = useGetMyProfile({
     query: {
-      enabled: user?.userType === 'CANDIDATE',
-    }
+      enabled: user?.userType === "CANDIDATE",
+    },
   });
-  const [activeTab, setActiveTab] = useState<'basic' | 'professional'>('basic');
+  const [activeTab, setActiveTab] = useState<"basic" | "professional">("basic");
 
   const profile = profileResponse?.data || null;
 
@@ -41,9 +41,14 @@ export default function WorkerProfilePage() {
             Manage your personal information and technical machinery skills.
           </p>
         </div>
-        {user?.userType === 'CANDIDATE' && profile?.id && (
+        {user?.userType === "CANDIDATE" && profile?.id && (
           <Link href={`/worker/${profile.id}`}>
-            <Button variant="outline" size="sm" leftIcon={<MdVisibility />}>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<MdVisibility />}
+              className="whitespace-nowrap"
+            >
               Preview Public Profile
             </Button>
           </Link>
@@ -53,7 +58,7 @@ export default function WorkerProfilePage() {
       <Tabs
         tabs={[
           {
-            id: 'basic',
+            id: "basic",
             label: (
               <div className="flex items-center gap-2">
                 <MdManageAccounts className="text-lg" />
@@ -61,10 +66,10 @@ export default function WorkerProfilePage() {
               </div>
             ),
           },
-          ...(user?.userType === 'CANDIDATE'
+          ...(user?.userType === "CANDIDATE"
             ? [
                 {
-                  id: 'professional',
+                  id: "professional",
                   label: (
                     <div className="flex items-center gap-2">
                       <MdBadge className="text-lg" />
@@ -76,24 +81,24 @@ export default function WorkerProfilePage() {
             : []),
         ]}
         activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as 'basic' | 'professional')}
+        onTabChange={(id) => setActiveTab(id as "basic" | "professional")}
         className="px-2"
       />
 
       <div className="pt-2">
-        {activeTab === 'basic' && (
+        {activeTab === "basic" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <BasicInfoForm user={user} />
           </div>
         )}
 
-        {user?.userType === 'CANDIDATE' && activeTab === 'professional' && (
+        {user?.userType === "CANDIDATE" && activeTab === "professional" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <ProfileForm initialData={profile} />
-            
-            <MachineSkillsList 
-              skills={profile?.skills || []} 
-              profileId={profile?.id} 
+
+            <MachineSkillsList
+              skills={profile?.skills || []}
+              profileId={profile?.id}
             />
           </div>
         )}

@@ -24,7 +24,7 @@ export const TableSkeleton = ({ rows = 5 }: { rows?: number }) => {
           </thead>
           <tbody className="divide-y divide-border/40">
             {Array.from({ length: rows }).map((_, i) => (
-              <tr key={i} className="hover:bg-muted/30 transition-colors">
+              <tr key={i} className="hover:bg-row-hover transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <Skeleton className="w-10 h-10 rounded-full shrink-0" />

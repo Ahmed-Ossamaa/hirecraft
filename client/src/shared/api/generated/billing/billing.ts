@@ -26,6 +26,10 @@ import type {
 
 import type {
   CancelSubscription200,
+  ChangePlan200,
+  ChangePlanDto,
+  ConfirmCheckout200,
+  ConfirmCheckoutDto,
   CreateCheckoutSession200,
   CreateCheckoutSessionDto,
   GetSubscription200
@@ -254,6 +258,134 @@ export const useCreateCheckoutSession = <TError = void,
       > => {
 
       const mutationOptions = getCreateCheckoutSessionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Confirm and activate checkout session on success redirect
+ */
+export const confirmCheckout = (
+    confirmCheckoutDto: ConfirmCheckoutDto,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<ConfirmCheckout200>(
+      {url: `/api/v1/billing/checkout/confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: confirmCheckoutDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getConfirmCheckoutMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmCheckout>>, TError,{data: ConfirmCheckoutDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmCheckout>>, TError,{data: ConfirmCheckoutDto}, TContext> => {
+
+const mutationKey = ['confirmCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmCheckout>>, {data: ConfirmCheckoutDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmCheckout(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof confirmCheckout>>>
+    export type ConfirmCheckoutMutationBody = ConfirmCheckoutDto
+    export type ConfirmCheckoutMutationError = void
+
+    /**
+ * @summary Confirm and activate checkout session on success redirect
+ */
+export const useConfirmCheckout = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmCheckout>>, TError,{data: ConfirmCheckoutDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmCheckout>>,
+        TError,
+        {data: ConfirmCheckoutDto},
+        TContext
+      > => {
+
+      const mutationOptions = getConfirmCheckoutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Change subscription plan: immediate upgrade or scheduled downgrade
+ */
+export const changePlan = (
+    changePlanDto: ChangePlanDto,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<ChangePlan200>(
+      {url: `/api/v1/billing/subscription/change-plan`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: changePlanDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getChangePlanMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePlan>>, TError,{data: ChangePlanDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof changePlan>>, TError,{data: ChangePlanDto}, TContext> => {
+
+const mutationKey = ['changePlan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePlan>>, {data: ChangePlanDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changePlan(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePlanMutationResult = NonNullable<Awaited<ReturnType<typeof changePlan>>>
+    export type ChangePlanMutationBody = ChangePlanDto
+    export type ChangePlanMutationError = unknown
+
+    /**
+ * @summary Change subscription plan: immediate upgrade or scheduled downgrade
+ */
+export const useChangePlan = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePlan>>, TError,{data: ChangePlanDto}, TContext>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePlan>>,
+        TError,
+        {data: ChangePlanDto},
+        TContext
+      > => {
+
+      const mutationOptions = getChangePlanMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

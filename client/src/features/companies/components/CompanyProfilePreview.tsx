@@ -13,9 +13,9 @@ import {
   MdArrowForward,
 } from "react-icons/md";
 import { CollapsibleText, Button } from "@/shared/components/ui";
-import { PublicJobCard } from "@/features/jobs/components/PublicJobCard";
 import Image from "next/image";
 import Link from "next/link";
+import { PublicJobCard } from "@/features/jobs/components/public/PublicJobCard";
 
 interface CompanyProfilePreviewProps {
   company: Company;

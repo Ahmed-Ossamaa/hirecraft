@@ -15,7 +15,7 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { JobStatus } from './domain/job-status.enum';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 
 import { ApplicationsService } from '../applications/applications.service';
@@ -27,6 +27,7 @@ export class JobsService {
   constructor(
     @Inject(JOB_REPOSITORY)
     private readonly jobRepository: IJobRepository,
+    @Inject(forwardRef(() => SubscriptionLimitsService))
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => ApplicationsService))
@@ -54,19 +55,28 @@ export class JobsService {
   }
 
   async createJob(params: CreateJobParams): Promise<Job> {
-    return this.dataSource.transaction(async (tx) => {
-      await this.subscriptionLimitsService.lockCompany(params.companyId, tx);
-      const currentCount = await this.jobRepository.countActiveByCompanyId(
-        params.companyId,
-        tx,
-      );
-      await this.subscriptionLimitsService.checkJobPostingLimit(
-        params.companyId,
-        currentCount,
-        tx,
-      );
-      return this.jobRepository.create(params, tx);
-    });
+    const jobParams: CreateJobParams = {
+      ...params,
+      status: JobStatus.DRAFT,
+      publishedAt: null,
+      expiresAt: null,
+    };
+    return this.jobRepository.create(jobParams);
+  }
+
+  async closeExcessActiveJobs(
+    companyId: string,
+    keepCount: number,
+    tx: EntityManager,
+  ): Promise<number> {
+    return this.jobRepository.closeExcessActiveJobs(companyId, keepCount, tx);
+  }
+
+  async closeExpiredJobs(
+    now: Date = new Date(),
+    tx?: EntityManager,
+  ): Promise<number> {
+    return this.jobRepository.closeExpiredJobs(now, tx);
   }
 
   async findAllJobs(
@@ -122,16 +132,22 @@ export class JobsService {
     companyId: string,
     params: Partial<CreateJobParams>,
   ): Promise<Job> {
+    // Content update only: strip status and publication timestamp parameters
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { status, publishedAt, expiresAt, ...contentParams } = params;
+
     const updated = await this.jobRepository.updateReturning(
       id,
-      params,
+      contentParams,
       companyId,
     );
+
     if (!updated) {
       throw new NotFoundException(
         `Job with ID ${id} not found or you don't have permission`,
       );
     }
+
     return updated;
   }
 
@@ -140,11 +156,74 @@ export class JobsService {
     companyId: string,
     status: JobStatus,
   ): Promise<Job> {
-    return this.updateJob(id, companyId, { status });
+    if (status === JobStatus.CLOSED) {
+      throw new ForbiddenException(
+        'Companies cannot manually close jobs. Please move the job to DRAFT instead.',
+      );
+    }
+
+    return this.dataSource.transaction(async (tx) => {
+      const currentJob = await this.jobRepository.findById(id, tx);
+      if (!currentJob || currentJob.companyId !== companyId) {
+        throw new NotFoundException(
+          `Job with ID ${id} not found or you don't have permission`,
+        );
+      }
+
+      if (currentJob.status === status) {
+        return currentJob;
+      }
+
+      const isPublishing = status === JobStatus.PUBLISHED;
+      const statusParams: Partial<CreateJobParams> = { status };
+
+      if (isPublishing) {
+        await this.subscriptionLimitsService.lockCompany(companyId, tx);
+        await this.subscriptionLimitsService.checkActiveJobLimit(companyId, tx);
+        await this.subscriptionLimitsService.checkJobPostingLimit(
+          companyId,
+          tx,
+        );
+
+        statusParams.publishedAt = new Date();
+        statusParams.expiresAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        );
+      }
+
+      const updated = await this.jobRepository.updateReturning(
+        id,
+        statusParams,
+        companyId,
+        tx,
+      );
+
+      if (!updated) {
+        throw new NotFoundException(
+          `Job with ID ${id} not found or you don't have permission`,
+        );
+      }
+
+      if (isPublishing) {
+        await this.subscriptionLimitsService.recordJobPostingUsage(
+          companyId,
+          id,
+          tx,
+        );
+      }
+
+      return updated;
+    });
   }
 
   async adminUpdateJobStatus(id: string, status: JobStatus): Promise<Job> {
-    const updated = await this.jobRepository.updateReturning(id, { status });
+    const params: Partial<CreateJobParams> = { status };
+    if (status === JobStatus.PUBLISHED) {
+      params.publishedAt = new Date();
+      params.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    }
+
+    const updated = await this.jobRepository.updateReturning(id, params);
     if (!updated) {
       throw new NotFoundException(`Job with ID ${id} not found`);
     }

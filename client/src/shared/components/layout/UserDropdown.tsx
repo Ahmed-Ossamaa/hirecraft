@@ -12,6 +12,7 @@ import {
   MdKeyboardArrowDown,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface UserDropdownProps {
@@ -24,6 +25,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { user, clearAuth } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -48,15 +50,17 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
         method: "POST",
       });
       clearAuth();
+      queryClient.clear();
       setIsDropdownOpen(false);
       router.push("/");
       router.refresh();
-      toast.success("Logged out successfully");
+      toast.success("Logged out successfully", {duration: 500});
     } catch (error) {
       console.error("Logout failed:", error);
       clearAuth();
+      queryClient.clear();
       router.push("/");
-      toast.error("Failed to logout cleanly");
+      toast.error("Failed to logout");
     } finally {
       setIsLoggingOut(false);
     }

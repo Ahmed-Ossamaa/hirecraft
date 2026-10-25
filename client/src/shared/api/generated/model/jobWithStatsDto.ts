@@ -31,6 +31,10 @@ export interface JobWithStatsDto {
   status: JobWithStatsDtoStatus;
   jobType?: JobWithStatsDtoJobType;
   salaryRange?: string;
+  /** @nullable */
+  publishedAt?: string | null;
+  /** @nullable */
+  expiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
