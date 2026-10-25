@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  ForbiddenException,
   UseGuards,
   Get,
   Query,
@@ -13,18 +12,22 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { UserType } from '../users/domain/user-type.enum';
 import { CompanyRole } from '../company-members/domain/company-role.enum';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { CompanyRoleGuard } from '@/common/guards/company-role.guard';
+import { RequireCompanyRole } from '@/common/decorators/company-role.decorator';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
-import { RolesGuard } from '@/common/guards/role.guard';
 import { Job } from './domain/job.entity';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
@@ -36,8 +39,9 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.EMPLOYER)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard)
+  @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
   @ApiOperation({
     summary: 'Create a new job posting for a company (always created as DRAFT)',
   })
@@ -54,21 +58,8 @@ export class JobsController {
   async createJob(
     @Body() dto: CreateJobDto,
     @CurrentUser('id') userId: string,
-    @CurrentUser('companyId') companyId?: string,
-    @CurrentUser('role') role?: CompanyRole,
+    @CurrentUser('companyId') companyId: string,
   ) {
-    if (!companyId) {
-      throw new ForbiddenException(
-        'You must belong to a company to post a job.',
-      );
-    }
-
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException(
-        'You do not have permission to create job postings.',
-      );
-    }
-
     const job = await this.jobsService.createJob({
       ...dto,
       companyId,
@@ -88,22 +79,21 @@ export class JobsController {
   }
 
   @Get('company')
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get all jobs for a specific company -My company- (paginated)',
   })
   @ApiPaginatedResponse(JobWithStatsDto)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.EMPLOYER)
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard)
+  @RequireCompanyRole(
+    CompanyRole.ADMIN,
+    CompanyRole.HIRING_MANAGER,
+    CompanyRole.STAFF,
+  )
   async getCompanyJobs(
     @Query() query: FindJobsQueryDto,
-    @CurrentUser('companyId') companyId?: string,
+    @CurrentUser('companyId') companyId: string,
   ) {
-    if (!companyId) {
-      throw new ForbiddenException(
-        'You must belong to a company to view its jobs.',
-      );
-    }
-
     // Returns ALL jobs (Drafts, Published, etc.) for this specific company
     return this.jobsService.getJobsByCompany(companyId, query);
   }
@@ -117,8 +107,9 @@ export class JobsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.EMPLOYER)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard)
+  @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
   @ApiOperation({ summary: 'Update job posting details (Employer only)' })
   @ApiStandardResponse(Job)
   @ApiResponse({
@@ -129,20 +120,14 @@ export class JobsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateJobDto,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: CompanyRole,
   ) {
-    if (!companyId) throw new ForbiddenException('No company association.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException(
-        'You do not have permission to update job postings.',
-      );
-    }
     return this.jobsService.updateJob(id, companyId, dto);
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.EMPLOYER)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard)
+  @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
   @ApiOperation({
     summary: 'Update job publication status (Employer only)',
     operationId: 'updateJobStatus',
@@ -161,34 +146,21 @@ export class JobsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateJobStatusDto,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: CompanyRole,
   ) {
-    if (!companyId) throw new ForbiddenException('No company association.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException(
-        'You do not have permission to update job postings.',
-      );
-    }
     return this.jobsService.updateJobStatus(id, companyId, dto.status);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.EMPLOYER)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard)
+  @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
   @ApiOperation({ summary: 'Delete a job posting (Employer only)' })
   @ApiResponse({ status: 204, description: 'Job deleted successfully.' })
   async deleteJob(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('companyId') companyId: string,
-    @CurrentUser('role') role: CompanyRole,
   ) {
-    if (!companyId) throw new ForbiddenException('No company association.');
-    if (role !== CompanyRole.ADMIN && role !== CompanyRole.HIRING_MANAGER) {
-      throw new ForbiddenException(
-        'You do not have permission to delete job postings.',
-      );
-    }
     await this.jobsService.deleteJob(id, companyId);
   }
 }
