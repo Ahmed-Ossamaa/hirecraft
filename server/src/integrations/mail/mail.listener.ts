@@ -7,6 +7,9 @@ import {
   PasswordResetRequestedEvent,
   UserVerificationRequestedEvent,
   SubscriptionCreatedEvent,
+  SubscriptionCancellationScheduledEvent,
+  SubscriptionDowngradeScheduledEvent,
+  SubscriptionExpiredEvent,
 } from './mail.events';
 import {
   getInviteEmailHtml,
@@ -14,6 +17,9 @@ import {
   getPasswordResetHtml,
   getVerifyEmailHtml,
   getSubscriptionConfirmationHtml,
+  getSubscriptionCancellationScheduledHtml,
+  getSubscriptionDowngradeScheduledHtml,
+  getSubscriptionExpiredHtml,
 } from './mail.templates';
 
 @Injectable()
@@ -98,6 +104,62 @@ export class MailListener {
       payload.email,
       payload.recipientName || payload.companyName,
       `Subscription Confirmed: Welcome to ${payload.planName}!`,
+      html,
+    );
+  }
+
+  @OnEvent('subscription.cancellation_scheduled', { async: true })
+  async handleSubscriptionCancellationScheduledEvent(
+    payload: SubscriptionCancellationScheduledEvent,
+  ) {
+    this.logger.log(
+      `Handling subscription.cancellation_scheduled event for ${payload.email}`,
+    );
+    const html = getSubscriptionCancellationScheduledHtml(
+      payload.companyName,
+      payload.planName,
+      payload.currentPeriodEnd,
+    );
+    await this.mailService.sendEmail(
+      payload.email,
+      payload.recipientName || payload.companyName,
+      `Subscription Cancellation Scheduled - Technically`,
+      html,
+    );
+  }
+
+  @OnEvent('subscription.downgrade_scheduled', { async: true })
+  async handleSubscriptionDowngradeScheduledEvent(
+    payload: SubscriptionDowngradeScheduledEvent,
+  ) {
+    this.logger.log(
+      `Handling subscription.downgrade_scheduled event for ${payload.email}`,
+    );
+    const html = getSubscriptionDowngradeScheduledHtml(
+      payload.companyName,
+      payload.currentPlanName,
+      payload.targetPlanName,
+      payload.effectiveDate,
+    );
+    await this.mailService.sendEmail(
+      payload.email,
+      payload.recipientName || payload.companyName,
+      `Subscription Plan Change Scheduled - Technically`,
+      html,
+    );
+  }
+
+  @OnEvent('subscription.expired', { async: true })
+  async handleSubscriptionExpiredEvent(payload: SubscriptionExpiredEvent) {
+    this.logger.log(`Handling subscription.expired event for ${payload.email}`);
+    const html = getSubscriptionExpiredHtml(
+      payload.companyName,
+      payload.planName,
+    );
+    await this.mailService.sendEmail(
+      payload.email,
+      payload.recipientName || payload.companyName,
+      `Subscription Expired - Technically`,
       html,
     );
   }
