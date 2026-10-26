@@ -205,21 +205,24 @@ export const JobsFilter: React.FC = () => {
           variant={isExpanded ? "secondary" : "outline"}
           size="md"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="flex items-center gap-2 shrink-0 h-10 px-3 md:px-4 text-sm font-medium transition-all "
+          className="relative flex items-center justify-center gap-1 shrink-0 h-9 px-2 rounded-xl transition-all"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
+          title={isExpanded ? "Collapse filters" : "Expand filters"}
         >
-          <FiFilter className=" text-primary w-3 h-3" />
+          <FiFilter className="text-primary w-4 h-4 shrink-0" />
           {activeFilterCount > 0 && (
-            <span className="min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+            <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-card z-10 pointer-events-none">
               {activeFilterCount}
             </span>
           )}
-          {isExpanded ? (
-            <FiMinus className="text-xs text-muted-foreground" />
-          ) : (
-            <FiPlus className="text-xs text-muted-foreground" />
-          )}
+          <span className="text-muted-foreground flex items-center justify-center shrink-0">
+            {isExpanded ? (
+              <FiMinus className="w-3.5 h-3.5 shrink-0" />
+            ) : (
+              <FiPlus className="w-3.5 h-3.5 shrink-0" />
+            )}
+          </span>
         </Button>
       </div>
 

@@ -108,7 +108,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
         size="sm"
         aria-label="action menu"
         title="Action Menu"
-        className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+        className="h-8 w-8 p-0 text-muted-foreground hover:bg-card/60 hover:text-foreground"
         onClick={handleToggle}
       >
         <MdMoreVert className="text-xl" />

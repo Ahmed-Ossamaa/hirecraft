@@ -117,24 +117,24 @@
 }
 
 :root {
-  --background: #f8fafc;
+  --background: #f1f5f9;
   --foreground: #0f172a;
-  --card: #f4f8fd;
-  --card-hover: #f1f5f9;
-  --row-hover: #d9e0e859;
+  --card: #ffffff;
+  --card-hover: #e8edf5;
+  --row-hover: #e8f0fecf;
   --input: #ffffff;
-  --border: #e2e8f0;
-  --border-subtle: #cbd5e1;
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
   --border-light: #94a3b8;
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
   /* Dual CTA section */
-  --cta-section: #f1f6fd;
+  --cta-section: #eef4fc;
   --cta-operator-card: #f8fbff;
   --cta-employer-card: #edf5ff;
-  --cta-card-border: #cfe0ff;
+  --cta-card-border: #bfd7fe;
   --cta-accent-soft: #e0edff;
 
   /* Company cover fallback */
