@@ -55,7 +55,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div 
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80  animate-in fade-in duration-200"
+      className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-background/80  animate-in fade-in duration-200"
     >
       <div 
         className={`bg-card w-full ${maxWidth} rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]`}
