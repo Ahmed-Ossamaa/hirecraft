@@ -26,7 +26,7 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
       className={`p-4 cursor-pointer rounded-xl border transition-all duration-200 ${
         isActive
           ? "bg-primary/5 border-primary shadow-sm"
-          : "bg-card border-border hover:border-primary/60 hover:shadow-md"
+          : "bg-card border-border hover:border-primary/60 hover:bg-card-hover/40 hover:shadow-md"
       }`}
     >
       <div className="flex justify-between items-start gap-2 mb-2">
