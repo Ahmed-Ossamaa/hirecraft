@@ -4,17 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { getGetProfileByIdQueryOptions } from "@/shared/api/generated/worker-profiles/worker-profiles";
 import { WorkerProfilePreview } from "@/features/worker-profiles/components/WorkerProfilePreview";
 import { MdRefresh } from "react-icons/md";
+import { FiFileText } from "react-icons/fi";
+import { CollapsibleText } from "@/shared/components/ui";
 
 interface WorkerProfileSlideOverProps {
   isOpen: boolean;
   onClose: () => void;
   workerProfileId: string | null;
+  coverLetter?: string;
 }
 
 export const WorkerProfileSlideOver: React.FC<WorkerProfileSlideOverProps> = ({
   isOpen,
   onClose,
   workerProfileId,
+  coverLetter,
 }) => {
   const { data, isLoading, isError, refetch } = useQuery({
     ...getGetProfileByIdQueryOptions(workerProfileId!),
@@ -49,7 +53,21 @@ export const WorkerProfileSlideOver: React.FC<WorkerProfileSlideOverProps> = ({
           </div>
         )}
 
-        {profile && <WorkerProfilePreview profile={profile} hideTopMargin={true} />}
+        {profile && (
+          <WorkerProfilePreview profile={profile} hideTopMargin={true} />
+        )}
+        {coverLetter && (
+          <div className="p-6 md:p-8 pb-0 bg-background">
+            <div className="p-5 rounded-2xl border border-border bg-card shadow-xs">
+              <div className="flex items-center gap-2 mb-2.5 text-xs font-mono uppercase tracking-wider text-primary font-semibold">
+                <FiFileText className="text-sm" />
+                Cover Letter
+              </div>
+              <CollapsibleText text={coverLetter || ""} />
+            </div>
+          </div>
+        )}
+
       </div>
     </SlideOver>
   );

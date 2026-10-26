@@ -56,7 +56,7 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
     ) || {};
 
   return (
-    <div className={`bg-background pb-20 ${hideTopMargin ? '' : 'mt-28 min-h-screen'}`}>
+    <div className={`bg-background pb-5 ${hideTopMargin ? '' : 'mt-28 min-h-screen'}`}>
       {/* Header Banner */}
       <div className="bg-primary/5 border-b border-border h-28 md:h-38 relative overflow-hidden">
         {/*  Overlay */}
@@ -136,7 +136,7 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
               {profile.email && (
                 <a 
                   href={`mailto:${profile.email}`} 
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-card text-foreground rounded-xl text-sm font-medium hover:bg-card-hover border border-border transition-colors shadow-sm"
                 >
                   <MdEmail className="text-lg" />
                   {profile.email}
@@ -145,7 +145,7 @@ export const WorkerProfilePreview: React.FC<WorkerProfilePreviewProps> = ({ prof
               {profile.phone && (
                 <a 
                   href={`tel:${profile.phone}`} 
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-card text-foreground rounded-xl text-sm font-medium hover:bg-input border border-border transition-colors shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-card text-foreground rounded-xl text-sm font-medium hover:bg-card-hover border border-border transition-colors shadow-sm"
                 >
                   <MdPhone className="text-lg" />
                   {profile.phone}

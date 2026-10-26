@@ -1,4 +1,4 @@
-import { IsUUID, IsString, IsOptional } from 'class-validator';
+import { IsUUID, IsString, IsOptional, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateJobApplicationDto {
@@ -11,5 +11,8 @@ export class CreateJobApplicationDto {
   })
   @IsString()
   @IsOptional()
+  @MaxLength(2000, {
+    message: 'Cover letter must be at most 2000 characters long',
+  })
   coverLetter?: string;
 }

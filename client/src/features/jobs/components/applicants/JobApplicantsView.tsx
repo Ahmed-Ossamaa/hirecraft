@@ -35,6 +35,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { WorkerProfileSlideOver } from "./WorkerProfileSlideOver";
 import { ApplicantMetricsCards } from "./ApplicantMetricsCards";
 import { ApplicantTableRow } from "./ApplicantTableRow";
+import { CoverLetterModal } from "./CoverLetterModal";
 
 interface JobApplicantsViewProps {
   jobId: string;
@@ -55,9 +56,10 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
 
   // Local state
   const [searchValue, setSearchValue] = useState(currentSearch);
-  const [selectedApplicantId, setSelectedApplicantId] = useState<string | null>(
-    null,
-  );
+  const [selectedApplication, setSelectedApplication] =
+    useState<EmployerApplicationResponseDto | null>(null);
+  const [viewingCoverLetterApp, setViewingCoverLetterApp] =
+    useState<EmployerApplicationResponseDto | null>(null);
 
   useEffect(() => {
     setSearchValue(currentSearch);
@@ -321,6 +323,7 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
                   <thead className="bg-muted/30 border-b border-border/40 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                     <tr>
                       <th className="px-5 py-3 font-medium">Applicant</th>
+                      <th className="px-5 py-3 font-medium">Cover Letter</th>
                       <th
                         className="px-5 py-3 font-medium cursor-pointer group hover:text-foreground transition-colors select-none"
                         onClick={handleToggleSort}
@@ -345,7 +348,8 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
                       <ApplicantTableRow
                         key={app.id}
                         application={app}
-                        onSelectApplicant={(id) => setSelectedApplicantId(id)}
+                        onSelectApplicant={(selected) => setSelectedApplication(selected)}
+                        onViewCoverLetter={(selected) => setViewingCoverLetterApp(selected)}
                         onToggleStar={(id, isStarred) =>
                           updateStarMutation.mutate({
                             id,
@@ -385,11 +389,24 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
         </>
       )}
 
+      {/* Cover Letter Modal */}
+      <CoverLetterModal
+        isOpen={!!viewingCoverLetterApp}
+        onClose={() => setViewingCoverLetterApp(null)}
+        application={viewingCoverLetterApp}
+        onViewProfile={() => {
+          if (viewingCoverLetterApp) {
+            setSelectedApplication(viewingCoverLetterApp);
+          }
+        }}
+      />
+
       {/* worker Profile SlideOver */}
       <WorkerProfileSlideOver
-        isOpen={!!selectedApplicantId}
-        onClose={() => setSelectedApplicantId(null)}
-        workerProfileId={selectedApplicantId}
+        isOpen={!!selectedApplication}
+        onClose={() => setSelectedApplication(null)}
+        workerProfileId={selectedApplication?.workerProfileId ?? null}
+        coverLetter={selectedApplication?.coverLetter}
       />
     </div>
   );

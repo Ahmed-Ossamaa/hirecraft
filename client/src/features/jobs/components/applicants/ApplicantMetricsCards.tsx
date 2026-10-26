@@ -152,7 +152,7 @@ export const ApplicantMetricsCards: React.FC<ApplicantMetricsCardsProps> = ({
                 </span>
               </div>
 
-              {/* Thin 4px Progress Bar */}
+              {/* Progress Bar */}
               <div
                 className="w-full bg-border/40 dark:bg-border/60 rounded-full h-1 overflow-hidden"
                 role="progressbar"

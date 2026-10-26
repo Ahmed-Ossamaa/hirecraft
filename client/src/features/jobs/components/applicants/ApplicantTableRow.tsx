@@ -12,6 +12,8 @@ import {
   EMPLOYER_APPLICATION_STATUS_OPTIONS,
 } from "@/shared/utils/applicationStatus";
 
+import { FiFileText } from "react-icons/fi";
+
 const getInitials = (name?: string) => {
   if (!name) return "U";
   return name
@@ -23,7 +25,8 @@ const getInitials = (name?: string) => {
 
 interface ApplicantTableRowProps {
   application: EmployerApplicationResponseDto;
-  onSelectApplicant: (workerProfileId: string) => void;
+  onSelectApplicant: (application: EmployerApplicationResponseDto) => void;
+  onViewCoverLetter: (application: EmployerApplicationResponseDto) => void;
   onToggleStar: (applicationId: string, isStarred: boolean) => void;
   onStatusChange: (
     applicationId: string,
@@ -35,6 +38,7 @@ interface ApplicantTableRowProps {
 export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
   application: app,
   onSelectApplicant,
+  onViewCoverLetter,
   onToggleStar,
   onStatusChange,
   onToggleArchive,
@@ -64,7 +68,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
 
           {/* Candidate Info (Opens SlideOver) */}
           <div
-            onClick={() => onSelectApplicant(app.workerProfileId)}
+            onClick={() => onSelectApplicant(app)}
             className="flex items-center gap-3 cursor-pointer group min-w-0"
             title="Click to view candidate profile"
           >
@@ -95,7 +99,31 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
         </div>
       </td>
 
-      {/* Column 2: Applied At */}
+      {/* Column 2: Cover Letter Preview */}
+      <td className="px-5 py-3.5 max-w-55">
+        {app.coverLetter ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewCoverLetter(app);
+            }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer group text-left max-w-full"
+            title="Click to view full cover letter"
+          >
+            <FiFileText className="text-primary shrink-0 text-sm group-hover:scale-110 transition-transform" />
+            <span className="truncate group-hover:underline">
+              {app.coverLetter}
+            </span>
+          </button>
+        ) : (
+          <span className="text-muted-foreground/40 text-xs select-none">
+            —
+          </span>
+        )}
+      </td>
+
+      {/* Column 3: Applied At */}
       <td
         className="px-5 py-3.5 text-muted-foreground whitespace-nowrap cursor-help"
         title={new Date(app.createdAt).toLocaleString()}
@@ -103,7 +131,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
         {formatTimeAgo(app.createdAt)}
       </td>
 
-      {/* Column 3: Status */}
+      {/* Column 4: Status */}
       <td className="px-5 py-3.5">
         <select
           value={app.status}
@@ -130,7 +158,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
         </select>
       </td>
 
-      {/* Column 4: Actions (Archive / Unarchive) */}
+      {/* Column 5: Actions (Archive / Unarchive) */}
       <td className="px-5 py-3.5 text-right pr-6">
         {app.isArchived ? (
           <button
