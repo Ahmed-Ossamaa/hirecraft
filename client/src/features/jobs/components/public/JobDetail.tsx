@@ -30,9 +30,10 @@ import { formatTimeAgo } from "@/shared/utils/date-utils";
 
 interface JobDetailProps {
   job: Job | null;
+  isModal?: boolean;
 }
 
-export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
+export const JobDetail: React.FC<JobDetailProps> = ({ job, isModal = false }) => {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -57,7 +58,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
   };
   if (!job) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-card rounded-2xl border border-border">
+      <div className={`flex flex-col items-center justify-center h-full text-center p-8 bg-card ${isModal ? '' : 'rounded-2xl border border-border'}`}>
         <MdWorkOutline className="text-6xl text-muted-foreground mb-4 opacity-50" />
         <h3 className="font-headline text-2xl text-foreground mb-2">
           No Job Selected
@@ -71,7 +72,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
   }
 
   return (
-    <div className="bg-card rounded-2xl border border-border overflow-hidden flex flex-col h-full shadow-sm">
+    <div className={`bg-card ${isModal ? 'min-h-full' : 'h-full rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col'}`}>
       {/* Header */}
       <div className="p-6 md:p-8 border-b border-border bg-card-hover/50 relative">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -198,7 +199,7 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job }) => {
       </div>
 
       {/* Content Scroll Area */}
-      <div className="p-6 md:p-8 flex-1 overflow-y-auto">
+      <div className={`p-6 md:p-8 ${isModal ? '' : 'flex-1 overflow-y-auto'}`}>
         <div className="max-w-3xl space-y-8">
           {/* Role Description */}
           <section>

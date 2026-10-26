@@ -1,7 +1,6 @@
 "use client";
 
 import { Sidebar } from "@/shared/components/layout/Sidebar";
-import { DashboardTopBar } from "@/shared/components/layout/DashboardTopBar";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -42,8 +41,7 @@ export default function DashboardLayout({
         setCollapsed={setCollapsed} 
       />
       <div className={`${collapsed ? "ml-17" : "ml-17 md:ml-60"} transition-all duration-300 flex flex-col min-h-screen`}>
-        <DashboardTopBar />
-        <main className="flex-1 p-2 md:p-6">{children}</main>
+        <main className="flex-1 p-3 md:p-6 min-w-0">{children}</main>
       </div>
     </div>
   );

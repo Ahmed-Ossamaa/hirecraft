@@ -12,8 +12,7 @@ import {
   MdKeyboardArrowDown,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 
 interface UserDropdownProps {
   showName?: boolean;
@@ -24,11 +23,10 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  const { user, clearAuth } = useAuthStore();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user } = useAuthStore();
+  const { logout, isLoggingOut } = useLogout({
+    onSuccess: () => setIsDropdownOpen(false),
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -42,29 +40,6 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      clearAuth();
-      queryClient.clear();
-      setIsDropdownOpen(false);
-      router.push("/");
-      router.refresh();
-      toast.success("Logged out successfully", {duration: 500});
-    } catch (error) {
-      console.error("Logout failed:", error);
-      clearAuth();
-      queryClient.clear();
-      router.push("/");
-      toast.error("Failed to logout");
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
 
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
@@ -162,7 +137,7 @@ export const UserDropdown: React.FC<UserDropdownProps> = ({
 
           <div className="border-t border-border/50 py-1">
             <button
-              onClick={handleLogout}
+              onClick={logout}
               disabled={isLoggingOut}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
             >

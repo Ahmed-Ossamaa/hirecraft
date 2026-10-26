@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFindAll } from '@/shared/api/generated/jobs/jobs';
 import { FindAll200, FindAllParams, Job } from '@/shared/api/generated/model';
-import { Pagination } from '@/shared/components/ui';
+import { Pagination, SlideOver } from '@/shared/components/ui';
 import { CompactJobCard } from './CompactJobCard';
 import { JobDetail } from './JobDetail';
 import { JobsFilter } from './JobsFilter';
@@ -18,6 +18,18 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const jobIdParam = searchParams.get('jobId');
+
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(jobIdParam);
+  const [isMobileSlideOverOpen, setIsMobileSlideOverOpen] = useState(false);
+
+  useEffect(() => {
+    if (jobIdParam) {
+      setSelectedJobId(jobIdParam);
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setIsMobileSlideOverOpen(true);
+      }
+    }
+  }, [jobIdParam]);
 
   const apiParams = useMemo(() => {
     const allowedStringKeys = ['search', 'experienceLevel', 'jobType', 'country', 'city', 'companyId', 'order'] as const;
@@ -46,7 +58,7 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
     { query: { initialData } }
   );
 
-  const res= data?.data
+  const res = data?.data;
   const jobs = res?.data || [];
   const currentPage = res?.page || 1;
   const totalPages = res?.totalPages || 1;
@@ -54,18 +66,37 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
   
   // Find the currently selected job
   const selectedJob = useMemo(() => {
-    if (jobIdParam) {
-      return jobs.find((j: Job) => j.id === jobIdParam) || null;
+    if (selectedJobId) {
+      const found = jobs.find((j: Job) => j.id === selectedJobId);
+      if (found) return found;
     }
     // Default to the first job if none selected
     return jobs.length > 0 ? jobs[0] : null;
-  }, [jobIdParam, jobs]);
+  }, [selectedJobId, jobs]);
 
-  // Update URL when a job is clicked
+  // Update URL and state when a job is clicked without triggering Next.js RSC re-fetch
   const handleJobSelect = (id: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('jobId', id);
-    router.push(`/jobs?${params.toString()}`, { scroll: false });
+    setSelectedJobId(id);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.set('jobId', id);
+      window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+
+      if (window.innerWidth < 1024) {
+        setIsMobileSlideOverOpen(true);
+      }
+    }
+  };
+
+  const handleCloseSlideOver = () => {
+    setIsMobileSlideOverOpen(false);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      params.delete('jobId');
+      const newQuery = params.toString();
+      const newUrl = newQuery ? `${window.location.pathname}?${newQuery}` : window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }
   };
 
   const handlePageChange = (newPage: number) => {
@@ -76,8 +107,8 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
 
   if (isLoading && !jobs.length) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-120px)] min-h-150 animate-pulse">
-        <div className="lg:col-span-4 lg:col-start-1 bg-card border border-border rounded-2xl"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-120px-100px)] min-h-150 animate-pulse">
+        <div className="col-span-12 lg:col-span-4 bg-card border border-border rounded-2xl h-[calc(100vh-280px)] min-h-125 lg:h-full"></div>
         <div className="lg:col-span-8 bg-card border border-border rounded-2xl hidden lg:block"></div>
       </div>
     );
@@ -89,48 +120,59 @@ export const JobsView: React.FC<JobsViewProps> = ({ initialData }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh-120px-100px)] min-h-150">
         
         {/* Left Pane: Job List */}
-      <div className="lg:col-span-4 flex flex-col h-125 lg:h-full bg-background/50 rounded-2xl overflow-hidden border border-border">
-        <div className="p-4 border-b border-border bg-card-hover shrink-0">
-          <h1 className="font-headline text-xl text-foreground">Active Roles</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            {totalJobs} open position{totalJobs === 1 ? '' : 's'}
-          </p>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-          {jobs.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground text-sm">
-              No active jobs found.
-            </div>
-          ) : (
-            jobs.map((job: Job) => (
-              <CompactJobCard
-                key={job.id}
-                job={job}
-                isActive={selectedJob?.id === job.id}
-                onClick={() => handleJobSelect(job.id)}
+        <div className="col-span-12 lg:col-span-4 flex flex-col h-[calc(100vh-280px)] min-h-125 lg:h-full bg-background/50 rounded-2xl overflow-hidden border border-border">
+          <div className="p-4 border-b border-border bg-card-hover shrink-0">
+            <h1 className="font-headline text-xl text-foreground">Active Roles</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {totalJobs} open position{totalJobs === 1 ? '' : 's'}
+            </p>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            {jobs.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground text-sm">
+                No active jobs found.
+              </div>
+            ) : (
+              jobs.map((job: Job) => (
+                <CompactJobCard
+                  key={job.id}
+                  job={job}
+                  isActive={selectedJob?.id === job.id}
+                  onClick={() => handleJobSelect(job.id)}
+                />
+              ))
+            )}
+          </div>
+
+          {totalPages > 0 && (
+            <div className="p-3 border-t border-border bg-card-hover/50 shrink-0">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
-            ))
+            </div>
           )}
         </div>
 
-        {totalPages > 0 && (
-          <div className="p-3 border-t border-border bg-card-hover/50 shrink-0">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
+        {/* Right Pane: Job Detail (Desktop Only) */}
+        <div className="hidden lg:flex lg:col-span-8 flex-col h-full overflow-hidden">
+          <JobDetail job={selectedJob} />
+        </div>
       </div>
 
-
-      {/* Right Pane: Job Detail (Sticky on Desktop) */}
-      <div className="lg:col-span-8 flex flex-col h-150 lg:h-full overflow-hidden">
-        <JobDetail job={selectedJob} />
-      </div>
-    </div>
+      {/* Mobile/Tablet Drawer SlideOver */}
+      <SlideOver
+        isOpen={isMobileSlideOverOpen && !!selectedJob}
+        onClose={handleCloseSlideOver}
+        title={selectedJob?.title || "Job Details"}
+        width="max-w-4xl"
+      >
+        <div className="h-full bg-card">
+          <JobDetail job={selectedJob} isModal={true} />
+        </div>
+      </SlideOver>
     </>
   );
 };

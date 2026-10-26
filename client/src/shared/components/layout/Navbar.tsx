@@ -182,23 +182,23 @@ export const Navbar: React.FC = () => {
             </button>
           </form>
 
-          <nav className="flex flex-col gap-4 px-2">
+          <nav className="flex flex-col gap-2 px-2  ">
             <Link
-              className="text-foreground hover:text-primary transition-colors font-body-lg text-lg font-medium cursor-pointer"
+              className="text-foreground hover:text-primary hover:bg-card-hover px-3 py-2 rounded-lg transition-colors font-body-lg  font-medium cursor-pointer"
               href="/jobs"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Browse Jobs
             </Link>
             <Link
-              className="text-foreground hover:text-primary transition-colors font-body-lg text-lg font-medium cursor-pointer"
+              className="text-foreground hover:text-primary hover:bg-card-hover px-3 py-2 rounded-lg transition-colors font-body-lg  font-medium cursor-pointer"
               href="/companies"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Companies
             </Link>
             <Link
-              className="text-foreground hover:text-primary transition-colors font-body-lg text-lg font-medium cursor-pointer"
+              className="text-foreground hover:text-primary hover:bg-card-hover px-3 py-2 rounded-lg transition-colors font-body-lg  font-medium cursor-pointer"
               href="/pricing"
               onClick={() => setIsMobileMenuOpen(false)}
             >

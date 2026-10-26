@@ -13,7 +13,7 @@ import {
   FindAllExperienceLevel,
   FindAllJobType,
 } from "@/shared/api/generated/model";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiFilter, FiPlus, FiMinus } from "react-icons/fi";
 
 export const JobsFilter: React.FC = () => {
   const router = useRouter();
@@ -32,6 +32,16 @@ export const JobsFilter: React.FC = () => {
     searchParams.get("yearsOfExperience") || "",
   );
   const [jobType, setJobType] = useState(searchParams.get("jobType") || "");
+
+  const activeFilterCount = [
+    country,
+    city,
+    expLevel,
+    yearsOfExp,
+    jobType,
+  ].filter(Boolean).length;
+
+  const [isExpanded, setIsExpanded] = useState(() => activeFilterCount > 0);
 
   // Debounced URL search updater
   const debouncedUpdateSearch = useDebouncedCallback((val: string) => {
@@ -68,11 +78,21 @@ export const JobsFilter: React.FC = () => {
     setSearch(currentSearch);
     debouncedUpdateSearch.cancel();
 
-    setCountry(searchParams.get("country") || "");
-    setCity(searchParams.get("city") || "");
-    setExpLevel(searchParams.get("experienceLevel") || "");
-    setYearsOfExp(searchParams.get("yearsOfExperience") || "");
-    setJobType(searchParams.get("jobType") || "");
+    const newCountry = searchParams.get("country") || "";
+    const newCity = searchParams.get("city") || "";
+    const newExp = searchParams.get("experienceLevel") || "";
+    const newYears = searchParams.get("yearsOfExperience") || "";
+    const newJobType = searchParams.get("jobType") || "";
+
+    setCountry(newCountry);
+    setCity(newCity);
+    setExpLevel(newExp);
+    setYearsOfExp(newYears);
+    setJobType(newJobType);
+
+    if (newCountry || newCity || newExp || newYears || newJobType) {
+      setIsExpanded(true);
+    }
   }, [searchParams, debouncedUpdateSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,74 +177,102 @@ export const JobsFilter: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-card border border-border rounded-2xl mb-6">
-      {/* Top row: Search input */}
-      <div className="relative">
-        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
-        <Input
-          placeholder="Search jobs, machines..."
-          value={search}
-          onChange={handleSearchChange}
-          className="pl-9"
-        />
-        {search && (
-          <button
-            type="button"
-            onClick={handleClearSearch}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm cursor-pointer p-1"
-            aria-label="Clear search"
-          >
-            <FiX />
-          </button>
-        )}
+    <div className="flex flex-col gap-3 p-4 bg-card border border-border rounded-2xl mb-6 shadow-xs">
+      {/* Search input + Filter btn */}
+      <div className="flex items-center gap-2.5">
+        <div className="relative flex-1">
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
+          <Input
+            placeholder="Search jobs, machines..."
+            value={search}
+            onChange={handleSearchChange}
+            className="pl-9"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm cursor-pointer p-1"
+              aria-label="Clear search"
+            >
+              <FiX />
+            </button>
+          )}
+        </div>
+
+        <Button
+          type="button"
+          variant={isExpanded ? "secondary" : "outline"}
+          size="md"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="flex items-center gap-2 shrink-0 h-10 px-3 md:px-4 text-sm font-medium transition-all "
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
+        >
+          <FiFilter className=" text-primary w-3 h-3" />
+          {activeFilterCount > 0 && (
+            <span className="min-w-5 h-5 px-1 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+              {activeFilterCount}
+            </span>
+          )}
+          {isExpanded ? (
+            <FiMinus className="text-xs text-muted-foreground" />
+          ) : (
+            <FiPlus className="text-xs text-muted-foreground" />
+          )}
+        </Button>
       </div>
 
-      {/* Second row: Filter Dropdowns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {/* Country & City */}
-        <CountryCitySelect
-          country={country}
-          city={city}
-          onCountryChange={handleCountryChange}
-          onCityChange={handleCityChange}
-          allCountriesOptionLabel="All Countries"
-          allCitiesOptionLabel="All Cities"
-        />
+      {/* Filter Dropdowns */}
+      {isExpanded && (
+        <div className="pt-3 border-t border-border/50 ">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Country & City */}
+            <CountryCitySelect
+              country={country}
+              city={city}
+              onCountryChange={handleCountryChange}
+              onCityChange={handleCityChange}
+              allCountriesOptionLabel="All Countries"
+              allCitiesOptionLabel="All Cities"
+            />
 
-        {/* Experience Level */}
-        <Select
-          value={expLevel}
-          options={expLevelOptions}
-          onChange={handleExpLevelChange}
-        />
+            {/* Experience Level */}
+            <Select
+              value={expLevel}
+              options={expLevelOptions}
+              onChange={handleExpLevelChange}
+            />
 
-        {/* Years of Experience */}
-        <Select
-          value={yearsOfExp}
-          options={yearsOfExpOptions}
-          onChange={handleYearsOfExpChange}
-        />
+            {/* Years of Experience */}
+            <Select
+              value={yearsOfExp}
+              options={yearsOfExpOptions}
+              onChange={handleYearsOfExpChange}
+            />
 
-        {/* Job Type */}
-        <Select
-          value={jobType}
-          options={jobTypeOptions}
-          onChange={handleJobTypeChange}
-        />
-      </div>
+            {/* Job Type */}
+            <Select
+              value={jobType}
+              options={jobTypeOptions}
+              onChange={handleJobTypeChange}
+            />
+          </div>
 
-      {/* Clear filters btn */}
-      {hasActiveFilters && (
-        <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearFilters}
-            leftIcon={<FiX className="text-xs" />}
-            className="text-muted-foreground hover:text-primary h-7 px-2"
-          >
-            Clear all
-          </Button>
+          {/* Clear filters btn */}
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/50 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                leftIcon={<FiX className="text-xs" />}
+                className="text-muted-foreground hover:text-primary h-7 px-2"
+              >
+                Clear all filters
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
