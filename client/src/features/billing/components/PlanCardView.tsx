@@ -2,7 +2,7 @@
 
 import React from "react";
 import { MdCheck, MdStars } from "react-icons/md";
-import clsx from "clsx";
+import { cn } from "@/shared/utils/utils";
 import type { Plan } from "@/shared/api/generated/model";
 import { getPlanDescription, getPlanFeatures } from "../utils/plan-features";
 import {
@@ -53,7 +53,7 @@ export const PlanCardView: React.FC<PlanCardViewProps> = ({
 
   return (
     <div
-      className={clsx(
+      className={cn(
         "relative rounded-2xl flex flex-col justify-between p-6 sm:p-7 transition-all duration-300",
         isCurrentPlan
           ? "bg-card border-2 border-primary shadow-lg ring-4 ring-primary/5"

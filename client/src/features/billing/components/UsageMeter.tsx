@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import clsx from "clsx";
+import { cn } from "@/shared/utils/utils";
 
 interface UsageMeterProps {
   label: string;
@@ -57,9 +57,9 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
       </div>
 
       {/* Progress Track */}
-      <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden">
+      <div className="h-1 w-full bg-border/40 dark:bg-border/60 rounded-full overflow-hidden">
         <div
-          className={clsx(
+          className={cn(
             "h-full transition-all duration-500 ease-out rounded-full",
             isUnlimited
               ? "bg-primary/40 w-full"

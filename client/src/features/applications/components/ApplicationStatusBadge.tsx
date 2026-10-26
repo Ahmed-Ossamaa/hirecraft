@@ -1,6 +1,5 @@
 import React from 'react';
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '@/shared/utils/utils';
 import {
   getApplicationStatusColor,
   getApplicationStatusLabel,
@@ -20,11 +19,9 @@ export const ApplicationStatusBadge: React.FC<ApplicationStatusBadgeProps> = ({ 
 
   return (
     <span
-      className={twMerge(
-        clsx(
-          'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-medium border',
-          colorClasses
-        ),
+      className={cn(
+        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-medium border',
+        colorClasses,
         className
       )}
     >
