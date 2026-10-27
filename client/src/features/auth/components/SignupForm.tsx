@@ -161,13 +161,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-mono uppercase text-primary tracking-wider font-semibold">
-            Specialized Trades Enrolment
+            Machine Operators & Technicians
           </span>
           <span className="text-[10px] font-mono bg-card-hover text-primary px-2 py-0.5 rounded border border-primary/30">
             Profile Setup
           </span>
         </div>
-        <h2 className="font-headline text-3xl sm:text-4xl text-foreground font-medium tracking-tight">
+        <h2 className="font-headline text-2xl sm:text-3xl text-foreground font-medium tracking-tight">
           Create Technically Account
         </h2>
         <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">

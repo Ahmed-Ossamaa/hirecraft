@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
-import { MdPrecisionManufacturing, MdArrowForward } from "react-icons/md";
+import {
+  MdPrecisionManufacturing,
+  MdArrowForward,
+  MdArrowBack,
+  MdSquareFoot,
+} from "react-icons/md";
 import { Button } from "@/shared/components/ui";
 
 export const AuthSlider = () => {
@@ -35,8 +41,25 @@ export const AuthSlider = () => {
   const isRegister = mode === "register";
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4  relative z-20 w-full max-w-7xl mx-auto min-h-screen">
-      <div className="relative w-full max-w-5xl h-155 bg-card border border-border rounded-2xl shadow-2xl flex lg:overflow-hidden lg:flex-row flex-col">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 py-8 lg:py-6 relative z-20 w-full max-w-7xl mx-auto">
+      {/* Mobile-only Centered Header linking to home'/'*/}
+      <Link
+        href="/"
+        className="lg:hidden flex items-center gap-2.5 mb-5 group cursor-pointer transition-transform hover:scale-[1.02]"
+        title="Return to Home"
+      >
+        <div className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-primary group-hover:border-primary group-hover:scale-105 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+          <MdSquareFoot className="text-xl" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <h1 className="font-headline font-bold text-2xl tracking-tight text-foreground">
+            Technically
+          </h1>
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        </div>
+      </Link>
+
+      <div className="relative w-full max-w-5xl h-auto lg:h-150 bg-card border border-border rounded-2xl shadow-2xl flex flex-col lg:flex-row lg:overflow-hidden my-auto">
         {/* Mobile View Toggle - hidden on lg */}
         <div className="lg:hidden w-full flex p-4 border-b border-border bg-background rounded-t-2xl">
           <div className="flex w-full bg-input p-1 rounded-xl gap-1">
@@ -59,12 +82,12 @@ export const AuthSlider = () => {
 
         {/* left :Sign in */}
         <div
-          className={`w-full lg:w-1/2 p-8 sm:p-12 relative border-r border-border/50 lg:block ${isRegister ? "hidden lg:block" : "block"}`}
+          className={`w-full lg:w-1/2 p-6 sm:p-7 lg:py-6 lg:px-9 relative border-r border-border/50 lg:block ${isRegister ? "hidden lg:block" : "block"}`}
         >
           <div
             className={`w-full h-full transition-[opacity,transform] duration-[400ms,650ms] ease-[ease,cubic-bezier(0.65,0,0.35,1)] ${
               isRegister
-                ? "lg:opacity-0 lg:-translate-x-7.5:pointer-events-none opacity-0 hidden lg:flex"
+                ? "lg:opacity-0 lg:-translate-x-7.5 lg:pointer-events-none opacity-0 hidden lg:flex"
                 : "opacity-100 translate-x-0 pointer-events-auto"
             }`}
           >
@@ -74,7 +97,7 @@ export const AuthSlider = () => {
 
         {/* right: SIGN UP */}
         <div
-          className={`w-full lg:w-1/2 p-8 sm:p-12 relative bg-card lg:block ${!isRegister ? "hidden lg:block" : "block"}`}
+          className={`w-full lg:w-1/2 p-6 sm:p-7 lg:py-6 lg:px-9 relative bg-card lg:block ${!isRegister ? "hidden lg:block" : "block"}`}
         >
           <div
             className={`w-full h-full transition-[opacity,transform] duration-[400ms,650ms] ease-[ease,cubic-bezier(0.65,0,0.35,1)] ${
@@ -106,9 +129,9 @@ export const AuthSlider = () => {
           <div className="absolute inset-0 bg-sky-950/20 mix-blend-overlay"></div>
 
           {/* Overlay Content */}
-          <div className="absolute inset-0 p-10 flex flex-col z-10">
-            {/* Top Badge */}
-            <div className="flex items-center justify-between shrink-0">
+          <div className="absolute inset-0 p-8 flex flex-col z-10">
+            {/* Top Bar with Specialized Trades Badge */}
+            <div className="flex items-center justify-end shrink-0">
               <span className="px-3 py-1 rounded-full text-[10px] font-mono tracking-wider uppercase bg-input/90 backdrop-blur-md border border-primary/40 text-primary flex items-center gap-1.5 shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
                 <span>Specialized Trades</span>
@@ -116,7 +139,7 @@ export const AuthSlider = () => {
             </div>
 
             {/* Centered Content */}
-            <div className="flex-1 flex flex-col justify-center mt-22">
+            <div className="flex-1 flex flex-col justify-end mb-15">
               <div className="p-5 rounded-2xl bg-card/90 backdrop-blur-md border border-border/80 mb-4 shadow-xl">
                 <div className="flex items-center gap-2 mb-2 text-primary">
                   <MdPrecisionManufacturing className="text-base" />
@@ -147,6 +170,17 @@ export const AuthSlider = () => {
                   ? "Already have an account? Sign In"
                   : "Need an account? Register Now"}
               </Button>
+
+              {/* back to home*/}
+              <div className="flex flex-col items-center mt-3">
+                <Link
+                  href="/"
+                  className="inline-flex items-center bg-card/80 gap-1.5 text-xs text-muted-foreground/80 hover:text-foreground transition-colors group cursor-pointer py-1 px-3 border   rounded-full"
+                >
+                  <MdArrowBack className="text-xs transition-transform group-hover:-translate-x-1" />
+                  <span>Back to home</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

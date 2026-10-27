@@ -87,12 +87,12 @@ export const LoginForm = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between">
+    <div className="w-full h-full flex flex-col justify-center">
       <div>
         {/* Status pill */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-mono uppercase text-primary tracking-wider font-semibold">
-            Direct Placement Platform
+            Precision Manufacturing Network
           </span>
           <span className="flex items-center gap-1.5 text-[11px] text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
@@ -100,9 +100,9 @@ export const LoginForm = () => {
           </span>
         </div>
         
-        <h1 className="font-headline text-3xl sm:text-4xl text-foreground font-medium tracking-tight">
+        <h2 className="font-headline text-2xl sm:text-3xl text-foreground font-medium tracking-tight">
           Sign In to Technically
-        </h1>
+        </h2>
         <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
           Access your profile, connect with hiring managers, and view active industrial roles.
         </p>
@@ -111,7 +111,7 @@ export const LoginForm = () => {
         <div className="relative flex py-5 items-center mt-7">
           <div className="grow border-t border-border"></div>
           <span className="shrink mx-4 text-[10px] uppercase font-mono tracking-wider text-muted-foreground">
-            continue with email
+            Sign In with email
           </span>
           <div className="grow border-t border-border"></div>
         </div>

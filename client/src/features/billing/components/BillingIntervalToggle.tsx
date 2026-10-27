@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import clsx from "clsx";
+import { cn } from "@/shared/utils/utils";
 
 interface BillingIntervalToggleProps {
   interval: "month" | "year";
@@ -23,7 +23,7 @@ export const BillingIntervalToggle: React.FC<BillingIntervalToggleProps> = ({
   className,
 }) => {
   return (
-    <div className={clsx("flex flex-col items-center justify-center gap-3", className)}>
+    <div className={cn("flex flex-col items-center justify-center gap-3", className)}>
       <div
         role="tablist"
         aria-label="Billing interval selection"
@@ -34,7 +34,7 @@ export const BillingIntervalToggle: React.FC<BillingIntervalToggleProps> = ({
           role="tab"
           aria-selected={interval === "month"}
           onClick={() => onChange("month")}
-          className={clsx(
+          className={cn(
             "px-5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer",
             interval === "month"
               ? "bg-card text-foreground shadow-sm"
@@ -49,7 +49,7 @@ export const BillingIntervalToggle: React.FC<BillingIntervalToggleProps> = ({
           role="tab"
           aria-selected={interval === "year"}
           onClick={() => onChange("year")}
-          className={clsx(
+          className={cn(
             "px-5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 cursor-pointer",
             interval === "year"
               ? "bg-card text-foreground shadow-sm"
