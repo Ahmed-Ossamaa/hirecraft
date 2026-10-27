@@ -1,6 +1,7 @@
 import { AuthSlider } from '@/features/auth/components/AuthSlider';
 import { Suspense } from 'react';
 
+
 export default function AuthPage() {
   return (
     <div className="bg-background text-foreground font-body min-h-screen antialiased selection:bg-primary selection:text-white flex flex-col justify-between relative overflow-x-hidden">
@@ -19,3 +20,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+
