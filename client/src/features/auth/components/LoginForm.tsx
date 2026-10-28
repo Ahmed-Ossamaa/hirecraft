@@ -1,21 +1,22 @@
 "use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Input, Button, Checkbox } from '@/shared/components/ui';
-import { MdLogin } from 'react-icons/md';
-import { useLogin } from '@/shared/api/generated/auth/auth';
-import { useAuthStore } from '@/shared/stores/auth-store';
-import { useRouter } from 'next/navigation';
-import { ForgotPasswordModal } from './ForgotPasswordModal';
-import { FormError } from '@/shared/components/ui/FormError';
-import { getApiError } from '@/shared/utils/error';
+import { useState } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Input, Button, Checkbox } from "@/shared/components/ui";
+import { MdLogin } from "react-icons/md";
+import { useLogin } from "@/shared/api/generated/auth/auth";
+import { useAuthStore } from "@/shared/stores/auth-store";
+import { useRouter } from "next/navigation";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
+import { FormError } from "@/shared/components/ui/FormError";
+import { getApiError } from "@/shared/utils/error";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().nonempty('Password is required'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().nonempty("Password is required"),
   keepSession: z.boolean().optional(),
 });
 
@@ -34,17 +35,17 @@ export const LoginForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
+    mode: "onBlur",
     defaultValues: {
       keepSession: true,
-    }
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: data.email,
           password: data.password,
@@ -57,31 +58,34 @@ export const LoginForm = () => {
       }
 
       const { user, accessToken } = await response.json();
-      
+
       let companyId = null;
       let role = null;
       if (accessToken) {
         try {
-          const payload = JSON.parse(atob(accessToken.split('.')[1]));
+          const payload = JSON.parse(atob(accessToken.split(".")[1]));
           companyId = payload.companyId || null;
           role = payload.role || null;
         } catch (e) {
-          console.error('Failed to parse token payload', e);
+          console.error("Failed to parse token payload", e);
         }
       }
 
       setAuth(user, companyId, role);
 
-      if (user.userType === 'EMPLOYER') {
-        router.push('/dashboard/company');
+      if (user.userType === "EMPLOYER") {
+        router.push("/dashboard/company");
       } else {
-        router.push('/dashboard/profile');
+        router.push("/dashboard/profile");
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      setError('root', {
-        type: 'manual',
-        message: getApiError(error, 'Invalid email or password. Please try again.'),
+      console.error("Login failed:", error);
+      setError("root", {
+        type: "manual",
+        message: getApiError(
+          error,
+          "Invalid email or password. Please try again.",
+        ),
       });
     }
   };
@@ -99,14 +103,15 @@ export const LoginForm = () => {
             Matching Live
           </span>
         </div>
-        
+
         <h2 className="font-headline text-2xl sm:text-3xl text-foreground font-medium tracking-tight">
           Sign In to Technically
         </h2>
         <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-          Access your profile, connect with hiring managers, and view active industrial roles.
+          Access your profile, connect with hiring managers, and view active
+          industrial roles.
         </p>
-        
+
         {/* Divider */}
         <div className="relative flex py-5 items-center mt-7">
           <div className="grow border-t border-border"></div>
@@ -122,19 +127,19 @@ export const LoginForm = () => {
             label="Email"
             type="email"
             placeholder="name@workshop.pro"
-            {...register('email')}
+            {...register("email")}
             error={errors.email?.message}
           />
-          
+
           <FormError message={errors.root?.message} className="mb-2" />
-          
+
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 Password
               </label>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsForgotModalOpen(true)}
                 className="text-[11px] text-primary hover:underline transition cursor-pointer"
               >
@@ -144,37 +149,45 @@ export const LoginForm = () => {
             <Input
               type="password"
               placeholder="••••••••••••"
-              {...register('password')}
+              {...register("password")}
               error={errors.password?.message}
             />
           </div>
-          
+
           <div className="flex items-center justify-between text-xs pt-0.5">
-            <Checkbox
-              label="Keep me signed in"
-              {...register('keepSession')}
-            />
+            <Checkbox label="Keep me signed in" {...register("keepSession")} />
           </div>
-          
-          <Button 
-            type="submit" 
-            fullWidth 
-            className="mt-2" 
+
+          <Button
+            type="submit"
+            fullWidth
+            className="mt-2"
             disabled={isSubmitting}
             rightIcon={<MdLogin className="text-sm" />}
           >
-            {isSubmitting ? 'Signing In...' : 'Sign In'}
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </Button>
         </form>
       </div>
 
       <div className="mt-4 pt-4 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
-        By continuing, you agree to Technically&apos;s <a href="terms" className="underline hover:text-primary transition">Terms of Service</a> and <a href="privacy" className="underline hover:text-primary transition">Privacy Policy</a>.
+        By continuing, you agree to Technically&apos;s
+        <Link href="/terms" className="underline hover:text-primary transition">
+          Terms of Service
+        </Link>
+        and
+        <Link
+          href="/privacy"
+          className="underline hover:text-primary transition"
+        >
+          Privacy Policy
+        </Link>
+        .
       </div>
-      
-      <ForgotPasswordModal 
-        isOpen={isForgotModalOpen} 
-        onClose={() => setIsForgotModalOpen(false)} 
+
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
       />
     </div>
   );
