@@ -169,7 +169,7 @@ export const LoginForm = () => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
-        By continuing, you agree to Technically&apos;s <a href="#" className="underline hover:text-primary transition">Terms of Service</a> and <a href="#" className="underline hover:text-primary transition">Privacy Policy</a>.
+        By continuing, you agree to Technically&apos;s <a href="terms" className="underline hover:text-primary transition">Terms of Service</a> and <a href="privacy" className="underline hover:text-primary transition">Privacy Policy</a>.
       </div>
       
       <ForgotPasswordModal 

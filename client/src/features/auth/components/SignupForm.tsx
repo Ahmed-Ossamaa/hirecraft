@@ -356,11 +356,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
       <div className="mt-1 pt-2 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
         By continuing, you agree to Technically&apos;s{" "}
-        <a href="#" className="underline hover:text-primary transition">
+        <a href="terms" className="underline hover:text-primary transition">
           Terms of Service
         </a>{" "}
         and{" "}
-        <a href="#" className="underline hover:text-primary transition">
+        <a href="privacy" className="underline hover:text-primary transition">
           Privacy Policy
         </a>
         .
