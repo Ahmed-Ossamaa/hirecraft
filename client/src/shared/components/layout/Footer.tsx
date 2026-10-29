@@ -24,9 +24,12 @@ export const Footer = () => {
         </div>
 
         {/* Right : Links*/}
-        <div className="flex items-center gap-6 text-xs text-muted-foreground">
-          <Link href="/" className="hover:text-primary transition-colors">
-            Employer
+        <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-6 gap-y-2 text-xs text-muted-foreground">
+          <Link href="/about" className="hover:text-primary transition-colors">
+            About Us
+          </Link>
+          <Link href="/faq" className="hover:text-primary transition-colors">
+            FAQ
           </Link>
           <Link
             href="/privacy"
@@ -43,6 +46,7 @@ export const Footer = () => {
           >
             Contact Us
           </Link>
+          <span className="text-border hidden sm:inline">|</span>
           <span>© 2026 Technically</span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -223,7 +224,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         )}
 
         <form className="mt-4 space-y-3" onSubmit={handleSubmit(onSubmit)}>
-
           {/* 1st basic info */}
           <div
             className={
@@ -231,7 +231,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
                 ? "hidden"
                 : "space-y-3"
             }
-           >
+          >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="First Name"
@@ -356,13 +356,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
 
       <div className="mt-1 pt-2 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
         By continuing, you agree to Technically&apos;s{" "}
-        <a href="#" className="underline hover:text-primary transition">
+        <Link href="/terms" className="underline hover:text-primary transition">
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="#" className="underline hover:text-primary transition">
+        <Link
+          href="/privacy"
+          className="underline hover:text-primary transition"
+        >
           Privacy Policy
-        </a>
+        </Link>
         .
       </div>
     </div>

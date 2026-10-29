@@ -7,7 +7,6 @@ import { User } from "../api/generated/model";
 import { AUTH_COOKIES } from "../constants/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isInitializing, setIsInitializing] = useState(true);
   const { isAuthenticated, setAuth, clearAuth } = useAuthStore();
 
   useEffect(() => {
@@ -44,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 setAuth(user, companyId, role);
-                setIsInitializing(false);
                 return;
               }
             }
@@ -55,19 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearAuth();
         }
       }
-      setIsInitializing(false);
     };
 
     initializeAuth();
   }, [isAuthenticated, setAuth, clearAuth]);
-
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return <>{children}</>;
 }
