@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { Company } from './company';
+import type { CompanyResponseDto } from './companyResponseDto';
 
 export type RemoveCover200AllOf = {
-  data?: Company;
+  data?: CompanyResponseDto;
 };

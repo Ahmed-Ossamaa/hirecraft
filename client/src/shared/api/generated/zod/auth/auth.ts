@@ -81,7 +81,6 @@ export const loginResponse = zod.object({
   "gender": zod.enum(['male', 'female']).optional(),
   "dob": zod.string().datetime({}).optional(),
   "avatarURL": zod.string().nullish(),
-  "avatarPublicId": zod.string().nullish(),
   "isBanned": zod.boolean(),
   "isEmailVerified": zod.boolean(),
   "createdAt": zod.string().datetime({}),

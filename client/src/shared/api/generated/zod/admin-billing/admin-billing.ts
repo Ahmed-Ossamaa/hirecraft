@@ -51,7 +51,8 @@ export const getSubscriptionsResponse = zod.object({
   "currentPeriodStart": zod.string().datetime({}),
   "currentPeriodEnd": zod.string().datetime({}),
   "cancelAtPeriodEnd": zod.boolean(),
-  "createdAt": zod.string().datetime({})
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({})
 })).optional()
 })).optional()
 }))

@@ -27,7 +27,6 @@ export const getSubscriptionResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
@@ -45,7 +44,6 @@ export const getSubscriptionResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
@@ -122,7 +120,6 @@ export const confirmCheckoutResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
@@ -140,7 +137,6 @@ export const confirmCheckoutResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
@@ -182,7 +178,6 @@ export const changePlanResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
@@ -200,7 +195,6 @@ export const changePlanResponse = zod.object({
   "interval": zod.enum(['month', 'year']),
   "price": zod.number().describe('Plan price in major units (0 for free tier)'),
   "currency": zod.string().describe('Currency code'),
-  "paymentPriceId": zod.string().nullable(),
   "limits": zod.object({
   "maxJobPostings": zod.number().describe('Maximum total job postings allowed per period'),
   "maxActiveJobs": zod.number().describe('Maximum concurrently active published jobs'),
