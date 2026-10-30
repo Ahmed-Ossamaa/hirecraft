@@ -13,7 +13,7 @@ import { Company } from '@/features/companies/domain/company.entity';
 import { Job } from '@/features/jobs/domain/job.entity';
 import { JobStatus } from '@/features/jobs/domain/job-status.enum';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
-import { AdminSubscriptionResponseDto } from '../dto/admin-subscription-response.dto';
+import { Subscription } from '@/features/billing/domain/subscription.entity';
 
 @Injectable()
 export class AdminService {
@@ -92,7 +92,7 @@ export class AdminService {
   // Billing Management
   async getSubscriptions(
     query: AdminBillingQueryDto,
-  ): Promise<PaginatedResult<AdminSubscriptionResponseDto>> {
+  ): Promise<PaginatedResult<Subscription>> {
     return this.subscriptionsService.findSubscriptions(
       query,
       query.status,

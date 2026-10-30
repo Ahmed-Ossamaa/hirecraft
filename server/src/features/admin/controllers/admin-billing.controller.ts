@@ -32,6 +32,12 @@ export class AdminBillingController {
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
   async getSubscriptions(@Query() query: AdminBillingQueryDto) {
-    return this.adminService.getSubscriptions(query);
+    const result = await this.adminService.getSubscriptions(query);
+    return {
+      ...result,
+      data: result.data.map((sub) =>
+        AdminSubscriptionResponseDto.fromDomain(sub),
+      ),
+    };
   }
 }

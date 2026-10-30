@@ -17,7 +17,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
-import { Company } from '@/features/companies/domain/company.entity';
+import { CompanyResponseDto } from '@/features/companies/dto/company-response.dto';
 import { AdminService } from '../services/admin.service';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
@@ -34,20 +34,26 @@ export class AdminCompaniesController {
   @ApiOperation({
     summary: 'Get paginated list of companies with filters (Admin only)',
   })
-  @ApiPaginatedResponse(Company)
+  @ApiPaginatedResponse(CompanyResponseDto)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
   async getCompanies(@Query() query: AdminCompaniesQueryDto) {
-    return this.adminService.getCompanies(query);
+    const result = await this.adminService.getCompanies(query);
+    return {
+      ...result,
+      data: result.data.map((company) =>
+        CompanyResponseDto.fromDomain(company),
+      ),
+    };
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get details of a specific company by ID (Admin only)',
   })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns company details.',
@@ -58,6 +64,7 @@ export class AdminCompaniesController {
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
   async adminGetCompanyById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.getCompanyById(id);
+    const company = await this.adminService.getCompanyById(id);
+    return CompanyResponseDto.fromDomain(company);
   }
 }
