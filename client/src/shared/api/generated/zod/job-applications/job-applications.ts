@@ -11,9 +11,13 @@ import * as zod from 'zod';
 /**
  * @summary Submit an application for a job (Worker only)
  */
+export const applyToJobBodyCoverLetterMax = 2000;
+
+
+
 export const applyToJobBody = zod.object({
   "jobId": zod.string().uuid(),
-  "coverLetter": zod.string().optional()
+  "coverLetter": zod.string().max(applyToJobBodyCoverLetterMax).optional()
 })
 
 export const applyToJobResponse = zod.object({

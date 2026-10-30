@@ -1,16 +1,18 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { SubscriptionLimitsService } from './subscription-limits.service';
 import { SubscriptionReconciliationService } from '../services/subscription-reconciliation.service';
 import { BillingSchedulerService } from '../services/billing-scheduler.service';
 import { BillingModule } from '../billing.module';
-import { JobsModule } from '@/features/jobs/jobs.module';
-import { CompanyMembersModule } from '@/features/company-members/company-members.module';
+import { CompaniesModule } from '@/features/companies/companies.module';
+import { JobRepositoryModule } from '@/features/jobs/job-repository.module';
+import { CompanyMemberRepositoryModule } from '@/features/company-members/company-member-repository.module';
 
 @Module({
   imports: [
     BillingModule,
-    forwardRef(() => JobsModule),
-    forwardRef(() => CompanyMembersModule),
+    CompaniesModule,
+    JobRepositoryModule,
+    CompanyMemberRepositoryModule,
   ],
   providers: [
     SubscriptionLimitsService,

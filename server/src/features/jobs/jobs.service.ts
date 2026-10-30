@@ -3,6 +3,8 @@ import {
   Inject,
   NotFoundException,
   ForbiddenException,
+  Logger,
+  forwardRef,
 } from '@nestjs/common';
 import {
   type IJobRepository,
@@ -20,14 +22,14 @@ import { SubscriptionLimitsService } from '../billing/subscription-limits/subscr
 
 import { ApplicationsService } from '../applications/applications.service';
 import { JobWithStatsDto } from './dto/job-with-stats.dto';
-import { forwardRef } from '@nestjs/common';
 
 @Injectable()
 export class JobsService {
+  private readonly logger = new Logger(JobsService.name);
+
   constructor(
     @Inject(JOB_REPOSITORY)
     private readonly jobRepository: IJobRepository,
-    @Inject(forwardRef(() => SubscriptionLimitsService))
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => ApplicationsService))
@@ -254,5 +256,12 @@ export class JobsService {
 
   async checkJobOwnership(id: string, companyId: string): Promise<boolean> {
     return this.jobRepository.exists(id, companyId);
+  }
+
+  async countPublishedActiveByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    return this.jobRepository.countPublishedActiveByCompanyId(companyId, tx);
   }
 }

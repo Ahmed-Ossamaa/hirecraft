@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
-import { User } from '@/features/users/domain/user.entity';
+import { UserResponseDto } from '@/features/users/dto/user-response.dto';
 import { AdminService } from '../services/admin.service';
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { UpdateUserStatusDto } from '../dto/update-user-status.dto';
@@ -39,20 +39,24 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get paginated list of users with filters (Admin only)',
   })
-  @ApiPaginatedResponse(User)
+  @ApiPaginatedResponse(UserResponseDto)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
   async getUsers(@Query() query: AdminUsersQueryDto) {
-    return this.adminService.getUsers(query);
+    const result = await this.adminService.getUsers(query);
+    return {
+      ...result,
+      data: result.data.map((user) => UserResponseDto.fromDomain(user)),
+    };
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get details of a specific user by ID (Admin only)',
   })
-  @ApiStandardResponse(User)
+  @ApiStandardResponse(UserResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns user details.',
@@ -62,8 +66,11 @@ export class AdminUsersController {
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getUserById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.adminService.getUserById(id);
+  async getUserById(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<UserResponseDto> {
+    const user = await this.adminService.getUserById(id);
+    return UserResponseDto.fromDomain(user);
   }
 
   @Patch(':id/ban')

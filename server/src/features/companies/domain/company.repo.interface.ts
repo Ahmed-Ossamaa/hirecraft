@@ -42,4 +42,10 @@ export interface ICompanyRepository {
     companyId: string,
     customerId: string,
   ): Promise<boolean>;
+  /**
+   * Acquires a pessimistic write lock on the company row within the given
+   * transaction. Must be called at the start of any operation that enforces
+   * subscription limits to prevent concurrent limit bypass.
+   */
+  lockForWrite(companyId: string, tx: any): Promise<void>;
 }

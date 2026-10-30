@@ -11,6 +11,7 @@ import {
   STORAGE_SERVICE,
 } from '@/integrations/storage/storage.interface';
 import { User } from './domain/user.entity';
+import { AuthUserData, UserTokenData } from './domain/user-auth.types';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
@@ -40,11 +41,11 @@ export class UsersService {
     await this.userRepository.updateRefreshToken(userId, hashedToken);
   }
 
-  async findForAuthById(id: string): Promise<User | null> {
+  async findForAuthById(id: string): Promise<AuthUserData | null> {
     return this.userRepository.findForAuthById(id);
   }
 
-  async findForAuthByEmail(email: string): Promise<User | null> {
+  async findForAuthByEmail(email: string): Promise<AuthUserData | null> {
     return this.userRepository.findForAuthByEmail(email);
   }
 
@@ -68,7 +69,7 @@ export class UsersService {
     await this.userRepository.saveResetToken(userId, token, expiresAt);
   }
 
-  async findByResetToken(token: string): Promise<User | null> {
+  async findByResetToken(token: string): Promise<UserTokenData | null> {
     return this.userRepository.findByResetToken(token);
   }
 
@@ -85,7 +86,7 @@ export class UsersService {
     await this.userRepository.saveInviteToken(userId, token, expiresAt, tx);
   }
 
-  async findByInviteToken(token: string): Promise<User | null> {
+  async findByInviteToken(token: string): Promise<UserTokenData | null> {
     return this.userRepository.findByInviteToken(token);
   }
 
@@ -101,7 +102,7 @@ export class UsersService {
     await this.userRepository.saveVerifyEmailToken(userId, hash, expiresAt);
   }
 
-  async findByVerifyEmailToken(hash: string): Promise<User | null> {
+  async findByVerifyEmailToken(hash: string): Promise<UserTokenData | null> {
     return this.userRepository.findByVerifyEmailToken(hash);
   }
 

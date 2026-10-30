@@ -17,4 +17,5 @@ export interface AdminSubscriptionResponseDto {
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
   createdAt: string;
+  updatedAt: string;
 }

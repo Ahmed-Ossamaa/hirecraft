@@ -9,16 +9,15 @@ jest.mock('@nestjs/schedule', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { BillingSchedulerService } from './billing-scheduler.service';
-import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionReconciliationService } from './subscription-reconciliation.service';
 import { DataSource } from 'typeorm';
 import { SubscriptionStatus } from '../domain/subscription-status.enum';
 import { Subscription } from '../domain/subscription.entity';
+import { JOB_REPOSITORY } from '@/features/jobs/domain/job.repo.interface';
 
 describe('BillingSchedulerService', () => {
   let service: BillingSchedulerService;
-  let jobsServiceMock: { closeExpiredJobs: jest.Mock };
   let subscriptionsServiceMock: {
     findExpiredActiveSubscriptions: jest.Mock;
     markSubscriptionExpired: jest.Mock;
@@ -26,15 +25,14 @@ describe('BillingSchedulerService', () => {
   let reconciliationServiceMock: {
     reconcileCompanyResources: jest.Mock;
   };
+  let jobRepoMock: {
+    closeExpiredJobs: jest.Mock;
+  };
   let dataSourceMock: {
     transaction: jest.Mock;
   };
 
   beforeEach(async () => {
-    jobsServiceMock = {
-      closeExpiredJobs: jest.fn().mockResolvedValue(3),
-    };
-
     subscriptionsServiceMock = {
       findExpiredActiveSubscriptions: jest.fn().mockResolvedValue([]),
       markSubscriptionExpired: jest.fn().mockResolvedValue({}),
@@ -48,22 +46,26 @@ describe('BillingSchedulerService', () => {
       }),
     };
 
+    jobRepoMock = {
+      closeExpiredJobs: jest.fn().mockResolvedValue(3),
+    };
+
     dataSourceMock = {
       transaction: jest.fn(async (cb) => {
         const fakeTx = {};
-        return cb(fakeTx);
+        return await cb(fakeTx);
       }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BillingSchedulerService,
-        { provide: JobsService, useValue: jobsServiceMock },
         { provide: SubscriptionsService, useValue: subscriptionsServiceMock },
         {
           provide: SubscriptionReconciliationService,
           useValue: reconciliationServiceMock,
         },
+        { provide: JOB_REPOSITORY, useValue: jobRepoMock },
         { provide: DataSource, useValue: dataSourceMock },
       ],
     }).compile();
@@ -76,7 +78,7 @@ describe('BillingSchedulerService', () => {
   });
 
   describe('runDailySweep', () => {
-    it('closes expired jobs and sweeps expired subscriptions', async () => {
+    it('sweeps expired subscriptions', async () => {
       const now = new Date('2026-10-22T00:00:00Z');
       const expiredSub1 = new Subscription();
       expiredSub1.id = 'sub-1';
@@ -96,7 +98,6 @@ describe('BillingSchedulerService', () => {
 
       const result = await service.runDailySweep(now);
 
-      expect(jobsServiceMock.closeExpiredJobs).toHaveBeenCalledWith(now);
       expect(
         subscriptionsServiceMock.findExpiredActiveSubscriptions,
       ).toHaveBeenCalledWith(now);
@@ -147,7 +148,6 @@ describe('BillingSchedulerService', () => {
 
       const result = await service.runDailySweep(now);
 
-      expect(result.closedJobs).toBe(3);
       expect(result.reconciledSubscriptions).toBe(1);
     });
   });

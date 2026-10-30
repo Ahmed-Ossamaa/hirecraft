@@ -7,6 +7,7 @@ import {
   FindUsersOptions,
 } from '../domain/user.repo.interface';
 import { User } from '../domain/user.entity';
+import { AuthUserData, UserTokenData } from '../domain/user-auth.types';
 import { UserOrmEntity } from './user.orm-entity';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 
@@ -30,7 +31,7 @@ export class UserTypeormRepository implements IUserRepository {
     return this.mapToDomain(ormEntity);
   }
 
-  async findForAuthByEmail(email: string): Promise<User | null> {
+  async findForAuthByEmail(email: string): Promise<AuthUserData | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
       .where('user.email = :email', { email })
@@ -38,18 +39,26 @@ export class UserTypeormRepository implements IUserRepository {
       .getOne();
 
     if (!ormEntity) return null;
-    return this.mapToDomain(ormEntity);
+    return {
+      user: this.mapToDomain(ormEntity),
+      passwordHash: ormEntity.passwordHash,
+      hashedRefreshToken: ormEntity.hashedRefreshToken ?? null,
+    };
   }
 
-  async findForAuthById(id: string): Promise<User | null> {
+  async findForAuthById(id: string): Promise<AuthUserData | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
       .where('user.id = :id', { id })
-      .addSelect(['user.hashedRefreshToken'])
+      .addSelect(['user.passwordHash', 'user.hashedRefreshToken'])
       .getOne();
 
     if (!ormEntity) return null;
-    return this.mapToDomain(ormEntity);
+    return {
+      user: this.mapToDomain(ormEntity),
+      passwordHash: ormEntity.passwordHash,
+      hashedRefreshToken: ormEntity.hashedRefreshToken ?? null,
+    };
   }
 
   async updateRefreshToken(
@@ -71,10 +80,10 @@ export class UserTypeormRepository implements IUserRepository {
       .returning('*')
       .execute();
 
-    const rawRows = result.raw as Record<string, any>[];
+    const rawRows = result.raw as UserOrmEntity[];
     if (!rawRows || !rawRows[0]) return null;
 
-    return this.mapToDomain(rawRows[0] as UserOrmEntity);
+    return this.mapToDomain(rawRows[0]);
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
@@ -108,7 +117,7 @@ export class UserTypeormRepository implements IUserRepository {
     });
   }
 
-  async findByVerifyEmailToken(token: string): Promise<User | null> {
+  async findByVerifyEmailToken(token: string): Promise<UserTokenData | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
       .where('user.hashedVerifyEmailToken = :token', { token })
@@ -119,7 +128,10 @@ export class UserTypeormRepository implements IUserRepository {
       .getOne();
 
     if (!ormEntity) return null;
-    return this.mapToDomain(ormEntity);
+    return {
+      user: this.mapToDomain(ormEntity),
+      tokenExpiresAt: ormEntity.verifyEmailTokenExpiresAt ?? null,
+    };
   }
 
   async saveResetToken(
@@ -140,7 +152,7 @@ export class UserTypeormRepository implements IUserRepository {
     });
   }
 
-  async findByResetToken(token: string): Promise<User | null> {
+  async findByResetToken(token: string): Promise<UserTokenData | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
       .where('user.hashedResetPasswordToken = :token', { token })
@@ -151,7 +163,10 @@ export class UserTypeormRepository implements IUserRepository {
       .getOne();
 
     if (!ormEntity) return null;
-    return this.mapToDomain(ormEntity);
+    return {
+      user: this.mapToDomain(ormEntity),
+      tokenExpiresAt: ormEntity.resetPasswordExpiresAt ?? null,
+    };
   }
 
   async saveInviteToken(
@@ -174,7 +189,7 @@ export class UserTypeormRepository implements IUserRepository {
     });
   }
 
-  async findByInviteToken(token: string): Promise<User | null> {
+  async findByInviteToken(token: string): Promise<UserTokenData | null> {
     const ormEntity = await this.repository
       .createQueryBuilder('user')
       .where('user.hashedInviteToken = :token', { token })
@@ -182,7 +197,10 @@ export class UserTypeormRepository implements IUserRepository {
       .getOne();
 
     if (!ormEntity) return null;
-    return this.mapToDomain(ormEntity);
+    return {
+      user: this.mapToDomain(ormEntity),
+      tokenExpiresAt: ormEntity.inviteTokenExpiresAt ?? null,
+    };
   }
 
   async findById(id: string): Promise<User | null> {
@@ -235,11 +253,24 @@ export class UserTypeormRepository implements IUserRepository {
       totalPages,
     };
   }
-
   // convert ORM entity -> Domain entity
+
   private mapToDomain(orm: UserOrmEntity): User {
     const user = new User();
-    Object.assign(user, orm);
+    user.id = orm.id;
+    user.email = orm.email;
+    user.firstName = orm.firstName;
+    user.lastName = orm.lastName;
+    user.userType = orm.userType;
+    user.phoneNumber = orm.phoneNumber ?? '';
+    user.gender = orm.gender;
+    user.dob = orm.dob;
+    user.avatarURL = orm.avatarURL;
+    user.avatarPublicId = orm.avatarPublicId;
+    user.isBanned = orm.isBanned;
+    user.isEmailVerified = orm.isEmailVerified;
+    user.createdAt = orm.createdAt;
+    user.updatedAt = orm.updatedAt;
     return user;
   }
 }

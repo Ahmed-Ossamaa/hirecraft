@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { CompanyMember } from './companyMember';
+import type { CompanyMemberResponseDto } from './companyMemberResponseDto';
 
 export type UpdateMemberRole200AllOf = {
-  data?: CompanyMember;
+  data?: CompanyMemberResponseDto;
 };

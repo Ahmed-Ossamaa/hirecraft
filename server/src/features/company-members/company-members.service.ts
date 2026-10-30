@@ -5,7 +5,6 @@ import {
   ForbiddenException,
   ConflictException,
   BadRequestException,
-  forwardRef,
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -31,7 +30,6 @@ import appConfig from '@/config/app.config';
 import { CompanyRole } from './domain/company-role.enum';
 import { CompanyMemberStatus } from './domain/company-member-status.enum';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
-import { CompanyMemberOrmEntity } from './infrastructure/company-member.orm-entity';
 
 @Injectable()
 export class CompanyMembersService {
@@ -44,7 +42,6 @@ export class CompanyMembersService {
     private readonly companiesService: CompaniesService,
     private readonly eventEmitter: EventEmitter2,
     private readonly dataSource: DataSource,
-    @Inject(forwardRef(() => SubscriptionLimitsService))
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
   ) {}
 
@@ -402,78 +399,34 @@ export class CompanyMembersService {
     maxUsers: number,
     tx: EntityManager,
   ): Promise<{ revokedPending: number; deactivatedActive: number }> {
-    const memberRepo = tx.getRepository(CompanyMemberOrmEntity);
-
-    const allMembers = await memberRepo.find({
-      where: { companyId },
-      order: { joinedAt: 'DESC', createdAt: 'DESC' },
-    });
-
-    const pendingMembers = allMembers.filter(
-      (m) => m.status === CompanyMemberStatus.PENDING,
+    return this.companyMemberRepository.reconcileExcessMembers(
+      companyId,
+      maxUsers,
+      tx,
     );
-    const activeMembers = allMembers.filter(
-      (m) => m.status === CompanyMemberStatus.ACTIVE,
-    );
-
-    let revokedPending = 0;
-    let deactivatedActive = 0;
-
-    // Cancel excess pending invitations first
-    const totalReserved = activeMembers.length + pendingMembers.length;
-    if (totalReserved > maxUsers && pendingMembers.length > 0) {
-      const excessPendingCount = Math.min(
-        totalReserved - maxUsers,
-        pendingMembers.length,
-      );
-      const pendingToRevoke = pendingMembers.slice(0, excessPendingCount);
-      for (const pending of pendingToRevoke) {
-        await memberRepo.delete(pending.id);
-        revokedPending++;
-      }
-    }
-
-    // Deactivate excess active members if still over limit
-    if (activeMembers.length > maxUsers) {
-      const excessActiveCount = activeMembers.length - maxUsers;
-
-      const nonAdmins = activeMembers.filter(
-        (m) => m.role !== CompanyRole.ADMIN,
-      );
-      const admins = activeMembers.filter((m) => m.role === CompanyRole.ADMIN);
-
-      const toDeactivate: CompanyMemberOrmEntity[] = [];
-
-      for (const member of nonAdmins) {
-        if (toDeactivate.length < excessActiveCount) {
-          toDeactivate.push(member);
-        }
-      }
-
-      // If we still need to deactivate and have more than 1 admin, deactivate newer admins
-      if (toDeactivate.length < excessActiveCount && admins.length > 1) {
-        // admins is ordered joinedAt DESC, last one is the oldest admin
-        const adminsCanDeactivate = admins.slice(0, admins.length - 1);
-        for (const admin of adminsCanDeactivate) {
-          if (toDeactivate.length < excessActiveCount) {
-            toDeactivate.push(admin);
-          }
-        }
-      }
-
-      for (const member of toDeactivate) {
-        member.status = CompanyMemberStatus.DEACTIVATED;
-        member.deactivationReason = 'PLAN_LIMIT_EXCEEDED';
-        member.deactivatedAt = new Date();
-        await memberRepo.save(member);
-        deactivatedActive++;
-      }
-    }
-
-    return { revokedPending, deactivatedActive };
   }
 
   async getActiveAdmin(companyId: string): Promise<CompanyMember | null> {
     return this.companyMemberRepository.findActiveAdminByCompanyId(companyId);
+  }
+
+  async countReservedMembersByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    return this.companyMemberRepository.countReservedMembersByCompanyId(
+      companyId,
+      tx,
+    );
+  }
+
+  async countActiveMembersByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<number> {
+    return this.companyMemberRepository.countActiveMembersByCompanyId(
+      companyId,
+      tx,
+    );
   }
 }

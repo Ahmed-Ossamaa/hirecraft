@@ -17,7 +17,5 @@ export interface Plan {
   price: number;
   /** Currency code */
   currency: string;
-  /** @nullable */
-  paymentPriceId: string | null;
   limits: PlanLimits;
 }

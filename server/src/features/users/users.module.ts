@@ -22,7 +22,6 @@ import { StorageModule } from '@/integrations/storage/storage.module';
       provide: USER_REPOSITORY,
       useClass: UserTypeormRepository,
     },
-    UsersService,
     JwtStrategy,
   ],
   exports: [USER_REPOSITORY, UsersService],

@@ -31,6 +31,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import { LoginResponseDto, RefreshResponseDto } from './dto/auth-responses.dto';
+import { UserResponseDto } from '../users/dto/user-response.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -69,7 +70,10 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return { user, accessToken };
+    return {
+      user: UserResponseDto.fromDomain(user),
+      accessToken,
+    };
   }
 
   @Post('logout')

@@ -1,5 +1,6 @@
 import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
 import { Exclude } from 'class-transformer';
+import { ApiHideProperty } from '@nestjs/swagger';
 
 export class Company {
   id!: string;
@@ -7,11 +8,13 @@ export class Company {
   logoUrl?: string | null;
 
   @Exclude()
+  @ApiHideProperty()
   logoPublicId?: string | null;
 
   coverUrl?: string | null;
 
   @Exclude()
+  @ApiHideProperty()
   coverPublicId?: string | null;
 
   description?: string;
@@ -27,6 +30,7 @@ export class Company {
   industry?: string;
 
   @Exclude()
+  @ApiHideProperty()
   paymentCustomerId?: string | null;
 
   members?: CompanyMember[];

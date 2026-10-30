@@ -8,5 +8,6 @@
 
 export interface CreateJobApplicationDto {
   jobId: string;
+  /** @maxLength 2000 */
   coverLetter?: string;
 }

@@ -28,7 +28,7 @@ import { UserType } from '../users/domain/user-type.enum';
 import { CompanyRole } from './domain/company-role.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { GetCompanyMembersDto } from './dto/get-company-members.dto';
-import { CompanyMember } from './domain/company-member.entity';
+import { CompanyMemberResponseDto } from './dto/company-member-response.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { ResponseMessage } from '@/common/decorators/response-message.decorator';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
@@ -49,16 +49,22 @@ export class CompanyMembersController {
     CompanyRole.STAFF,
   )
   @ApiOperation({ summary: 'Get a list of members in my company' })
-  @ApiPaginatedResponse(CompanyMember)
+  @ApiPaginatedResponse(CompanyMemberResponseDto)
   async getMembers(
     @CurrentUser('companyId') companyId: string,
     @Query() queryDto: GetCompanyMembersDto,
   ) {
-    return this.companyMembersService.getMembers(
+    const result = await this.companyMembersService.getMembers(
       companyId,
       queryDto,
       queryDto.status,
     );
+    return {
+      ...result,
+      data: result.data.map((member) =>
+        CompanyMemberResponseDto.fromDomain(member),
+      ),
+    };
   }
 
   @Post('invite')
@@ -84,7 +90,7 @@ export class CompanyMembersController {
   @Patch(':userId/role')
   @Roles(UserType.EMPLOYER, UserType.PLATFORM_ADMIN)
   @ApiOperation({ summary: "Update a member's role in their active company" })
-  @ApiStandardResponse(CompanyMember)
+  @ApiStandardResponse(CompanyMemberResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Member role updated successfully.',
@@ -106,7 +112,7 @@ export class CompanyMembersController {
     @CurrentUser('companyId') callerCompanyId?: string,
     @CurrentUser('role') callerRole?: CompanyRole,
   ) {
-    return this.companyMembersService.updateMemberRole(
+    const member = await this.companyMembersService.updateMemberRole(
       targetUserId,
       dto.role,
       callerUserType,
@@ -114,6 +120,7 @@ export class CompanyMembersController {
       callerCompanyId,
       callerRole,
     );
+    return CompanyMemberResponseDto.fromDomain(member);
   }
 
   @Delete(':userId')

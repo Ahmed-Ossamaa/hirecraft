@@ -30,6 +30,7 @@ import jwtConfig from '../../config/jwt.config';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../users/domain/user.entity';
+import { type AuthUserData } from '../users/domain/user-auth.types';
 import { type ConfigType } from '@nestjs/config';
 import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
 import { JwtUser, JwtPayload } from '@/common/types/jwt.types';
@@ -88,20 +89,23 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.validateUserCredentials(dto.email, dto.password);
+    const authData = await this.validateUserCredentials(
+      dto.email,
+      dto.password,
+    );
 
-    if (!user.isEmailVerified) {
+    if (!authData.user.isEmailVerified) {
       throw new ForbiddenException(
         'Email is not verified. Please check your inbox.',
       );
     }
 
-    const tokens = await this.issueTokens(user);
+    const tokens = await this.issueTokens(authData.user);
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken);
+    await this.storeRefreshToken(authData.user.id, tokens.refreshToken);
 
     return {
-      user,
+      user: authData.user,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
@@ -117,23 +121,23 @@ export class AuthService {
       );
       const userId = payload.sub;
 
-      const user = await this.usersService.findForAuthById(userId);
+      const authData = await this.usersService.findForAuthById(userId);
 
-      if (!user || !user.hashedRefreshToken) {
+      if (!authData || !authData.hashedRefreshToken) {
         throw new ForbiddenException('Access Denied');
       }
 
       const refreshTokenMatches = await bcrypt.compare(
         refreshToken,
-        user.hashedRefreshToken,
+        authData.hashedRefreshToken,
       );
       if (!refreshTokenMatches) {
         throw new ForbiddenException('Access Denied');
       }
 
-      const tokens = await this.issueTokens(user);
+      const tokens = await this.issueTokens(authData.user);
 
-      await this.storeRefreshToken(user.id, tokens.refreshToken);
+      await this.storeRefreshToken(authData.user.id, tokens.refreshToken);
 
       return tokens;
     } catch {
@@ -146,14 +150,14 @@ export class AuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
-    const user = await this.usersService.findForAuthById(userId);
-    if (!user) {
+    const authData = await this.usersService.findForAuthById(userId);
+    if (!authData) {
       throw new NotFoundException('User not found');
     }
 
     const isMatch = await bcrypt.compare(
       dto.currentPassword,
-      user.passwordHash,
+      authData.passwordHash,
     );
     if (!isMatch) {
       throw new UnauthorizedException('Incorrect current password');
@@ -196,19 +200,19 @@ export class AuthService {
       .createHash('sha256')
       .update(dto.token)
       .digest('hex');
-    const user = await this.usersService.findByResetToken(tokenHash);
-    if (!user || !user.resetPasswordExpiresAt) {
+    const tokenData = await this.usersService.findByResetToken(tokenHash);
+    if (!tokenData || !tokenData.tokenExpiresAt) {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
-    if (user.resetPasswordExpiresAt < new Date()) {
+    if (tokenData.tokenExpiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
     const hash = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.usersService.updatePassword(user.id, hash);
-    await this.usersService.clearResetToken(user.id);
+    await this.usersService.updatePassword(tokenData.user.id, hash);
+    await this.usersService.clearResetToken(tokenData.user.id);
   }
 
   async acceptInvite(dto: AcceptInviteDto): Promise<void> {
@@ -216,21 +220,21 @@ export class AuthService {
       .createHash('sha256')
       .update(dto.token)
       .digest('hex');
-    const user = await this.usersService.findByInviteToken(tokenHash);
-    if (!user || !user.inviteTokenExpiresAt) {
+    const tokenData = await this.usersService.findByInviteToken(tokenHash);
+    if (!tokenData || !tokenData.tokenExpiresAt) {
       throw new UnauthorizedException('Invalid or expired invite token');
     }
 
-    if (user.inviteTokenExpiresAt < new Date()) {
+    if (tokenData.tokenExpiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired invite token');
     }
 
     const hash = await bcrypt.hash(dto.newPassword, 10);
 
-    await this.usersService.updatePassword(user.id, hash);
-    await this.usersService.verifyEmail(user.id);
-    await this.companyMembersService.acceptInvite(user.id);
-    await this.usersService.clearInviteToken(user.id);
+    await this.usersService.updatePassword(tokenData.user.id, hash);
+    await this.usersService.verifyEmail(tokenData.user.id);
+    await this.companyMembersService.acceptInvite(tokenData.user.id);
+    await this.usersService.clearInviteToken(tokenData.user.id);
   }
 
   async requestEmailVerification(userId: string): Promise<void> {
@@ -269,17 +273,17 @@ export class AuthService {
 
   async verifyEmailWithToken(token: string): Promise<void> {
     const hash = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await this.usersService.findByVerifyEmailToken(hash);
-    if (!user || !user.verifyEmailTokenExpiresAt) {
+    const tokenData = await this.usersService.findByVerifyEmailToken(hash);
+    if (!tokenData || !tokenData.tokenExpiresAt) {
       throw new UnauthorizedException('Invalid or expired verification token');
     }
 
-    if (user.verifyEmailTokenExpiresAt < new Date()) {
+    if (tokenData.tokenExpiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired verification token');
     }
 
-    await this.usersService.verifyEmail(user.id);
-    await this.usersService.clearVerifyEmailToken(user.id);
+    await this.usersService.verifyEmail(tokenData.user.id);
+    await this.usersService.clearVerifyEmailToken(tokenData.user.id);
   }
 
   // ------------------------------
@@ -287,19 +291,19 @@ export class AuthService {
   private async validateUserCredentials(
     email: string,
     pass: string,
-  ): Promise<User> {
-    const user = await this.usersService.findForAuthByEmail(email);
+  ): Promise<AuthUserData> {
+    const authData = await this.usersService.findForAuthByEmail(email);
 
-    if (!user || !user.passwordHash) {
+    if (!authData || !authData.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
+    const isMatch = await bcrypt.compare(pass, authData.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return user;
+    return authData;
   }
 
   private async getTokens(user: JwtUser) {

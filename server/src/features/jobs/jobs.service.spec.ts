@@ -2,6 +2,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+jest.mock('@nestjs/schedule', () => ({
+  Cron: () => () => {},
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { JobsService } from './jobs.service';
 import { ApplicationsService } from '../applications/applications.service';
@@ -34,6 +38,7 @@ describe('JobsService', () => {
       delete: jest.fn(),
       closeExcessActiveJobs: jest.fn().mockResolvedValue(2),
       closeExpiredJobs: jest.fn().mockResolvedValue(1),
+      countPublishedActiveByCompanyId: jest.fn().mockResolvedValue(1),
     };
 
     applicationsServiceMock = {

@@ -28,15 +28,20 @@ import {
   SubscriptionExpiredEvent,
 } from '@/integrations/mail/mail.events';
 
+import { JOB_POSTING_USAGE_REPOSITORY } from '../domain/job-posting-usage.repo.interface';
+import { JOB_REPOSITORY } from '@/features/jobs/domain/job.repo.interface';
+import { COMPANY_MEMBER_REPOSITORY } from '@/features/company-members/domain/company-member.repo.interface';
+import { PROCESSED_WEBHOOK_REPOSITORY } from '../domain/processed-webhook.repo.interface';
+
 describe('SubscriptionsService', () => {
   let service: SubscriptionsService;
   let paymentProvider: jest.Mocked<PaymentProvider>;
   let subscriptionRepo: any;
+  let processedWebhookRepo: any;
   let companiesService: any;
   let dataSource: any;
   let plansService: jest.Mocked<PlansService>;
   let eventEmitter: any;
-  let queryRunner: any;
 
   beforeEach(async () => {
     paymentProvider = {
@@ -58,8 +63,12 @@ describe('SubscriptionsService', () => {
       save: jest.fn(),
     };
 
+    processedWebhookRepo = {
+      tryRecordEvent: jest.fn().mockResolvedValue(true),
+    };
+
     companiesService = {
-      getCompanyById: jest.fn(),
+      getCompanyById: jest.fn().mockResolvedValue(null),
       updatePaymentCustomerIdIfNull: jest.fn().mockResolvedValue(true),
     };
 
@@ -72,26 +81,12 @@ describe('SubscriptionsService', () => {
       emit: jest.fn(),
     };
 
-    queryRunner = {
-      connect: jest.fn(),
-      startTransaction: jest.fn(),
-      commitTransaction: jest.fn(),
-      rollbackTransaction: jest.fn(),
-      release: jest.fn(),
-      manager: {
-        getRepository: jest.fn().mockImplementation((entity) => {
-          if (entity.name === 'ProcessedWebhookOrmEntity') {
-            return { insert: jest.fn() };
-          }
-          if (entity.name === 'SubscriptionOrmEntity') {
-            return subscriptionRepo;
-          }
-        }),
-      },
-    };
-
     dataSource = {
-      createQueryRunner: jest.fn().mockReturnValue(queryRunner),
+      transaction: jest
+        .fn()
+        .mockImplementation(async (cb: (tx: any) => Promise<any>) => {
+          return cb({});
+        }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -102,6 +97,10 @@ describe('SubscriptionsService', () => {
           useValue: subscriptionRepo,
         },
         {
+          provide: PROCESSED_WEBHOOK_REPOSITORY,
+          useValue: processedWebhookRepo,
+        },
+        {
           provide: CompaniesService,
           useValue: companiesService,
         },
@@ -109,6 +108,25 @@ describe('SubscriptionsService', () => {
         { provide: PlansService, useValue: plansService },
         { provide: PAYMENT_PROVIDER, useValue: paymentProvider },
         { provide: EventEmitter2, useValue: eventEmitter },
+        {
+          provide: JOB_POSTING_USAGE_REPOSITORY,
+          useValue: {
+            countUsage: jest.fn().mockResolvedValue(0),
+            recordUsage: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: JOB_REPOSITORY,
+          useValue: {
+            countPublishedActiveByCompanyId: jest.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: COMPANY_MEMBER_REPOSITORY,
+          useValue: {
+            countReservedMembersByCompanyId: jest.fn().mockResolvedValue(0),
+          },
+        },
       ],
     }).compile();
 
@@ -430,39 +448,32 @@ describe('SubscriptionsService', () => {
 
   describe('handlePaymentWebhook', () => {
     it('duplicate webhook event is safely ignored', async () => {
-      const processedRepo = {
-        insert: jest.fn().mockImplementation(() => {
-          const err = new Error('Unique violation');
-          (err as any).code = '23505';
-          return Promise.reject(err);
-        }),
-      };
-      queryRunner.manager.getRepository.mockImplementation((entity: any) => {
-        if (entity.name === 'ProcessedWebhookOrmEntity') return processedRepo;
-        return {};
-      });
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(false);
 
       const event = {
         id: 'evt_dup',
+        provider: 'stripe',
         type: PaymentEventType.SUBSCRIPTION_CREATED,
         subscriptionId: 'sub_1',
       } as any;
 
       await service.handlePaymentWebhook(event);
 
-      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(queryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(processedWebhookRepo.tryRecordEvent).toHaveBeenCalledWith(
+        'stripe',
+        'evt_dup',
+        PaymentEventType.SUBSCRIPTION_CREATED,
+        expect.anything(),
+      );
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('missing Stripe subscription price fails explicitly', async () => {
-      const processedRepo = { insert: jest.fn().mockResolvedValue(true) };
-      queryRunner.manager.getRepository.mockImplementation((entity: any) => {
-        if (entity.name === 'ProcessedWebhookOrmEntity') return processedRepo;
-        return {};
-      });
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
 
       const event = {
         id: 'evt_no_price',
+        provider: 'stripe',
         type: PaymentEventType.SUBSCRIPTION_CREATED,
         subscriptionId: 'sub_2',
       } as any;
@@ -485,18 +496,14 @@ describe('SubscriptionsService', () => {
       await expect(service.handlePaymentWebhook(event)).rejects.toThrow(
         BadRequestException,
       );
-      expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 
     it('emits subscription.reconcile immediately when webhook detects plan downgrade', async () => {
-      const processedRepo = { insert: jest.fn().mockResolvedValue(true) };
-      queryRunner.manager.getRepository.mockImplementation((entity: any) => {
-        if (entity.name === 'ProcessedWebhookOrmEntity') return processedRepo;
-        return subscriptionRepo;
-      });
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
 
       const event = {
         id: 'evt_downgrade',
+        provider: 'stripe',
         type: PaymentEventType.SUBSCRIPTION_UPDATED,
         subscriptionId: 'sub_downgrade',
       } as any;
@@ -536,7 +543,7 @@ describe('SubscriptionsService', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
         companyId: 'comp_1',
       });
-      expect(queryRunner.commitTransaction).toHaveBeenCalled();
+      expect(dataSource.transaction).toHaveBeenCalled();
     });
   });
 

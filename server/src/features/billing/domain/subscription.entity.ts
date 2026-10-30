@@ -1,3 +1,5 @@
+import { ApiHideProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import { SubscriptionStatus } from './subscription-status.enum';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 
@@ -5,7 +7,11 @@ export class Subscription {
   id!: string;
   companyId!: string;
   provider!: string;
+
+  @Exclude()
+  @ApiHideProperty()
   providerSubId?: string | null;
+
   planId!: PlanId;
   status!: SubscriptionStatus;
   currentPeriodStart!: Date;

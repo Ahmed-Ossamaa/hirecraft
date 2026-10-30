@@ -1,18 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { DataSource } from 'typeorm';
-import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionReconciliationService } from './subscription-reconciliation.service';
+import {
+  type IJobRepository,
+  JOB_REPOSITORY,
+} from '@/features/jobs/domain/job.repo.interface';
 
 @Injectable()
 export class BillingSchedulerService {
   private readonly logger = new Logger(BillingSchedulerService.name);
 
   constructor(
-    private readonly jobsService: JobsService,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly reconciliationService: SubscriptionReconciliationService,
+    @Inject(JOB_REPOSITORY)
+    private readonly jobRepository: IJobRepository,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -20,7 +24,7 @@ export class BillingSchedulerService {
    * Daily midnight sweep (Egypt Time - Africa/Cairo)
    * Closes published jobs that passed their expiresAt timestamp.
    * Sweeps subscriptions that passed currentPeriodEnd, marks them EXPIRED,
-   *    and triggers resource reconciliation (downgrading to Free tier limits).
+   * and triggers resource reconciliation (downgrading to Free tier limits).
    */
   @Cron('0 0 * * *', { timeZone: 'Africa/Cairo' })
   async handleDailyMidnightSweep(): Promise<void> {
@@ -31,7 +35,7 @@ export class BillingSchedulerService {
   }
 
   /**
-   *  sweeper.
+   * Sweeper for expired jobs and subscriptions.
    */
   async runDailySweep(now: Date = new Date()): Promise<{
     closedJobs: number;
@@ -39,7 +43,7 @@ export class BillingSchedulerService {
   }> {
     let closedJobs = 0;
     try {
-      closedJobs = await this.jobsService.closeExpiredJobs(now);
+      closedJobs = await this.jobRepository.closeExpiredJobs(now);
       this.logger.log(
         `Job Expiration Sweep: closed ${closedJobs} jobs with expiresAt <= ${now.toISOString()}`,
       );

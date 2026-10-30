@@ -21,7 +21,7 @@ import { ResponseMessage } from '@/common/decorators/response-message.decorator'
 import { ApiImageUpload } from '@/common/decorators/api-image-upload.decorator';
 import { ImageValidationPipe } from '@/common/pipes/image-validation.pipe';
 import { UsersService } from './users.service';
-import { User } from './domain/user.entity';
+import { UserResponseDto } from './dto/user-response.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -35,20 +35,22 @@ export class UsersController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get your own profile details' })
-  @ApiStandardResponse(User)
+  @ApiStandardResponse(UserResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns the user profile.',
   })
-  async getProfile(@CurrentUser('id') userId: string) {
+  async getProfile(
+    @CurrentUser('id') userId: string,
+  ): Promise<UserResponseDto> {
     const user = await this.usersService.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return UserResponseDto.fromDomain(user);
   }
 
   @Patch('me')
   @ApiOperation({ summary: 'Update your own profile details' })
-  @ApiStandardResponse(User)
+  @ApiStandardResponse(UserResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully.',
@@ -56,8 +58,9 @@ export class UsersController {
   async updateProfile(
     @CurrentUser('id') userId: string,
     @Body() dto: UpdateProfileDto,
-  ) {
-    return this.usersService.updateProfile(userId, dto);
+  ): Promise<UserResponseDto> {
+    const updated = await this.usersService.updateProfile(userId, dto);
+    return UserResponseDto.fromDomain(updated);
   }
 
   @Patch('me/avatar')

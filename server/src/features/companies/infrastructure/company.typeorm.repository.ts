@@ -117,6 +117,18 @@ export class CompanyTypeormRepository implements ICompanyRepository {
     return (updateResult.affected ?? 0) > 0;
   }
 
+  /**
+   * Acquires a pessimistic write lock on the company row.
+   * This serializes concurrent publish/invite operations for the same company,
+   * preventing race conditions when enforcing subscription limits.
+   */
+  async lockForWrite(companyId: string, tx: EntityManager): Promise<void> {
+    await tx.findOne(CompanyOrmEntity, {
+      where: { id: companyId },
+      lock: { mode: 'pessimistic_write' },
+    });
+  }
+
   private mapToDomain(orm: CompanyOrmEntity): Company {
     const company = new Company();
     Object.assign(company, orm);
