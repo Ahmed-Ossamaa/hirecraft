@@ -1,8 +1,8 @@
 import { UserType } from './user-type.enum';
 import { User } from './user.entity';
-
 import { Gender } from './gender.enum';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { AuthUserData, UserTokenData } from './user-auth.types';
 
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
@@ -32,8 +32,8 @@ export interface IUserRepository {
 
   findByEmail(email: string): Promise<User | null>;
 
-  findForAuthByEmail(email: string): Promise<User | null>;
-  findForAuthById(id: string): Promise<User | null>;
+  findForAuthByEmail(email: string): Promise<AuthUserData | null>;
+  findForAuthById(id: string): Promise<AuthUserData | null>;
   findById(id: string): Promise<User | null>;
   findAll(options?: FindUsersOptions): Promise<PaginatedResult<User>>;
 
@@ -49,11 +49,11 @@ export interface IUserRepository {
     token: string,
     expiresAt: Date,
   ): Promise<void>;
-  findByVerifyEmailToken(token: string): Promise<User | null>;
+  findByVerifyEmailToken(token: string): Promise<UserTokenData | null>;
   clearVerifyEmailToken(userId: string): Promise<void>;
 
   saveResetToken(userId: string, token: string, expiresAt: Date): Promise<void>;
-  findByResetToken(token: string): Promise<User | null>;
+  findByResetToken(token: string): Promise<UserTokenData | null>;
   clearResetToken(userId: string): Promise<void>;
 
   saveInviteToken(
@@ -62,6 +62,6 @@ export interface IUserRepository {
     expiresAt: Date,
     tx?: any,
   ): Promise<void>;
-  findByInviteToken(token: string): Promise<User | null>;
+  findByInviteToken(token: string): Promise<UserTokenData | null>;
   clearInviteToken(userId: string): Promise<void>;
 }

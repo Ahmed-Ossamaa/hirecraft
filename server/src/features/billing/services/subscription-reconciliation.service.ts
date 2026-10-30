@@ -1,10 +1,16 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionLimitsService } from '../subscription-limits/subscription-limits.service';
-import { CompanyMembersService } from '@/features/company-members/company-members.service';
-import { JobsService } from '@/features/jobs/jobs.service';
+import {
+  type IJobRepository,
+  JOB_REPOSITORY,
+} from '@/features/jobs/domain/job.repo.interface';
+import {
+  type ICompanyMemberRepository,
+  COMPANY_MEMBER_REPOSITORY,
+} from '@/features/company-members/domain/company-member.repo.interface';
 
 @Injectable()
 export class SubscriptionReconciliationService {
@@ -13,10 +19,10 @@ export class SubscriptionReconciliationService {
   constructor(
     private readonly subscriptionsService: SubscriptionsService,
     private readonly subscriptionLimitsService: SubscriptionLimitsService,
-    @Inject(forwardRef(() => CompanyMembersService))
-    private readonly companyMembersService: CompanyMembersService,
-    @Inject(forwardRef(() => JobsService))
-    private readonly jobsService: JobsService,
+    @Inject(JOB_REPOSITORY)
+    private readonly jobRepository: IJobRepository,
+    @Inject(COMPANY_MEMBER_REPOSITORY)
+    private readonly companyMemberRepository: ICompanyMemberRepository,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -25,16 +31,23 @@ export class SubscriptionReconciliationService {
     this.logger.log(
       `Received subscription.reconcile event for company ${payload.companyId}`,
     );
-    await this.dataSource.transaction(async (tx) => {
-      await this.reconcileCompanyResources(payload.companyId, tx);
-    });
+    try {
+      await this.dataSource.transaction(async (tx) => {
+        await this.reconcileCompanyResources(payload.companyId, tx);
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to reconcile resources for company ${payload.companyId}`,
+        error,
+      );
+    }
   }
 
   /**
    * Reconciles a company's active resources (published jobs and team members)
    * against its currently effective plan limits.
    *
-   * Must be called within a transaction where the company row is locked.
+   * Executes atomic, idempotent database updates sharing one transaction (tx).
    */
   async reconcileCompanyResources(
     companyId: string,
@@ -53,25 +66,27 @@ export class SubscriptionReconciliationService {
       `Reconciling company ${companyId} against ${subscription.plan.name} limits: maxActiveJobs=${subscription.plan.limits.maxActiveJobs}, maxUsers=${subscription.plan.limits.maxUsers}`,
     );
 
-    //Reconcile published jobs (keeps newest up to maxActiveJobs, closes excess older jobs)
-    const closedJobs = await this.jobsService.closeExcessActiveJobs(
+    const closedJobs = await this.jobRepository.closeExcessActiveJobs(
       companyId,
       subscription.plan.limits.maxActiveJobs,
       tx,
     );
 
-    // Reconcile team members (revokes excess pending invites, deactivates excess active members)
-    const { revokedPending, deactivatedActive } =
-      await this.companyMembersService.reconcileExcessMembers(
+    const memberResults =
+      await this.companyMemberRepository.reconcileExcessMembers(
         companyId,
         subscription.plan.limits.maxUsers,
         tx,
       );
 
     this.logger.log(
-      `Reconciliation complete for company ${companyId}: closedJobs=${closedJobs}, revokedPending=${revokedPending}, deactivatedActive=${deactivatedActive}`,
+      `Reconciliation complete for company ${companyId}: closedJobs=${closedJobs}, revokedPending=${memberResults.revokedPending}, deactivatedActive=${memberResults.deactivatedActive}`,
     );
 
-    return { closedJobs, revokedPending, deactivatedActive };
+    return {
+      closedJobs,
+      revokedPending: memberResults.revokedPending,
+      deactivatedActive: memberResults.deactivatedActive,
+    };
   }
 }

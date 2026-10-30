@@ -2,7 +2,8 @@ import { User } from '@/features/users/domain/user.entity';
 import { CompanyRole } from './company-role.enum';
 import { CompanyMemberStatus } from './company-member-status.enum';
 import { Company } from '@/features/companies/domain/company.entity';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, ApiHideProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 
 export class CompanyMember {
   @ApiProperty()
@@ -38,7 +39,12 @@ export class CompanyMember {
   @ApiPropertyOptional()
   email?: string;
 
+  @Exclude()
+  @ApiHideProperty()
   user?: User;
+
+  @Exclude()
+  @ApiHideProperty()
   company?: Company;
 
   createdAt!: Date;

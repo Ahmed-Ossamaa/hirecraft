@@ -7,19 +7,29 @@ import {
   InternalServerErrorException,
   Inject,
 } from '@nestjs/common';
-import { DataSource, EntityManager, MoreThan, In } from 'typeorm';
-import { ProcessedWebhookOrmEntity } from '../infrastructure/processed-webhook.orm-entity';
-import { JobPostingUsageOrmEntity } from '../infrastructure/job-posting-usage.orm-entity';
-import { JobOrmEntity } from '@/features/jobs/infrastructure/job.orm-entity';
-import { JobStatus } from '@/features/jobs/domain/job-status.enum';
-import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
-import { CompanyMemberStatus } from '@/features/company-members/domain/company-member-status.enum';
+import { DataSource, EntityManager } from 'typeorm';
+import {
+  PROCESSED_WEBHOOK_REPOSITORY,
+  type IProcessedWebhookRepository,
+} from '../domain/processed-webhook.repo.interface';
+import {
+  JOB_POSTING_USAGE_REPOSITORY,
+  type IJobPostingUsageRepository,
+} from '../domain/job-posting-usage.repo.interface';
 import {
   CurrentSubscriptionDto,
   SubscriptionUsageDto,
 } from '../dto/billing-responses.dto';
 import { SUBSCRIPTION_REPOSITORY } from '../domain/subscription.repo.interface';
 import type { ISubscriptionRepository } from '../domain/subscription.repo.interface';
+import {
+  type IJobRepository,
+  JOB_REPOSITORY,
+} from '@/features/jobs/domain/job.repo.interface';
+import {
+  type ICompanyMemberRepository,
+  COMPANY_MEMBER_REPOSITORY,
+} from '@/features/company-members/domain/company-member.repo.interface';
 import { CompaniesService } from '@/features/companies/companies.service';
 import { Company } from '@/features/companies/domain/company.entity';
 import { Subscription } from '../domain/subscription.entity';
@@ -59,6 +69,14 @@ export class SubscriptionsService {
     private readonly dataSource: DataSource,
     private readonly plansService: PlansService,
     private readonly eventEmitter: EventEmitter2,
+    @Inject(JOB_POSTING_USAGE_REPOSITORY)
+    private readonly jobPostingUsageRepo: IJobPostingUsageRepository,
+    @Inject(JOB_REPOSITORY)
+    private readonly jobRepository: IJobRepository,
+    @Inject(COMPANY_MEMBER_REPOSITORY)
+    private readonly companyMemberRepository: ICompanyMemberRepository,
+    @Inject(PROCESSED_WEBHOOK_REPOSITORY)
+    private readonly processedWebhookRepo: IProcessedWebhookRepository,
   ) {}
 
   /**
@@ -269,29 +287,22 @@ export class SubscriptionsService {
         sessionDetails.subscriptionId,
       );
 
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      const { notificationData, shouldReconcile } =
+        await this.dataSource.transaction(async (tx) => {
+          const syncResult = await this.syncSubscriptionState(
+            paymentSub,
+            companyId,
+            tx,
+            PaymentProviderName.STRIPE,
+          );
+          return {
+            notificationData: syncResult?.notificationData ?? null,
+            shouldReconcile: syncResult?.shouldReconcile ?? false,
+          };
+        });
 
-      let notificationData: {
-        companyId: string;
-        planName: string;
-        currentPeriodEnd: Date | null;
-      } | null = null;
-
-      try {
-        notificationData = await this.syncSubscriptionState(
-          paymentSub,
-          companyId,
-          queryRunner.manager,
-          PaymentProviderName.STRIPE,
-        );
-        await queryRunner.commitTransaction();
-      } catch (err) {
-        await queryRunner.rollbackTransaction();
-        throw err;
-      } finally {
-        await queryRunner.release();
+      if (shouldReconcile) {
+        this.eventEmitter.emit('subscription.reconcile', { companyId });
       }
 
       if (notificationData) {
@@ -348,12 +359,14 @@ export class SubscriptionsService {
           }
           activeSub.currentPeriodEnd = nextEnd;
           await this.subscriptionRepo.save(activeSub, tx);
+          this.eventEmitter.emit('subscription.reconcile', { companyId });
         } else {
           this.logger.log(
             `Subscription ${activeSub.id} for company ${companyId} passed period end (${activeSub.currentPeriodEnd.toISOString()}). Marking EXPIRED JIT.`,
           );
           activeSub.status = SubscriptionStatus.EXPIRED;
           await this.subscriptionRepo.save(activeSub, tx);
+          this.eventEmitter.emit('subscription.reconcile', { companyId });
         }
       } else {
         const plan = this.plansService.getPlanById(activeSub.planId);
@@ -419,46 +432,21 @@ export class SubscriptionsService {
     periodEnd: Date | null,
     tx?: EntityManager,
   ): Promise<SubscriptionUsageDto> {
-    const manager = tx || this.dataSource?.manager;
-    if (!manager) {
-      return { activeJobs: 0, jobPostingsUsed: 0, teamMembersCount: 0 };
-    }
-
     try {
-      const activeJobsPromise = manager.getRepository(JobOrmEntity).count({
-        where: {
-          companyId,
-          status: JobStatus.PUBLISHED,
-          expiresAt: MoreThan(new Date()),
-        },
-      });
-
-      const teamMembersPromise = manager
-        .getRepository(CompanyMemberOrmEntity)
-        .count({
-          where: {
-            companyId,
-            status: In([
-              CompanyMemberStatus.ACTIVE,
-              CompanyMemberStatus.PENDING,
-            ]),
-          },
-        });
-
-      const qb = manager
-        .getRepository(JobPostingUsageOrmEntity)
-        .createQueryBuilder('usage')
-        .where('usage.companyId = :companyId', { companyId });
-
-      if (periodStart) {
-        qb.andWhere('usage.publishedAt >= :start', { start: periodStart });
-      }
-      if (periodEnd) {
-        qb.andWhere('usage.publishedAt < :end', { end: periodEnd });
-      }
-
       const [activeJobs, teamMembersCount, jobPostingsUsed] = await Promise.all(
-        [activeJobsPromise, teamMembersPromise, qb.getCount()],
+        [
+          this.jobRepository.countPublishedActiveByCompanyId(companyId, tx),
+          this.companyMemberRepository.countReservedMembersByCompanyId(
+            companyId,
+            tx,
+          ),
+          this.jobPostingUsageRepo.countUsage(
+            companyId,
+            periodStart,
+            periodEnd,
+            tx,
+          ),
+        ],
       );
 
       return { activeJobs, jobPostingsUsed, teamMembersCount };
@@ -478,19 +466,7 @@ export class SubscriptionsService {
     options: PageOptionsDto,
     status?: SubscriptionStatus,
     planId?: PlanId,
-  ): Promise<
-    PaginatedResult<{
-      id: string;
-      companyId: string;
-      planId: string;
-      provider: string;
-      status: SubscriptionStatus;
-      currentPeriodStart: Date;
-      currentPeriodEnd: Date;
-      cancelAtPeriodEnd: boolean;
-      createdAt: Date;
-    }>
-  > {
+  ): Promise<PaginatedResult<Subscription>> {
     return this.subscriptionRepo.findSubscriptions(options, status, planId);
   }
 
@@ -751,76 +727,78 @@ export class SubscriptionsService {
   ): Promise<void> {
     const { id: eventId, type } = event;
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
-      const processedRepo = queryRunner.manager.getRepository(
-        ProcessedWebhookOrmEntity,
-      );
+      const result = await this.dataSource.transaction(async (tx) => {
+        const isNewEvent = await this.processedWebhookRepo.tryRecordEvent(
+          event.provider,
+          eventId,
+          type,
+          tx,
+        );
 
-      try {
-        await processedRepo.insert({
-          provider: event.provider,
-          eventId: eventId,
-          type: type,
-        });
-      } catch (err: unknown) {
-        if (err instanceof Error && 'code' in err && err.code === '23505') {
+        if (!isNewEvent) {
           this.logger.log(
             `Webhook event ${eventId} already processed. Skipping.`,
           );
-          await queryRunner.rollbackTransaction();
-          return;
-        }
-        throw err;
-      }
-
-      let notificationData: {
-        companyId: string;
-        planName: string;
-        currentPeriodEnd: Date | null;
-      } | null = null;
-
-      if (latestPaymentSub) {
-        if (!companyId) {
-          this.logger.error(
-            `Cannot sync subscription ${latestPaymentSub.id} without a resolved company ID. eventId: ${eventId}`,
-          );
-          throw new BadRequestException(
-            'Unresolvable company ID for subscription webhook.',
-          );
+          return null;
         }
 
-        notificationData = await this.syncSubscriptionState(
-          latestPaymentSub,
-          companyId,
-          queryRunner.manager,
-          event.provider,
-        );
+        let notificationData: {
+          companyId: string;
+          planName: string;
+          currentPeriodEnd: Date | null;
+        } | null = null;
+        let shouldReconcile = false;
+
+        if (latestPaymentSub) {
+          if (!companyId) {
+            this.logger.error(
+              `Cannot sync subscription ${latestPaymentSub.id} without a resolved company ID. eventId: ${eventId}`,
+            );
+            throw new BadRequestException(
+              'Unresolvable company ID for subscription webhook.',
+            );
+          }
+
+          const syncResult = await this.syncSubscriptionState(
+            latestPaymentSub,
+            companyId,
+            tx,
+            event.provider,
+          );
+          if (syncResult) {
+            notificationData = syncResult.notificationData;
+            shouldReconcile = syncResult.shouldReconcile;
+          }
+        }
+
+        return { notificationData, shouldReconcile };
+      });
+
+      if (!result) {
+        return;
       }
 
-      await queryRunner.commitTransaction();
+      if (result.shouldReconcile && companyId) {
+        this.eventEmitter.emit('subscription.reconcile', { companyId });
+      }
 
-      if (notificationData) {
+      if (result.notificationData) {
         const company = await this.companiesService
-          .getCompanyById(notificationData.companyId)
+          .getCompanyById(result.notificationData.companyId)
           .catch(() => null);
 
         if (company) {
           this.notifySubscriptionActivated(
-            notificationData.companyId,
+            result.notificationData.companyId,
             company.name,
-            notificationData.planName,
-            notificationData.currentPeriodEnd,
+            result.notificationData.planName,
+            result.notificationData.currentPeriodEnd,
             company.email,
           );
         }
       }
     } catch (error) {
-      await queryRunner.rollbackTransaction();
-
       if (
         error instanceof Error &&
         error.message === 'DUPLICATE_ACTIVE_SUBSCRIPTION_ANOMALY'
@@ -833,8 +811,6 @@ export class SubscriptionsService {
 
       this.logger.error(`Error processing webhook event ${eventId}`, error);
       throw error;
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -847,9 +823,12 @@ export class SubscriptionsService {
     entityManager: EntityManager,
     provider: PaymentProviderName,
   ): Promise<{
-    companyId: string;
-    planName: string;
-    currentPeriodEnd: Date | null;
+    notificationData: {
+      companyId: string;
+      planName: string;
+      currentPeriodEnd: Date | null;
+    } | null;
+    shouldReconcile: boolean;
   } | null> {
     if (!paymentSub.priceId) {
       throw new BadRequestException(
@@ -876,6 +855,8 @@ export class SubscriptionsService {
         entityManager,
       });
 
+      let shouldReconcile = false;
+
       if (localStatus === SubscriptionStatus.ACTIVE) {
         if (previousPlanId && previousPlanId !== plan.id) {
           const previousPlan = this.plansService.getPlanById(previousPlanId);
@@ -887,23 +868,30 @@ export class SubscriptionsService {
 
           if (isDowngrade) {
             this.logger.log(
-              `Downgrade detected via provider sync for company ${companyId} (${previousPlan.name} -> ${plan.name}). Emitting subscription.reconcile.`,
+              `Downgrade detected via provider sync for company ${companyId} (${previousPlan.name} -> ${plan.name}). Reconcile will be emitted post-commit.`,
             );
-            this.eventEmitter.emit('subscription.reconcile', { companyId });
+            shouldReconcile = true;
           }
         }
 
         return {
-          companyId,
-          planName: plan.name,
-          currentPeriodEnd: paymentSub.currentPeriodEnd,
+          notificationData: {
+            companyId,
+            planName: plan.name,
+            currentPeriodEnd: paymentSub.currentPeriodEnd,
+          },
+          shouldReconcile,
         };
       } else {
-        this.eventEmitter.emit('subscription.reconcile', { companyId });
+        shouldReconcile = true;
+        return {
+          notificationData: null,
+          shouldReconcile,
+        };
       }
-      return null;
     } catch (err: unknown) {
       this.handleSubscriptionSyncError(err, companyId, paymentSub.id);
+      return null;
     }
   }
 

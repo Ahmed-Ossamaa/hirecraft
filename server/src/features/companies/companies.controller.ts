@@ -28,7 +28,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { FindCompaniesQueryDto } from './dto/find-companies-query.dto';
 import { CompanyListItemDto } from './dto/company-list-item.dto';
-import { Company } from './domain/company.entity';
+import { CompanyResponseDto } from './dto/company-response.dto';
 
 @ApiTags('Companies')
 @Controller('companies')
@@ -53,26 +53,28 @@ export class CompaniesController {
     CompanyRole.STAFF,
   )
   @ApiOperation({ summary: 'Get details of my company' })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns company details',
   })
   async getMyCompany(@CurrentUser('companyId') companyId: string) {
-    return this.companiesService.getMyCompany(companyId);
+    const company = await this.companiesService.getMyCompany(companyId);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get a specific company profile by its ID (Public)',
   })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns company details',
   })
   async getCompanyById(@Param('id') id: string) {
-    return this.companiesService.getCompanyById(id);
+    const company = await this.companiesService.getCompanyById(id);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Patch('me')
@@ -80,13 +82,14 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard, CompanyRoleGuard)
   @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({ summary: 'Update my company details (Admin)' })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({ status: 200, description: 'Company updated' })
   async updateCompanyProfile(
     @CurrentUser('companyId') companyId: string,
     @Body() dto: UpdateCompanyDto,
   ) {
-    return this.companiesService.updateCompany(companyId, dto);
+    const company = await this.companiesService.updateCompany(companyId, dto);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Patch('me/logo')
@@ -97,7 +100,7 @@ export class CompaniesController {
   @ApiOperation({
     summary: 'Upload or update company logo (Admin)',
   })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Company logo updated',
@@ -106,7 +109,8 @@ export class CompaniesController {
     @CurrentUser('companyId') companyId: string,
     @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
   ) {
-    return this.companiesService.uploadLogo(companyId, file);
+    const company = await this.companiesService.uploadLogo(companyId, file);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Delete('me/logo')
@@ -114,13 +118,14 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard, CompanyRoleGuard)
   @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({ summary: 'Remove company logo (Admin)' })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Company logo removed',
   })
   async removeLogo(@CurrentUser('companyId') companyId: string) {
-    return this.companiesService.removeLogo(companyId);
+    const company = await this.companiesService.removeLogo(companyId);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Patch('me/cover')
@@ -131,7 +136,7 @@ export class CompaniesController {
   @ApiOperation({
     summary: 'Upload or update company cover (Admin)',
   })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Company cover updated',
@@ -140,7 +145,8 @@ export class CompaniesController {
     @CurrentUser('companyId') companyId: string,
     @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
   ) {
-    return this.companiesService.uploadCover(companyId, file);
+    const company = await this.companiesService.uploadCover(companyId, file);
+    return CompanyResponseDto.fromDomain(company);
   }
 
   @Delete('me/cover')
@@ -148,12 +154,13 @@ export class CompaniesController {
   @UseGuards(JwtAuthGuard, CompanyRoleGuard)
   @RequireCompanyRole(CompanyRole.ADMIN)
   @ApiOperation({ summary: 'Remove company cover (Admin)' })
-  @ApiStandardResponse(Company)
+  @ApiStandardResponse(CompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Company cover removed',
   })
   async removeCover(@CurrentUser('companyId') companyId: string) {
-    return this.companiesService.removeCover(companyId);
+    const company = await this.companiesService.removeCover(companyId);
+    return CompanyResponseDto.fromDomain(company);
   }
 }

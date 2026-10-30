@@ -270,6 +270,87 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   }
 
   /**
+   * Reconciles company members down to the allowed maxUsers capacity:
+   * 1. Cancels/deletes excess pending invitations first if ACTIVE + PENDING > maxUsers.
+   * 2. Deactivates excess active members if ACTIVE > maxUsers, prioritizing non-admins first
+   *    and never deactivating the last active admin.
+   */
+  async reconcileExcessMembers(
+    companyId: string,
+    maxUsers: number,
+    tx: EntityManager,
+  ): Promise<{ revokedPending: number; deactivatedActive: number }> {
+    const memberRepo = tx.getRepository(CompanyMemberOrmEntity);
+
+    const allMembers = await memberRepo.find({
+      where: { companyId },
+      order: { joinedAt: 'DESC', createdAt: 'DESC' },
+    });
+
+    const pendingMembers = allMembers.filter(
+      (m) => m.status === CompanyMemberStatus.PENDING,
+    );
+    const activeMembers = allMembers.filter(
+      (m) => m.status === CompanyMemberStatus.ACTIVE,
+    );
+
+    let revokedPending = 0;
+    let deactivatedActive = 0;
+
+    // Cancel excess pending invitations first
+    const totalReserved = activeMembers.length + pendingMembers.length;
+    if (totalReserved > maxUsers && pendingMembers.length > 0) {
+      const excessPendingCount = Math.min(
+        totalReserved - maxUsers,
+        pendingMembers.length,
+      );
+      const pendingToRevoke = pendingMembers.slice(0, excessPendingCount);
+      for (const pending of pendingToRevoke) {
+        await memberRepo.delete(pending.id);
+        revokedPending++;
+      }
+    }
+
+    // Deactivate excess active members if still over limit
+    if (activeMembers.length > maxUsers) {
+      const excessActiveCount = activeMembers.length - maxUsers;
+
+      const nonAdmins = activeMembers.filter(
+        (m) => m.role !== CompanyRole.ADMIN,
+      );
+      const admins = activeMembers.filter((m) => m.role === CompanyRole.ADMIN);
+
+      const toDeactivate: CompanyMemberOrmEntity[] = [];
+
+      for (const member of nonAdmins) {
+        if (toDeactivate.length < excessActiveCount) {
+          toDeactivate.push(member);
+        }
+      }
+
+      // If we still need to deactivate and have more than 1 admin, deactivate newer admins
+      if (toDeactivate.length < excessActiveCount && admins.length > 1) {
+        const adminsCanDeactivate = admins.slice(0, admins.length - 1);
+        for (const admin of adminsCanDeactivate) {
+          if (toDeactivate.length < excessActiveCount) {
+            toDeactivate.push(admin);
+          }
+        }
+      }
+
+      for (const member of toDeactivate) {
+        member.status = CompanyMemberStatus.DEACTIVATED;
+        member.deactivationReason = 'PLAN_LIMIT_EXCEEDED';
+        member.deactivatedAt = new Date();
+        await memberRepo.save(member);
+        deactivatedActive++;
+      }
+    }
+
+    return { revokedPending, deactivatedActive };
+  }
+
+  /**
    * Removes a company member record by user ID and company ID.
    */
   async remove(userId: string, companyId: string): Promise<boolean> {

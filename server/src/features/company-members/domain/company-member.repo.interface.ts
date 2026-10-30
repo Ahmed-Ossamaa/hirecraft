@@ -69,5 +69,11 @@ export interface ICompanyMemberRepository {
     tx?: EntityManager,
   ): Promise<number>;
 
+  reconcileExcessMembers(
+    companyId: string,
+    maxUsers: number,
+    tx: EntityManager,
+  ): Promise<{ revokedPending: number; deactivatedActive: number }>;
+
   remove(userId: string, companyId: string): Promise<boolean>;
 }

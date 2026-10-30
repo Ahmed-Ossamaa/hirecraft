@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 import { PlanId } from './plan-id.enum';
 
 export type PlanInterval = 'month' | 'year';
@@ -46,10 +47,8 @@ export class Plan {
   @ApiProperty({ example: 'EGP', description: 'Currency code' })
   readonly currency: string;
 
-  @ApiProperty({
-    example: 'price_1UC30dIa6NIi04iKJWYRhHhl',
-    nullable: true,
-  })
+  @ApiHideProperty()
+  @Exclude()
   readonly paymentPriceId: string | null;
 
   @ApiProperty({ type: () => PlanLimits })

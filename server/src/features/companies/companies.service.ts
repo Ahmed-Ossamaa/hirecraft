@@ -173,4 +173,8 @@ export class CompaniesService {
       customerId,
     );
   }
+
+  async lockForWrite(companyId: string, tx: EntityManager): Promise<void> {
+    return this.companyRepository.lockForWrite(companyId, tx);
+  }
 }
