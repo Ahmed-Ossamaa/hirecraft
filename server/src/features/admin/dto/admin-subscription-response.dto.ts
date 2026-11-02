@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SubscriptionStatus } from '@/features/billing/domain/subscription-status.enum';
 import { Subscription } from '@/features/billing/domain/subscription.entity';
 
@@ -8,6 +8,12 @@ export class AdminSubscriptionResponseDto {
 
   @ApiProperty({ example: 'a4b82771-460d-45be-bb58-1fecb73fa911' })
   companyId!: string;
+
+  @ApiPropertyOptional({ example: 'Acme Inc' })
+  companyName?: string | null;
+
+  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  companyLogo?: string | null;
 
   @ApiProperty({ example: 'STARTER_MONTHLY' })
   planId!: string;
@@ -37,6 +43,8 @@ export class AdminSubscriptionResponseDto {
     const dto = new AdminSubscriptionResponseDto();
     dto.id = sub.id;
     dto.companyId = sub.companyId;
+    dto.companyName = sub.companyName ?? null;
+    dto.companyLogo = sub.companyLogo ?? null;
     dto.planId = sub.planId;
     dto.provider = sub.provider;
     dto.status = sub.status;

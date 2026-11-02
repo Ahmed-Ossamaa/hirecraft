@@ -1,10 +1,15 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { SubscriptionStatus } from '@/features/billing/domain/subscription-status.enum';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 
 export class AdminBillingQueryDto extends PageOptionsDto {
+  @ApiPropertyOptional({ description: 'Search by company name' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({
     enum: SubscriptionStatus,
     description: 'Filter by subscription status',
