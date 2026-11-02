@@ -52,9 +52,7 @@ export class CompanyMemberOrmEntity {
   @JoinColumn({ name: 'userId' })
   user?: UserOrmEntity;
 
-  @ManyToOne(() => CompanyOrmEntity, (company) => company.members, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => CompanyOrmEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'companyId' })
   company?: CompanyOrmEntity;
 

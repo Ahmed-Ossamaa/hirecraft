@@ -59,7 +59,7 @@ export class CompaniesController {
     description: 'Returns company details',
   })
   async getMyCompany(@CurrentUser('companyId') companyId: string) {
-    const company = await this.companiesService.getMyCompany(companyId);
+    const company = await this.companiesService.getCompanyById(companyId);
     return CompanyResponseDto.fromDomain(company);
   }
 

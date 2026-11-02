@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Company } from '../domain/company.entity';
-import { CompanyMemberResponseDto } from '@/features/company-members/dto/company-member-response.dto';
 
 export class CompanyResponseDto {
   @ApiProperty({ example: 'a4b82771-460d-45be-bb58-1fecb73fa911' })
@@ -64,9 +63,6 @@ export class CompanyResponseDto {
   @ApiPropertyOptional({ example: 'Manufacturing' })
   industry?: string;
 
-  @ApiPropertyOptional({ type: () => [CompanyMemberResponseDto] })
-  members?: CompanyMemberResponseDto[];
-
   @ApiProperty()
   createdAt!: Date;
 
@@ -92,12 +88,6 @@ export class CompanyResponseDto {
     dto.industry = company.industry;
     dto.createdAt = company.createdAt;
     dto.updatedAt = company.updatedAt;
-    if (company.members) {
-      dto.members = company.members.map((m) =>
-        CompanyMemberResponseDto.fromDomain(m),
-      );
-    }
     return dto;
   }
 }
-

@@ -1,14 +1,14 @@
-import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  Index,
 } from 'typeorm';
 
 @Entity('companies')
+@Index('idx_companies_location', ['country', 'city'])
 export class CompanyOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -58,17 +58,14 @@ export class CompanyOrmEntity {
   @Column({ nullable: true })
   size?: string;
 
+  @Index('idx_companies_industry')
   @Column({ nullable: true })
   industry?: string;
 
   @Column({ nullable: true, type: 'varchar', unique: true })
   paymentCustomerId?: string | null;
 
-  @OneToMany(() => CompanyMemberOrmEntity, (member) => member.company, {
-    cascade: true,
-  })
-  members!: CompanyMemberOrmEntity[];
-
+  @Index('idx_companies_created_at')
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

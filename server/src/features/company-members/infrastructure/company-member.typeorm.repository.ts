@@ -4,6 +4,7 @@ import { Repository, EntityManager } from 'typeorm';
 import {
   ICompanyMemberRepository,
   CreateCompanyMemberParams,
+  CompanyMemberBasicInfo,
 } from '../domain/company-member.repo.interface';
 import { CompanyMember } from '../domain/company-member.entity';
 import { CompanyMemberOrmEntity } from './company-member.orm-entity';
@@ -208,6 +209,39 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   }
 
   /**
+   * Batch counts the number of active members for multiple companies.
+   */
+  async countActiveMembersByCompanyIds(
+    companyIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, number>> {
+    const map = new Map<string, number>();
+    if (!companyIds || companyIds.length === 0) {
+      return map;
+    }
+
+    const manager = tx || this.repository.manager;
+    const rawResults = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .where('member.companyId IN (:...companyIds)', { companyIds })
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
+      .select([
+        'member.companyId AS "companyId"',
+        'COUNT(member.id) AS "count"',
+      ])
+      .groupBy('member.companyId')
+      .getRawMany<{ companyId: string; count: string }>();
+
+    for (const row of rawResults) {
+      map.set(row.companyId, parseInt(row.count, 10));
+    }
+
+    return map;
+  }
+
+  /**
    * Counts the number of reserved seats (ACTIVE + PENDING) in a company.
    */
   async countReservedMembersByCompanyId(
@@ -222,6 +256,80 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
         statuses: [CompanyMemberStatus.ACTIVE, CompanyMemberStatus.PENDING],
       })
       .getCount();
+  }
+
+  /**
+   * Batch resolves company names for a list of user IDs in a single query.
+   */
+  async findCompanyNamesByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (!userIds || userIds.length === 0) {
+      return map;
+    }
+
+    const manager = tx || this.repository.manager;
+    const rawResults = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .innerJoin('member.company', 'company')
+      .where('member.userId IN (:...userIds)', { userIds })
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
+      .select(['member.userId AS "userId"', 'company.name AS "companyName"'])
+      .getRawMany<{ userId: string; companyName: string }>();
+
+    for (const row of rawResults) {
+      map.set(row.userId, row.companyName);
+    }
+
+    return map;
+  }
+
+  /**
+   * Batch resolves company details (name, role, companyId) for a list of user IDs in a single query.
+   */
+  async findCompanyDetailsByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, CompanyMemberBasicInfo>> {
+    const map = new Map<string, CompanyMemberBasicInfo>();
+    if (!userIds || userIds.length === 0) {
+      return map;
+    }
+
+    const manager = tx || this.repository.manager;
+    const rawResults = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
+      .innerJoin('member.company', 'company')
+      .where('member.userId IN (:...userIds)', { userIds })
+      .andWhere('member.status = :status', {
+        status: CompanyMemberStatus.ACTIVE,
+      })
+      .select([
+        'member.userId AS "userId"',
+        'member.companyId AS "companyId"',
+        'member.role AS "role"',
+        'company.name AS "companyName"',
+      ])
+      .getRawMany<{
+        userId: string;
+        companyId: string;
+        role: string;
+        companyName: string;
+      }>();
+
+    for (const row of rawResults) {
+      map.set(row.userId, {
+        companyId: row.companyId,
+        role: row.role,
+        companyName: row.companyName,
+      });
+    }
+
+    return map;
   }
 
   /**

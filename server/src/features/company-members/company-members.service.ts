@@ -13,6 +13,7 @@ import {
   type ICompanyMemberRepository,
   COMPANY_MEMBER_REPOSITORY,
   CreateCompanyMemberParams,
+  CompanyMemberBasicInfo,
 } from './domain/company-member.repo.interface';
 import { CompanyMember } from './domain/company-member.entity';
 import { UsersService } from '../users/users.service';
@@ -270,7 +271,7 @@ export class CompanyMembersService {
     },
     companyId: string,
   ): Promise<void> {
-    const company = await this.companiesService.getMyCompany(companyId);
+    const company = await this.companiesService.getCompanyById(companyId);
     if (!company) {
       throw new NotFoundException('Company not found.');
     }
@@ -424,8 +425,38 @@ export class CompanyMembersService {
     companyId: string,
     tx?: EntityManager,
   ): Promise<number> {
-    return this.companyMemberRepository.countActiveMembersByCompanyId(
+    return await this.companyMemberRepository.countActiveMembersByCompanyId(
       companyId,
+      tx,
+    );
+  }
+
+  async countActiveMembersByCompanyIds(
+    companyIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, number>> {
+    return await this.companyMemberRepository.countActiveMembersByCompanyIds(
+      companyIds,
+      tx,
+    );
+  }
+
+  async findCompanyNamesByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, string>> {
+    return await this.companyMemberRepository.findCompanyNamesByUserIds(
+      userIds,
+      tx,
+    );
+  }
+
+  async findCompanyDetailsByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, CompanyMemberBasicInfo>> {
+    return await this.companyMemberRepository.findCompanyDetailsByUserIds(
+      userIds,
       tx,
     );
   }

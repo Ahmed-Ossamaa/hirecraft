@@ -35,14 +35,6 @@ export class CompaniesService {
     return company;
   }
 
-  async getMyCompany(companyId: string): Promise<Company> {
-    const company = await this.companyRepository.findByIdWithMembers(companyId);
-    if (!company) {
-      throw new NotFoundException('Company not found');
-    }
-    return company;
-  }
-
   async findAllCompanies(
     options?: FindCompaniesOptions,
   ): Promise<PaginatedResult<Company>> {
