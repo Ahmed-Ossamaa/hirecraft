@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { MdInfoOutline, MdArrowBack } from "react-icons/md";
 
 export default function PaymentCancelPage() {

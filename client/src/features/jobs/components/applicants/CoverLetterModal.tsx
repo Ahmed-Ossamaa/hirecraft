@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Modal, Button } from "@/shared/components/ui";
+import { Modal } from "@/shared/components/ui/Modal";
+import { Button } from "@/shared/components/ui/Button";
 import { EmployerApplicationResponseDto } from "@/shared/api/generated/model";
 import { formatDate } from "@/shared/utils/date-utils";
 import { FiFileText } from "react-icons/fi";

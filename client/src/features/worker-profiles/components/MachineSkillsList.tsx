@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { WorkerMachineSkill } from '@/shared/api/generated/model';
-import { Button } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui/Button';
 import { MdAdd, MdEdit, MdDelete, MdPrecisionManufacturing } from 'react-icons/md';
 import { useRemoveMachineSkill } from "@/features/worker-profiles/api/useProfileMutations";
 import { AddSkillModal } from './AddSkillModal';

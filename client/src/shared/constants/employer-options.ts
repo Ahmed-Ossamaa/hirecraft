@@ -1,12 +1,33 @@
 
-// mock for now
 export const INDUSTRY_SECTOR_OPTIONS = [
-  { value: 'Architectural Millwork & Fine Joinery', label: 'Architectural Millwork & Fine Joinery' },
-  { value: 'CNC Machining & Tool & Die Manufacturing', label: 'CNC Machining & Tool & Die Manufacturing' },
-  { value: 'Precision Custom Metal Fabrication', label: 'Precision Custom Metal Fabrication' },
-  { value: 'Fine Architectural Ceramics', label: 'Fine Architectural Ceramics' },
-  { value: 'Restoration & Heritage Building Craft', label: 'Restoration & Heritage Building Craft' }
-];
+  { value: 'AUTOMOTIVE', label: 'Automotive Manufacturing' },
+  { value: 'AEROSPACE', label: 'Aerospace & Aviation' },
+  { value: 'ELECTRONICS', label: 'Electronics & Electrical Equipment' },
+  { value: 'FOOD_BEVERAGE', label: 'Food & Beverage Manufacturing' },
+  { value: 'TEXTILES', label: 'Textiles & Apparel' },
+  { value: 'CHEMICALS', label: 'Chemical & Pharmaceutical Manufacturing' },
+  { value: 'PLASTICS_RUBBER', label: 'Plastics & Rubber Manufacturing' },
+  { value: 'METALWORKING', label: 'Metalworking, CNC & Machining' },
+  { value: 'STEEL_IRON', label: 'Steel & Iron Production' },
+  { value: 'MACHINERY', label: 'Machinery & Industrial Equipment' },
+  { value: 'CONSTRUCTION_MATERIALS', label: 'Construction & Building Materials' },
+  { value: 'CEMENT_CONCRETE', label: 'Cement & Concrete Manufacturing' },
+  { value: 'GLASS_CERAMICS', label: 'Glass & Ceramics Manufacturing' },
+  { value: 'PAPER_PACKAGING', label: 'Paper, Carton & Packaging Manufacturing' },
+  { value: 'WOOD_FURNITURE', label: 'Woodworking, Joinery & Furniture Manufacturing' },
+  { value: 'OIL_GAS', label: 'Oil & Gas' },
+  { value: 'PETROCHEMICALS', label: 'Petrochemicals' },
+  { value: 'MINING', label: 'Mining & Mineral Processing' },
+  { value: 'ENERGY', label: 'Energy & Power Generation' },
+  { value: 'SHIPBUILDING', label: 'Shipbuilding & Marine Manufacturing' },
+  { value: 'INDUSTRIAL_AUTOMATION', label: 'Industrial Automation & Robotics' },
+  { value: 'HVAC', label: 'HVAC & Refrigeration Manufacturing' },
+  { value: 'PRINTING', label: 'Printing & Publishing' },
+  { value: 'CONSUMER_GOODS', label: 'Household & Consumer Goods Manufacturing' },
+  { value: 'AGRICULTURE', label: 'Agricultural & Agricultural Equipment Manufacturing' },
+  { value: 'RECYCLING', label: 'Recycling & Waste Processing' },
+  { value: 'OTHER', label: 'Other Industrial & Manufacturing' },
+] as const;
 
 export const COMPANY_SIZE_OPTIONS = [
   { value: '1–10', label: '1–10' },

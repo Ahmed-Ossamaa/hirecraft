@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Skeleton } from "@/shared/components/ui";
+import { Skeleton } from "@/shared/components/ui/Skeleton";
 
 export const CompanyCardSkeleton: React.FC = () => {
   return (

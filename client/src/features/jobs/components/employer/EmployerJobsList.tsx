@@ -18,13 +18,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { JobDetailsModal } from "./JobDetailsModal";
 import { EmployerJobTableRow } from "./EmployerJobTableRow";
-import {
-  Button,
-  EmptyState,
-  Pagination,
-  Tabs,
-  TableSkeleton,
-} from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { Tabs } from "@/shared/components/ui/Tabs";
+import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
 
 export const EmployerJobsList: React.FC = () => {
   const router = useRouter();
@@ -286,7 +284,7 @@ export const EmployerJobsList: React.FC = () => {
                     onClick={() => handleSort("date")}
                   >
                     <span className="inline-flex items-center">
-                      Posted <SortIcon field="date" />
+                      Created <SortIcon field="date" />
                     </span>
                   </th>
                   <th className="px-5 py-3 font-medium text-center">Actions</th>

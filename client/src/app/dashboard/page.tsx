@@ -12,7 +12,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
 
-    if (user.userType === UserUserType.EMPLOYER) {
+    if (user.userType === UserUserType.PLATFORM_ADMIN) {
+      router.replace("/dashboard/admin");
+    } else if (user.userType === UserUserType.EMPLOYER) {
       router.replace("/dashboard/company");
     } else {
       router.replace("/dashboard/profile");

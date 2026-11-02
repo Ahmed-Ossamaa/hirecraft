@@ -12,7 +12,7 @@ import {
   MdArrowBack,
   MdSquareFoot,
 } from "react-icons/md";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 
 export const AuthSlider = () => {
   const searchParams = useSearchParams();

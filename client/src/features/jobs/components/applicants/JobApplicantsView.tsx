@@ -25,12 +25,10 @@ import {
   MdArrowDownward,
   MdStar,
 } from "react-icons/md";
-import {
-  Tabs,
-  TableSkeleton,
-  EmptyState,
-  Pagination,
-} from "@/shared/components/ui";
+import { Tabs } from "@/shared/components/ui/Tabs";
+import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
+import { Pagination } from "@/shared/components/ui/Pagination";
 import { useDebouncedCallback } from "use-debounce";
 import { WorkerProfileSlideOver } from "./WorkerProfileSlideOver";
 import { ApplicantMetricsCards } from "./ApplicantMetricsCards";

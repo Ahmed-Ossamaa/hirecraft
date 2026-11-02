@@ -5,7 +5,7 @@ import { useCompanySubscription, useAvailablePlans } from "../api/useBilling";
 import { CurrentPlanCard } from "./CurrentPlanCard";
 import { PricingGrid } from "./PricingGrid";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { Skeleton } from "@/shared/components/ui";
+import { Skeleton } from "@/shared/components/ui/Skeleton";
 import { MdWorkspacePremium, MdSecurity, MdHelpOutline } from "react-icons/md";
 
 export const BillingDashboardClient: React.FC = () => {

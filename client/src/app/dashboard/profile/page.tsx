@@ -7,7 +7,8 @@ import { MachineSkillsList } from "@/features/worker-profiles/components/Machine
 import { BasicInfoForm } from "@/features/users/components/BasicInfoForm";
 import { MdManageAccounts, MdBadge, MdVisibility } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { Button, Tabs } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
+import { Tabs } from "@/shared/components/ui/Tabs";
 import Link from "next/link";
 
 export default function WorkerProfilePage() {

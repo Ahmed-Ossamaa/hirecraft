@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { useConfirm } from "@/shared/providers/confirm-provider";
 import type { Plan, PlanId } from "@/shared/api/generated/model";
 import { getTierLevel } from "../utils/plan-features";

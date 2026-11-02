@@ -16,7 +16,9 @@ import {
   useSavedJobs,
   useToggleSaveJob,
 } from "@/features/jobs/api/useSavedJobs";
-import { Button, Pagination, EmptyState } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { formatTimeAgo } from "@/shared/utils/date-utils";
 import type { SavedJobResponseDto } from "@/shared/api/generated/model";
 

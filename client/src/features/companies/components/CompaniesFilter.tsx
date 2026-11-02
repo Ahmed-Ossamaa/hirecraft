@@ -3,12 +3,10 @@
 import React, { useEffect, useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import {
-  Input,
-  Select,
-  CountryCitySelect,
-  Button,
-} from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui/Input";
+import { Select } from "@/shared/components/ui/Select";
+import { CountryCitySelect } from "@/shared/components/ui/CountryCitySelect";
+import { Button } from "@/shared/components/ui/Button";
 import { INDUSTRY_SECTOR_OPTIONS } from "@/shared/constants/employer-options";
 import { FiSearch, FiX } from "react-icons/fi";
 
@@ -102,9 +100,7 @@ export const CompaniesFilter: React.FC = () => {
     });
   };
 
-  const hasActiveFilters = Boolean(
-    search || industry || country || city,
-  );
+  const hasActiveFilters = Boolean(search || industry || country || city);
 
   const industryOptions = [
     { label: "All Industries", value: "" },
@@ -115,13 +111,13 @@ export const CompaniesFilter: React.FC = () => {
     <div className="flex flex-col gap-4 p-4 bg-card border border-border rounded-2xl mb-6">
       {/*Search */}
       <div className="relative">
-        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
         <Input
           placeholder="Search companies by name..."
           value={search}
           onChange={handleSearchChange}
           className="pl-9"
         />
+        <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
         {search && (
           <button
             type="button"

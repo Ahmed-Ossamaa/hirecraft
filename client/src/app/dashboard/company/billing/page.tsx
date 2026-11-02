@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { BillingDashboardClient } from "@/features/billing";
+import { BillingDashboardClient } from "@/features/billing/components/BillingDashboardClient";
 
 export const metadata: Metadata = {
   title: "Plans & Billing | Technically",

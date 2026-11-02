@@ -1,6 +1,6 @@
 import React from "react";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { MdDeleteOutline } from "react-icons/md";
 import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { MemberRoleIcon } from "./MemberRoleIcon";

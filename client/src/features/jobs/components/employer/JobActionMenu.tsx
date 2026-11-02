@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { MdMoreVert } from "react-icons/md";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -131,14 +131,14 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
             View Public Job
           </Link>
           <div className="border-t border-border/40 my-1"></div>
-          <div className="px-4 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
             Change Status
           </div>
           {job.status !== "PUBLISHED" && (
             <button
               onClick={() => handleStatusChange("PUBLISHED")}
               disabled={updateStatusMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+              className="block w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-500/10 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               Publish
             </button>
@@ -147,7 +147,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
             <button
               onClick={() => handleStatusChange("DRAFT")}
               disabled={updateStatusMutation.isPending}
-              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-card-hover transition-colors disabled:opacity-50"
+              className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-card-hover transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               Move to Draft
             </button>
@@ -156,7 +156,7 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
           <button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+            className="block w-full text-left px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           >
             Delete Job
           </button>

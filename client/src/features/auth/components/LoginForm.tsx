@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Input, Button, Checkbox } from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui/Input";
+import { Button } from "@/shared/components/ui/Button";
+import { Checkbox } from "@/shared/components/ui/Checkbox";
 import { MdLogin } from "react-icons/md";
 import { useLogin } from "@/shared/api/generated/auth/auth";
 import { useAuthStore } from "@/shared/stores/auth-store";
@@ -75,8 +77,10 @@ export const LoginForm = () => {
 
       if (user.userType === "EMPLOYER") {
         router.push("/dashboard/company");
-      } else {
+      } else if (user.userType === "CANDIDATE") {
         router.push("/dashboard/profile");
+      } else if (user.userType === "PLATFORM_ADMIN") {
+        router.push("/dashboard/admin");
       }
     } catch (error) {
       console.error("Login failed:", error);

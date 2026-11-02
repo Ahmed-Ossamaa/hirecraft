@@ -3,17 +3,15 @@
 import React, { useEffect, useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import {
-  Input,
-  Select,
-  CountryCitySelect,
-  Button,
-} from "@/shared/components/ui";
+import { Input } from "@/shared/components/ui/Input";
+import { Select } from "@/shared/components/ui/Select";
+import { CountryCitySelect } from "@/shared/components/ui/CountryCitySelect";
+import { Button } from "@/shared/components/ui/Button";
 import {
   FindAllExperienceLevel,
   FindAllJobType,
 } from "@/shared/api/generated/model";
-import { FiSearch, FiX, FiFilter, FiPlus, FiMinus } from "react-icons/fi";
+import { FiSearch, FiX, FiFilter, FiPlus, FiMinus, } from "react-icons/fi";
 
 export const JobsFilter: React.FC = () => {
   const router = useRouter();
@@ -181,13 +179,13 @@ export const JobsFilter: React.FC = () => {
       {/* Search input + Filter btn */}
       <div className="flex items-center gap-2.5">
         <div className="relative flex-1">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
           <Input
             placeholder="Search jobs, machines..."
             value={search}
             onChange={handleSearchChange}
             className="pl-9"
-          />
+            />
+            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none" />
           {search && (
             <button
               type="button"

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MdLocationOn, MdBusiness, MdArrowForward } from "react-icons/md";
 import { CompanyListItemDto } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 
 interface CompanyCardProps {
   company: CompanyListItemDto;

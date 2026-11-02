@@ -5,7 +5,7 @@ import { getGetProfileByIdQueryOptions } from "@/shared/api/generated/worker-pro
 import { WorkerProfilePreview } from "@/features/worker-profiles/components/WorkerProfilePreview";
 import { MdRefresh } from "react-icons/md";
 import { FiFileText } from "react-icons/fi";
-import { CollapsibleText } from "@/shared/components/ui";
+import { CollapsibleText } from "@/shared/components/ui/CollapsibleText";
 
 interface WorkerProfileSlideOverProps {
   isOpen: boolean;

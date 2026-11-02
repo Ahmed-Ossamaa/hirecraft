@@ -5,7 +5,7 @@ import { useGetJobById } from "@/shared/api/generated/jobs/jobs";
 import { JobForm } from "@/features/jobs/components/employer/JobForm";
 import { EditJobSkeleton } from "@/features/jobs/components/employer/EditJobSkeleton";
 import { MdEdit, MdArrowBack, MdErrorOutline } from "react-icons/md";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 
 function EditJobError({ onBack }: { onBack: () => void }) {
   return (
