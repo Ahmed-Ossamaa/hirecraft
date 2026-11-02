@@ -20,6 +20,9 @@ export const getCompaniesQueryLimitMax = 100;
 
 export const getCompaniesQueryParams = zod.object({
   "search": zod.string().optional().describe('Search term for company name'),
+  "industry": zod.string().optional().describe('Filter by industry'),
+  "country": zod.string().optional().describe('Filter by country'),
+  "city": zod.string().optional().describe('Filter by city'),
   "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getCompaniesQueryOrderDefault),
   "page": zod.number().min(1).default(getCompaniesQueryPageDefault),
@@ -57,23 +60,11 @@ export const getCompaniesResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
   "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
+  "updatedAt": zod.string().datetime({}),
+  "memberCount": zod.number().optional(),
+  "jobCount": zod.number().optional(),
+  "subscriptionPlan": zod.string().nullish()
 })).optional()
 })).optional()
 }))
@@ -107,7 +98,52 @@ export const adminGetCompanyByIdResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
+  "createdAt": zod.string().datetime({}),
+  "updatedAt": zod.string().datetime({}),
+  "memberCount": zod.number().optional(),
+  "jobCount": zod.number().optional(),
+  "subscriptionPlan": zod.string().nullish()
+}).optional()
+}))
+
+/**
+ * @summary Get paginated list of members for a company (Admin only)
+ */
+export const getCompanyMembersParams = zod.object({
+  "id": zod.string()
+})
+
+export const getCompanyMembersQueryOrderDefault = "DESC";export const getCompanyMembersQueryPageDefault = 1;
+
+export const getCompanyMembersQueryLimitDefault = 10;
+export const getCompanyMembersQueryLimitMax = 100;
+
+
+
+export const getCompanyMembersQueryParams = zod.object({
+  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']).optional(),
+  "sortBy": zod.string().optional(),
+  "order": zod.enum(['ASC', 'DESC']).default(getCompanyMembersQueryOrderDefault),
+  "page": zod.number().min(1).default(getCompanyMembersQueryPageDefault),
+  "limit": zod.number().min(1).max(getCompanyMembersQueryLimitMax).default(getCompanyMembersQueryLimitDefault)
+})
+
+export const getCompanyMembersResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "data": zod.array(zod.object({
+
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number(),
+  "totalPages": zod.number()
+}).and(zod.object({
+  "data": zod.array(zod.object({
   "id": zod.string(),
   "userId": zod.string(),
   "companyId": zod.string(),
@@ -121,9 +157,7 @@ export const adminGetCompanyByIdResponse = zod.object({
   "email": zod.string().optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
-})).optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-}).optional()
+})).optional()
+})).optional()
 }))
 

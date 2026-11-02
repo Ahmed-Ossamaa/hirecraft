@@ -5,7 +5,6 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { CompanyMemberResponseDto } from './companyMemberResponseDto';
 
 export interface CompanyResponseDto {
   id: string;
@@ -33,7 +32,6 @@ export interface CompanyResponseDto {
   foundedYear?: number | null;
   size?: string;
   industry?: string;
-  members?: CompanyMemberResponseDto[];
   createdAt: string;
   updatedAt: string;
 }

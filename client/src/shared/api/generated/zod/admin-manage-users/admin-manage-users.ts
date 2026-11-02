@@ -57,7 +57,11 @@ export const getUsersResponse = zod.object({
   "isBanned": zod.boolean(),
   "isEmailVerified": zod.boolean(),
   "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
+  "updatedAt": zod.string().datetime({}),
+  "companyName": zod.string().nullish(),
+  "companyRole": zod.string().nullish(),
+  "companyId": zod.string().nullish(),
+  "workerProfileId": zod.string().nullish()
 })).optional()
 })).optional()
 }))
@@ -88,7 +92,11 @@ export const getUserByIdResponse = zod.object({
   "isBanned": zod.boolean(),
   "isEmailVerified": zod.boolean(),
   "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
+  "updatedAt": zod.string().datetime({}),
+  "companyName": zod.string().nullish(),
+  "companyRole": zod.string().nullish(),
+  "companyId": zod.string().nullish(),
+  "workerProfileId": zod.string().nullish()
 }).optional()
 }))
 

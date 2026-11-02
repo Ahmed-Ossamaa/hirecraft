@@ -23,7 +23,9 @@ import type {
 import type {
   AdminGetCompanyById200,
   GetCompanies200,
-  GetCompaniesParams
+  GetCompaniesParams,
+  GetCompanyMembers200,
+  GetCompanyMembersParams
 } from '.././model';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -207,6 +209,106 @@ export function useAdminGetCompanyById<TData = Awaited<ReturnType<typeof adminGe
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getAdminGetCompanyByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Get paginated list of members for a company (Admin only)
+ */
+export const getCompanyMembers = (
+    id: string,
+    params?: GetCompanyMembersParams,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<GetCompanyMembers200>(
+      {url: `/api/v1/admin/companies/${id}/members`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetCompanyMembersQueryKey = (id?: string,
+    params?: GetCompanyMembersParams,) => {
+    return [
+    `/api/v1/admin/companies/${id}/members`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetCompanyMembersQueryOptions = <TData = Awaited<ReturnType<typeof getCompanyMembers>>, TError = void>(id: string,
+    params?: GetCompanyMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCompanyMembersQueryKey(id,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompanyMembers>>> = ({ signal }) => getCompanyMembers(id,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCompanyMembersQueryResult = NonNullable<Awaited<ReturnType<typeof getCompanyMembers>>>
+export type GetCompanyMembersQueryError = void
+
+
+export function useGetCompanyMembers<TData = Awaited<ReturnType<typeof getCompanyMembers>>, TError = void>(
+ id: string,
+    params: undefined |  GetCompanyMembersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompanyMembers>>,
+          TError,
+          Awaited<ReturnType<typeof getCompanyMembers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompanyMembers<TData = Awaited<ReturnType<typeof getCompanyMembers>>, TError = void>(
+ id: string,
+    params?: GetCompanyMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompanyMembers>>,
+          TError,
+          Awaited<ReturnType<typeof getCompanyMembers>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompanyMembers<TData = Awaited<ReturnType<typeof getCompanyMembers>>, TError = void>(
+ id: string,
+    params?: GetCompanyMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get paginated list of members for a company (Admin only)
+ */
+
+export function useGetCompanyMembers<TData = Awaited<ReturnType<typeof getCompanyMembers>>, TError = void>(
+ id: string,
+    params?: GetCompanyMembersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyMembers>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCompanyMembersQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

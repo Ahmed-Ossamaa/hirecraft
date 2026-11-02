@@ -10,6 +10,10 @@ import type { AdminSubscriptionResponseDtoStatus } from './adminSubscriptionResp
 export interface AdminSubscriptionResponseDto {
   id: string;
   companyId: string;
+  /** @nullable */
+  companyName?: string | null;
+  /** @nullable */
+  companyLogo?: string | null;
   planId: string;
   provider: string;
   status: AdminSubscriptionResponseDtoStatus;
