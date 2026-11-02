@@ -262,6 +262,21 @@ export class JobsService {
     companyId: string,
     tx?: EntityManager,
   ): Promise<number> {
-    return this.jobRepository.countPublishedActiveByCompanyId(companyId, tx);
+    return await this.jobRepository.countPublishedActiveByCompanyId(
+      companyId,
+      tx,
+    );
+  }
+
+  async countJobsByCompanyIds(
+    companyIds: string[],
+    jobStatus?: JobStatus,
+    tx?: EntityManager,
+  ): Promise<Map<string, number>> {
+    return await this.jobRepository.countJobsByCompanyIds(
+      companyIds,
+      jobStatus,
+      tx,
+    );
   }
 }

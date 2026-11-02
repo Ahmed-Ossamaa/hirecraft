@@ -47,6 +47,11 @@ export interface IJobRepository {
     companyId: string,
     tx?: EntityManager,
   ): Promise<number>;
+  countJobsByCompanyIds(
+    companyIds: string[],
+    jobStatus?: JobStatus,
+    tx?: EntityManager,
+  ): Promise<Map<string, number>>;
   countPublishedActiveByCompanyId(
     companyId: string,
     tx?: EntityManager,

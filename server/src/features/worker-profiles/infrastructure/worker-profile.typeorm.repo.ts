@@ -112,6 +112,27 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     return profile ? profile.id : null;
   }
 
+  async findProfileIdsByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (!userIds || userIds.length === 0) {
+      return map;
+    }
+
+    const rawRows = await this.repository
+      .createQueryBuilder('wp')
+      .select(['wp.id AS "id"', 'wp.userId AS "userId"'])
+      .where('wp.userId IN (:...userIds)', { userIds })
+      .getRawMany<{ id: string; userId: string }>();
+
+    for (const row of rawRows) {
+      map.set(row.userId, row.id);
+    }
+
+    return map;
+  }
+
   async existsByUserId(userId: string): Promise<boolean> {
     return this.repository.exists({ where: { userId } });
   }

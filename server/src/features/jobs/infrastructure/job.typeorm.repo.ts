@@ -79,6 +79,12 @@ export class JobTypeormRepository implements IJobRepository {
     let sortColumn = 'job.createdAt';
     if (options.sortBy) {
       switch (options.sortBy) {
+        case 'companyId':
+          sortColumn = 'job.companyId';
+          break;
+        case 'publishedAt':
+          sortColumn = 'job.publishedAt';
+          break;
         case 'status':
           sortColumn = 'job.status';
           break;
@@ -99,7 +105,11 @@ export class JobTypeormRepository implements IJobRepository {
 
     qb.skip(options.skip)
       .take(options.limit)
-      .orderBy(sortColumn, options.order);
+      .orderBy(
+        sortColumn,
+        options.order,
+        options.sortBy === 'publishedAt' ? 'NULLS LAST' : undefined,
+      );
 
     const [jobs, total] = await qb.getManyAndCount();
 
@@ -156,6 +166,40 @@ export class JobTypeormRepository implements IJobRepository {
       .andWhere('job.status = :status', { status: JobStatus.PUBLISHED })
       .andWhere('job.expiresAt > :now', { now: new Date() })
       .getCount();
+  }
+
+  /**
+   * Batch counts total jobs for multiple companies in a single query.
+   */
+  async countJobsByCompanyIds(
+    companyIds: string[],
+    jobStatus?: JobStatus,
+    tx?: EntityManager,
+  ): Promise<Map<string, number>> {
+    const map = new Map<string, number>();
+    if (!companyIds || companyIds.length === 0) {
+      return map;
+    }
+
+    const manager = tx || this.repository.manager;
+    const qb = manager
+      .createQueryBuilder(JobOrmEntity, 'job')
+      .where('job.companyId IN (:...companyIds)', { companyIds });
+
+    if (jobStatus) {
+      qb.andWhere('job.status = :jobStatus', { jobStatus });
+    }
+
+    const rawResults = await qb
+      .select(['job.companyId AS "companyId"', 'COUNT(job.id) AS "count"'])
+      .groupBy('job.companyId')
+      .getRawMany<{ companyId: string; count: string }>();
+
+    for (const row of rawResults) {
+      map.set(row.companyId, parseInt(row.count, 10));
+    }
+
+    return map;
   }
 
   async update(id: string, params: Partial<CreateJobParams>): Promise<void> {

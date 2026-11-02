@@ -51,4 +51,5 @@ export interface WorkerProfileRepositoryInterface {
   deleteSkill(skillId: string): Promise<void>;
 
   getProfileId(userId: string): Promise<string | null>;
+  findProfileIdsByUserIds(userIds: string[]): Promise<Map<string, string>>;
 }
