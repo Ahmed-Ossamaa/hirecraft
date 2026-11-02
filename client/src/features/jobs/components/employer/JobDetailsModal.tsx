@@ -1,7 +1,18 @@
 import React from "react";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
-import { MdClose, MdWork, MdLocationOn, MdDateRange } from "react-icons/md";
-import { Button } from "@/shared/components/ui";
+import {
+  MdClose,
+  MdWork,
+  MdLocationOn,
+  MdDateRange,
+  MdCalendarToday,
+} from "react-icons/md";
+import { Button } from "@/shared/components/ui/Button";
+import {
+  formatDate,
+  formatDateTimeTooltip,
+  getIsoString,
+} from "@/shared/utils/date-utils";
 
 interface JobDetailsModalProps {
   job: JobWithStatsDto;
@@ -20,7 +31,7 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
           <h2 className="text-lg font-semibold text-foreground">Job Details</h2>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
           >
             <MdClose className="text-xl" />
           </button>
@@ -45,10 +56,24 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
                   {job.country}
                 </span>
               )}
-              <span className="flex items-center gap-1.5">
+              <time
+                dateTime={getIsoString(job.createdAt)}
+                className="flex items-center gap-1.5"
+                title={formatDateTimeTooltip(job.createdAt)}
+              >
                 <MdDateRange className="text-primary" />
-                Posted {new Date(job.createdAt).toLocaleDateString()}
-              </span>
+                Created {formatDate(job.createdAt)}
+              </time>
+              {job.publishedAt && (
+                <time
+                  dateTime={getIsoString(job.publishedAt)}
+                  className="flex items-center gap-1.5"
+                  title={formatDateTimeTooltip(job.publishedAt)}
+                >
+                  <MdCalendarToday className="text-emerald-600" />
+                  Published {formatDate(job.publishedAt)}
+                </time>
+              )}
             </div>
           </div>
 
@@ -85,9 +110,11 @@ export const JobDetailsModal: React.FC<JobDetailsModalProps> = ({
               <h3 className="text-lg font-semibold text-foreground mb-3 border-b border-border/40 pb-2">
                 Requirements
               </h3>
-              <div className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-[15px]">
-                {job.requirements}
-              </div>
+                <ul className="text-muted-foreground list-disc pl-5 space-y-1.5 text-[15px] leading-relaxed">
+                  {job.requirements.map((requirement, index) => (
+                    <li key={index}>{requirement}</li>
+                  ))}
+                </ul>
             </div>
           )}
         </div>

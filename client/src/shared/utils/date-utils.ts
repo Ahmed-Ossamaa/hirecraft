@@ -45,11 +45,38 @@ export function formatTimeAgo(dateInput: string | Date | number | undefined | nu
 }
 
 
-  export function formatDate (dateStr?: string | null) {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+export function formatDate(dateStr?: string | Date | number | null): string {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
+ * Returns a standardized full date & time string for tooltips (e.g. "11/1/2026, 7:00:00 AM").
+ * Returns undefined if date input is missing or invalid.
+ */
+export function formatDateTimeTooltip(
+  dateInput?: string | Date | number | null,
+): string | undefined {
+  if (!dateInput) return undefined;
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return undefined;
+  return date.toLocaleString();
+}
+
+/**
+ * Returns valid ISO string (UTC) for HTML <time dateTime="..."> attributes, or undefined.
+ */
+export function getIsoString(
+  dateInput?: string | Date | number | null,
+): string | undefined {
+  if (!dateInput) return undefined;
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+}
