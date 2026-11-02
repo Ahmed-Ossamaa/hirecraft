@@ -16,7 +16,7 @@
   --color-primary-hover: var(--primary-hover);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-
+  --color-destructive: var(--destructive);
   --color-cta-section: var(--cta-section);
   --color-cta-operator-card: var(--cta-operator-card);
   --color-cta-employer-card: var(--cta-employer-card);
@@ -130,6 +130,7 @@
   --primary-hover: #1d4ed8;
   --muted: #f1f5f9;
   --muted-foreground: #475569;
+  --destructive: #ef4444;
   /* Dual CTA section */
   --cta-section: #eef4fc;
   --cta-operator-card: #f8fbff;
@@ -155,6 +156,7 @@
   --primary-hover: #0284c7;
   --muted: #060a12;
   --muted-foreground: #94a3b8;
+  --destructive: #f87171;
   /* Dual CTA section */
   --cta-section: #060b13;
   --cta-operator-card: #0d1a30;
