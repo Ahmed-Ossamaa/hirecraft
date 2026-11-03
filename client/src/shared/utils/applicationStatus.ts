@@ -3,6 +3,7 @@ import type {
   CandidateApplicationResponseDtoStatus,
 } from "@/shared/api/generated/model";
 
+
 export type AnyApplicationStatus =
   | EmployerApplicationResponseDtoStatus
   | CandidateApplicationResponseDtoStatus

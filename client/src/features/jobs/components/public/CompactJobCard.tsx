@@ -5,7 +5,11 @@ import {
   MdAttachMoney,
 } from "react-icons/md";
 import { Job } from "@/shared/api/generated/model";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
+import {
+  formatTimeAgo,
+  formatDateTimeTooltip,
+  getIsoString,
+} from "@/shared/utils/date-utils";
 
 interface CompactJobCardProps {
   job: Job;
@@ -18,7 +22,10 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
   isActive,
   onClick,
 }) => {
-  const postedAgo = formatTimeAgo(job.createdAt);
+  const effectiveDate = job.publishedAt ?? job.createdAt;
+  const postedAgo = formatTimeAgo(effectiveDate);
+  const fullDateTime = formatDateTimeTooltip(effectiveDate);
+  const isoDate = getIsoString(effectiveDate);
 
   return (
     <div
@@ -41,9 +48,14 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
           )}
         </h3>
         {postedAgo && (
-          <span className="text-[11px] font-mono text-muted-foreground/80 shrink-0 mt-0.5">
+          <time
+            dateTime={isoDate}
+            title={fullDateTime}
+            suppressHydrationWarning
+            className="text-[11px] font-mono text-muted-foreground/80 shrink-0 mt-0.5"
+          >
             {postedAgo}
-          </span>
+          </time>
         )}
       </div>
 

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
 import { UsersService } from '@/features/users/users.service';
 import { CompaniesService } from '@/features/companies/companies.service';
+import { CompanyMembersService } from '@/features/company-members/company-members.service';
+import { WorkerProfilesService } from '@/features/worker-profiles/worker-profiles.service';
 import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from '@/features/billing/services/subscriptions.service';
 import { PlansService } from '@/features/plans/services/plans.service';
@@ -14,6 +16,8 @@ describe('AdminService', () => {
   let service: AdminService;
   let usersService: jest.Mocked<Partial<UsersService>>;
   let companiesService: jest.Mocked<Partial<CompaniesService>>;
+  let companyMembersService: jest.Mocked<Partial<CompanyMembersService>>;
+  let workerProfilesService: jest.Mocked<Partial<WorkerProfilesService>>;
   let jobsService: jest.Mocked<Partial<JobsService>>;
   let subscriptionsService: jest.Mocked<Partial<SubscriptionsService>>;
   let plansService: jest.Mocked<Partial<PlansService>>;
@@ -46,7 +50,26 @@ describe('AdminService', () => {
         .mockResolvedValue({ id: 'comp-1', name: 'Acme' }),
     };
 
+    companyMembersService = {
+      findCompanyNamesByUserIds: jest.fn().mockResolvedValue(new Map()),
+      findCompanyDetailsByUserIds: jest.fn().mockResolvedValue(new Map()),
+      countActiveMembersByCompanyId: jest.fn().mockResolvedValue(3),
+      countActiveMembersByCompanyIds: jest.fn().mockResolvedValue(new Map()),
+      getMembers: jest.fn().mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      }),
+    };
+
+    workerProfilesService = {
+      findProfileIdsByUserIds: jest.fn().mockResolvedValue(new Map()),
+    };
+
     jobsService = {
+      countJobsByCompanyIds: jest.fn().mockResolvedValue(new Map()),
       findAllJobs: jest.fn().mockResolvedValue({
         data: [],
         total: 0,
@@ -71,6 +94,7 @@ describe('AdminService', () => {
         limit: 10,
         totalPages: 0,
       }),
+      getActivePlansByCompanyIds: jest.fn().mockResolvedValue(new Map()),
     };
 
     plansService = {
@@ -82,6 +106,8 @@ describe('AdminService', () => {
         AdminService,
         { provide: UsersService, useValue: usersService },
         { provide: CompaniesService, useValue: companiesService },
+        { provide: CompanyMembersService, useValue: companyMembersService },
+        { provide: WorkerProfilesService, useValue: workerProfilesService },
         { provide: JobsService, useValue: jobsService },
         { provide: SubscriptionsService, useValue: subscriptionsService },
         { provide: PlansService, useValue: plansService },

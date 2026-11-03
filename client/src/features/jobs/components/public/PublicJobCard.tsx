@@ -2,7 +2,11 @@ import React from "react";
 import Link from "next/link";
 import { Job } from "@/shared/api/generated/model";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
+import {
+  formatTimeAgo,
+  formatDateTimeTooltip,
+  getIsoString,
+} from "@/shared/utils/date-utils";
 
 interface PublicJobCardProps {
   job: Job;
@@ -29,9 +33,16 @@ export const PublicJobCard: React.FC<PublicJobCardProps> = ({ job }) => {
             </span>
           </div>
         </div>
-        <div className="shrink-0 text-sm font-medium text-foreground bg-secondary/10 text-secondary px-3 py-1.5 rounded-full">
-          {formatTimeAgo(job.createdAt)}
-        </div>
+        {(job.publishedAt || job.createdAt) && (
+          <time
+            dateTime={getIsoString(job.publishedAt ?? job.createdAt)}
+            title={formatDateTimeTooltip(job.publishedAt ?? job.createdAt)}
+            suppressHydrationWarning
+            className="shrink-0 text-sm font-medium text-foreground bg-secondary/10 text-secondary px-3 py-1.5 rounded-full"
+          >
+            {formatTimeAgo(job.publishedAt ?? job.createdAt)}
+          </time>
+        )}
       </div>
     </Link>
   );

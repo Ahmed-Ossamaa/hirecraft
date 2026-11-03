@@ -8,7 +8,8 @@ import {
   FindAllCompaniesParams,
   CompanyListItemDto,
 } from "@/shared/api/generated/model";
-import { Pagination, EmptyState } from "@/shared/components/ui";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { CompaniesFilter } from "./CompaniesFilter";
 import { CompanyCard } from "./CompanyCard";
 import { CompanyCardSkeleton } from "./CompanyCardSkeleton";

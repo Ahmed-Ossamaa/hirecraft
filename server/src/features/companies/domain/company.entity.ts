@@ -1,4 +1,3 @@
-import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
 import { Exclude } from 'class-transformer';
 import { ApiHideProperty } from '@nestjs/swagger';
 
@@ -33,7 +32,6 @@ export class Company {
   @ApiHideProperty()
   paymentCustomerId?: string | null;
 
-  members?: CompanyMember[];
   createdAt!: Date;
   updatedAt!: Date;
 }

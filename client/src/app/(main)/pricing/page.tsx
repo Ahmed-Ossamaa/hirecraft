@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { PublicPricingGrid } from "@/features/billing";
+import { PublicPricingGrid } from "@/features/billing/components/PublicPricingGrid";
 import type { Plan } from "@/shared/api/generated/model";
 import { MdHelpOutline, MdSecurity, MdSpeed, MdSupportAgent } from "react-icons/md";
 

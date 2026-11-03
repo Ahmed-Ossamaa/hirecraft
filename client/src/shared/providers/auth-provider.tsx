@@ -7,13 +7,18 @@ import { User } from "../api/generated/model";
 import { AUTH_COOKIES } from "../constants/auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, setAuth, clearAuth } = useAuthStore();
+  const { isAuthenticated, setAuth, clearAuth, setHydrated } = useAuthStore();
 
   useEffect(() => {
     const initializeAuth = async () => {
       const hasSession = document.cookie.includes(`${AUTH_COOKIES.HAS_SESSION}=true`);
 
-      if (hasSession && !isAuthenticated) {
+      if (!hasSession) {
+        setHydrated(true);
+        return;
+      }
+
+      if (!isAuthenticated) {
         try {
           const refreshRes = await fetch("/api/auth/refresh", {
             method: "POST",
@@ -52,11 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to restore session:", error);
           clearAuth();
         }
+      } else {
+        setHydrated(true);
       }
     };
 
     initializeAuth();
-  }, [isAuthenticated, setAuth, clearAuth]);
+  }, [isAuthenticated, setAuth, clearAuth, setHydrated]);
 
   return <>{children}</>;
 }

@@ -11,6 +11,7 @@ import {
   MdPostAdd,
   MdDashboard,
   MdWorkspacePremium,
+  MdBarChart,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { UserUserType } from "@/shared/api/generated/model";
@@ -20,6 +21,39 @@ export interface NavItem {
   href: string;
   icon: React.ReactNode;
 }
+
+export const adminNav: NavItem[] = [
+  {
+    label: "Overview",
+    href: "/dashboard/admin",
+    icon: <MdDashboard className="text-lg" />,
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/admin/analytics",
+    icon: <MdBarChart className="text-lg" />,
+  },
+  {
+    label: "Users",
+    href: "/dashboard/admin/users",
+    icon: <MdGroup className="text-lg" />,
+  },
+  {
+    label: "Companies",
+    href: "/dashboard/admin/companies",
+    icon: <MdBusiness className="text-lg" />,
+  },
+  {
+    label: "Job Moderation",
+    href: "/dashboard/admin/jobs",
+    icon: <MdWorkOutline className="text-lg" />,
+  },
+  {
+    label: "Subscriptions",
+    href: "/dashboard/admin/billing",
+    icon: <MdWorkspacePremium className="text-lg" />,
+  },
+];
 
 export const candidateNav: NavItem[] = [
   {
@@ -76,11 +110,16 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
   const user = useAuthStore((s) => s.user);
 
   const navItems =
-    user?.userType === UserUserType.EMPLOYER ? employerNav : candidateNav;
+    user?.userType === UserUserType.PLATFORM_ADMIN
+      ? adminNav
+      : user?.userType === UserUserType.EMPLOYER
+      ? employerNav
+      : candidateNav;
 
   const isActive = (href: string) => {
     if (href === "/jobs") return pathname === "/jobs";
     if (href === "/dashboard/company") return pathname === href;
+    if (href === "/dashboard/admin") return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   };
 

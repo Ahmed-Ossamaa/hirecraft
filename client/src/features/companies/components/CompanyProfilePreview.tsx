@@ -12,7 +12,8 @@ import {
   MdStars,
   MdArrowForward,
 } from "react-icons/md";
-import { CollapsibleText, Button } from "@/shared/components/ui";
+import { CollapsibleText } from "@/shared/components/ui/CollapsibleText";
+import { Button } from "@/shared/components/ui/Button";
 import Image from "next/image";
 import Link from "next/link";
 import { PublicJobCard } from "@/features/jobs/components/public/PublicJobCard";

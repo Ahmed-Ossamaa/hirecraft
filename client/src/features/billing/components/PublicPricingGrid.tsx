@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { UserUserType } from "@/shared/api/generated/model/userUserType";
 import type { Plan } from "@/shared/api/generated/model";

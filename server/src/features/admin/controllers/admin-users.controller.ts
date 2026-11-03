@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
-import { UserResponseDto } from '@/features/users/dto/user-response.dto';
+import { AdminUserResponseDto } from '../dto/admin-user-response.dto';
 import { AdminService } from '../services/admin.service';
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { UpdateUserStatusDto } from '../dto/update-user-status.dto';
@@ -39,7 +39,7 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get paginated list of users with filters (Admin only)',
   })
-  @ApiPaginatedResponse(UserResponseDto)
+  @ApiPaginatedResponse(AdminUserResponseDto)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
@@ -48,7 +48,14 @@ export class AdminUsersController {
     const result = await this.adminService.getUsers(query);
     return {
       ...result,
-      data: result.data.map((user) => UserResponseDto.fromDomain(user)),
+      data: result.data.map((user) =>
+        AdminUserResponseDto.fromDomain(user, {
+          companyName: user.companyName,
+          companyRole: user.companyRole,
+          companyId: user.companyId,
+          workerProfileId: user.workerProfileId,
+        }),
+      ),
     };
   }
 
@@ -56,7 +63,7 @@ export class AdminUsersController {
   @ApiOperation({
     summary: 'Get details of a specific user by ID (Admin only)',
   })
-  @ApiStandardResponse(UserResponseDto)
+  @ApiStandardResponse(AdminUserResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns user details.',
@@ -68,9 +75,14 @@ export class AdminUsersController {
   })
   async getUserById(
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<UserResponseDto> {
+  ): Promise<AdminUserResponseDto> {
     const user = await this.adminService.getUserById(id);
-    return UserResponseDto.fromDomain(user);
+    return AdminUserResponseDto.fromDomain(user, {
+      companyName: user.companyName,
+      companyRole: user.companyRole,
+      companyId: user.companyId,
+      workerProfileId: user.workerProfileId,
+    });
   }
 
   @Patch(':id/ban')

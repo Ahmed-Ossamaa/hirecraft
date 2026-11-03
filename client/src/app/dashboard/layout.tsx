@@ -2,7 +2,7 @@
 
 import { Sidebar } from "@/shared/components/layout/Sidebar";
 import { useAuthStore } from "@/shared/stores/auth-store";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function DashboardLayout({
@@ -11,22 +11,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const [ready, setReady] = useState(false);
+  const pathname = usePathname();
+  const { isAuthenticated, isHydrated } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (ready && !isAuthenticated) {
-      router.replace("/auth?from=/dashboard");
+    if (isHydrated && !isAuthenticated) {
+      router.replace(`/auth?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [ready, isAuthenticated, router]);
+  }, [isHydrated, isAuthenticated, router, pathname]);
 
-  // Dont render until auth state is checked
-  if (!ready || !isAuthenticated) {
+  // Don't render until auth state is fully hydrated and verified
+  if (!isHydrated || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />

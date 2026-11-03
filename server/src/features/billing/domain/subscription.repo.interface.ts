@@ -23,6 +23,7 @@ export interface ISubscriptionRepository {
     options: PageOptionsDto,
     status?: SubscriptionStatus,
     planId?: PlanId,
+    search?: string,
   ): Promise<PaginatedResult<Subscription>>;
 
   create(
@@ -36,4 +37,9 @@ export interface ISubscriptionRepository {
     now: Date,
     tx?: EntityManager,
   ): Promise<Subscription[]>;
+
+  findActivePlansByCompanyIds(
+    companyIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, string>>;
 }

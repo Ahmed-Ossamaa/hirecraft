@@ -64,4 +64,3 @@ export class CompanyMemberResponseDto {
     return dto;
   }
 }
-

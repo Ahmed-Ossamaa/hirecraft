@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { CompanyResponseDto } from './companyResponseDto';
+import type { AdminCompanyResponseDto } from './adminCompanyResponseDto';
 
 export type AdminGetCompanyById200AllOf = {
-  data?: CompanyResponseDto;
+  data?: AdminCompanyResponseDto;
 };

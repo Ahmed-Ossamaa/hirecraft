@@ -43,8 +43,12 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
     options: PageOptionsDto,
     status?: SubscriptionStatus,
     planId?: PlanId,
+    search?: string,
   ): Promise<PaginatedResult<Subscription>> {
-    const qb = this.repository.createQueryBuilder('sub');
+    const qb = this.repository
+      .createQueryBuilder('sub')
+      .leftJoin('sub.company', 'company')
+      .addSelect(['company.name', 'company.logoUrl']);
 
     if (status) {
       qb.andWhere('sub.status = :status', { status });
@@ -52,6 +56,12 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
 
     if (planId) {
       qb.andWhere('sub.planId = :planId', { planId });
+    }
+
+    if (search) {
+      qb.andWhere('company.name ILIKE :search', {
+        search: `%${search.trim()}%`,
+      });
     }
 
     qb.orderBy('sub.createdAt', options.order || 'DESC');
@@ -101,9 +111,35 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
     return ormEntities.map((e) => this.mapToDomain(e));
   }
 
+  async findActivePlansByCompanyIds(
+    companyIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, string>> {
+    if (!companyIds.length) return new Map();
+    const manager = tx || this.repository.manager;
+    const raw = await manager
+      .createQueryBuilder(SubscriptionOrmEntity, 'sub')
+      .select('sub.companyId', 'companyId')
+      .addSelect('sub.planId', 'planId')
+      .where('sub.companyId IN (:...companyIds)', { companyIds })
+      .andWhere('sub.status = :status', { status: SubscriptionStatus.ACTIVE })
+      .getRawMany<{ companyId: string; planId: string }>();
+
+    const map = new Map<string, string>();
+    for (const row of raw) {
+      map.set(row.companyId, row.planId);
+    }
+    return map;
+  }
+
   private mapToDomain(ormEntity: SubscriptionOrmEntity): Subscription {
+    const { company, ...columns } = ormEntity;
     const domain = new Subscription();
-    Object.assign(domain, ormEntity);
+    Object.assign(domain, columns);
+    if (company) {
+      domain.companyName = company.name;
+      domain.companyLogo = company.logoUrl ?? null;
+    }
     return domain;
   }
 }

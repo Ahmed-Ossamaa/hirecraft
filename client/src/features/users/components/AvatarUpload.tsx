@@ -10,7 +10,7 @@ import {
 } from "@/shared/api/generated/users/users";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { toast } from "sonner";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { getApiError } from "@/shared/utils/error";
 
 export const AvatarUpload: React.FC = () => {

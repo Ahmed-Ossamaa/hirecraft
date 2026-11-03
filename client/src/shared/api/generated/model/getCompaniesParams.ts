@@ -12,6 +12,18 @@ export type GetCompaniesParams = {
  * Search term for company name
  */
 search?: string;
+/**
+ * Filter by industry
+ */
+industry?: string;
+/**
+ * Filter by country
+ */
+country?: string;
+/**
+ * Filter by city
+ */
+city?: string;
 sortBy?: string;
 order?: GetCompaniesOrder;
 /**

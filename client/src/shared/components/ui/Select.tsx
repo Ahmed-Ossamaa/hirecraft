@@ -5,7 +5,7 @@ import { FiChevronDown } from "react-icons/fi";
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  options: { label: string; value: string }[];
+  options: readonly { label: string; value: string }[];
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(

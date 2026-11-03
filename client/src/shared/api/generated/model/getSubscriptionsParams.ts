@@ -11,6 +11,10 @@ import type { GetSubscriptionsOrder } from './getSubscriptionsOrder';
 
 export type GetSubscriptionsParams = {
 /**
+ * Search by company name
+ */
+search?: string;
+/**
  * Filter by subscription status
  */
 status?: GetSubscriptionsStatus;

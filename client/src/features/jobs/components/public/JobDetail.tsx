@@ -15,7 +15,7 @@ import {
   MdEdit,
   MdTimelapse,
 } from "react-icons/md";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { Job, UserUserType } from "@/shared/api/generated/model";
 import { ApplyModal } from "@/features/applications/components/ApplyModal";
 import Link from "next/link";
@@ -26,7 +26,11 @@ import {
   useSavedJobs,
   useToggleSaveJob,
 } from "@/features/jobs/api/useSavedJobs";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
+import {
+  formatTimeAgo,
+  formatDateTimeTooltip,
+  getIsoString,
+} from "@/shared/utils/date-utils";
 
 interface JobDetailProps {
   job: Job | null;
@@ -92,10 +96,15 @@ export const JobDetail: React.FC<JobDetailProps> = ({ job, isModal = false }) =>
                 {job.city}, {job.country}
               </span>
               <span className="mx-2">•</span>
-              <span className="flex items-center gap-1 text-xs">
+              <time
+                dateTime={getIsoString(job.publishedAt ?? job.createdAt)}
+                title={formatDateTimeTooltip(job.publishedAt ?? job.createdAt)}
+                suppressHydrationWarning
+                className="flex items-center gap-1 text-xs"
+              >
                 <MdTimelapse />
-                {formatTimeAgo(job.createdAt.toString())}
-              </span>
+                {formatTimeAgo(job.publishedAt ?? job.createdAt)}
+              </time>
             </div>
 
             <div className="flex flex-wrap gap-2">

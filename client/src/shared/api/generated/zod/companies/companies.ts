@@ -81,21 +81,6 @@ export const getMyCompanyResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -143,21 +128,6 @@ export const updateCompanyProfileResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -192,21 +162,6 @@ export const getCompanyByIdResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -241,21 +196,6 @@ export const uploadLogoResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -286,21 +226,6 @@ export const removeLogoResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -335,21 +260,6 @@ export const uploadCoverResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()
@@ -380,21 +290,6 @@ export const removeCoverResponse = zod.object({
   "foundedYear": zod.number().nullish(),
   "size": zod.string().optional(),
   "industry": zod.string().optional(),
-  "members": zod.array(zod.object({
-  "id": zod.string(),
-  "userId": zod.string(),
-  "companyId": zod.string(),
-  "role": zod.enum(['ADMIN', 'HIRING_MANAGER', 'STAFF']),
-  "joinedAt": zod.string().datetime({}),
-  "status": zod.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED']),
-  "deactivationReason": zod.string().nullish(),
-  "deactivatedAt": zod.string().datetime({}).nullish(),
-  "firstName": zod.string().optional(),
-  "lastName": zod.string().optional(),
-  "email": zod.string().optional(),
-  "createdAt": zod.string().datetime({}),
-  "updatedAt": zod.string().datetime({})
-})).optional(),
   "createdAt": zod.string().datetime({}),
   "updatedAt": zod.string().datetime({})
 }).optional()

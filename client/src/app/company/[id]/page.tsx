@@ -3,7 +3,7 @@ import { fetchServer } from "@/shared/lib/ssr-fetch";
 import { Company, Job } from "@/shared/api/generated/model";
 import Link from "next/link";
 import { CompanyProfilePreview } from "@/features/companies/components/CompanyProfilePreview";
-import { FloatingBackButton } from "@/shared/components/ui";
+import { FloatingBackButton } from "@/shared/components/ui/FloatingBackButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;

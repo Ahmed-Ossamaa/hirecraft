@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '@/features/users/users.service';
 import { CompaniesService } from '@/features/companies/companies.service';
+import { CompanyMembersService } from '@/features/company-members/company-members.service';
 import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from '@/features/billing/services/subscriptions.service';
 import { PlansService } from '@/features/plans/services/plans.service';
@@ -9,25 +10,45 @@ import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
 import { AdminJobsQueryDto } from '../dto/admin-jobs-query.dto';
 import { AdminBillingQueryDto } from '../dto/admin-billing-query.dto';
 import { User } from '@/features/users/domain/user.entity';
+import { UserType } from '@/features/users/domain/user-type.enum';
 import { Company } from '@/features/companies/domain/company.entity';
 import { Job } from '@/features/jobs/domain/job.entity';
 import { JobStatus } from '@/features/jobs/domain/job-status.enum';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { Subscription } from '@/features/billing/domain/subscription.entity';
+import { CompanyMember } from '@/features/company-members/domain/company-member.entity';
+import { CompanyMemberBasicInfo } from '@/features/company-members/domain/company-member.repo.interface';
+import { GetCompanyMembersDto } from '@/features/company-members/dto/get-company-members.dto';
+import { WorkerProfilesService } from '@/features/worker-profiles/worker-profiles.service';
+
+export type AdminUserData = User & {
+  companyName?: string | null;
+  companyRole?: string | null;
+  companyId?: string | null;
+  workerProfileId?: string | null;
+};
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly usersService: UsersService,
     private readonly companiesService: CompaniesService,
+    private readonly companyMembersService: CompanyMembersService,
+    private readonly workerProfilesService: WorkerProfilesService,
     private readonly jobsService: JobsService,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly plansService: PlansService,
   ) {}
 
-  // User Management
-  async getUsers(query: AdminUsersQueryDto): Promise<PaginatedResult<User>> {
-    return this.usersService.findAllUsers({
+  // ----- User Management -----
+
+  /**
+   * Retrieves paginated users enriched with company details (employers) or profile IDs (candidates).
+   */
+  async getUsers(
+    query: AdminUsersQueryDto,
+  ): Promise<PaginatedResult<AdminUserData>> {
+    const paginated = await this.usersService.findAllUsers({
       page: query.page,
       limit: query.limit,
       order: query.order,
@@ -36,37 +57,182 @@ export class AdminService {
       isBanned: query.isBanned,
       isEmailVerified: query.isEmailVerified,
     });
+
+    const employerIds = paginated.data
+      .filter((u) => u.userType === UserType.EMPLOYER)
+      .map((u) => u.id);
+
+    const candidateIds = paginated.data
+      .filter((u) => u.userType === UserType.CANDIDATE)
+      .map((u) => u.id);
+
+    const [companyDetailsMap, workerProfileMap] = await Promise.all([
+      employerIds.length > 0
+        ? this.companyMembersService.findCompanyDetailsByUserIds(employerIds)
+        : Promise.resolve(new Map<string, CompanyMemberBasicInfo>()),
+      candidateIds.length > 0
+        ? this.workerProfilesService.findProfileIdsByUserIds(candidateIds)
+        : Promise.resolve(new Map<string, string>()),
+    ]);
+
+    const data: AdminUserData[] = paginated.data.map((u) => {
+      const companyInfo = companyDetailsMap.get(u.id);
+      const workerProfileId = workerProfileMap.get(u.id) ?? null;
+
+      return Object.assign(u, {
+        companyName: companyInfo?.companyName ?? null,
+        companyRole: companyInfo?.role ?? null,
+        companyId: companyInfo?.companyId ?? null,
+        workerProfileId,
+      });
+    });
+
+    return {
+      ...paginated,
+      data,
+    };
   }
 
-  async getUserById(userId: string): Promise<User> {
+  /**
+   * Retrieves a single user by ID with associated employer or candidate metadata.
+   */
+  async getUserById(userId: string): Promise<AdminUserData> {
     const user = await this.usersService.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
-    return user;
+
+    let companyName: string | null = null;
+    let companyRole: string | null = null;
+    let companyId: string | null = null;
+    let workerProfileId: string | null = null;
+
+    if (user.userType === UserType.EMPLOYER) {
+      const companyMap =
+        await this.companyMembersService.findCompanyDetailsByUserIds([user.id]);
+      const info = companyMap.get(user.id);
+      companyName = info?.companyName ?? null;
+      companyRole = info?.role ?? null;
+      companyId = info?.companyId ?? null;
+    } else if (user.userType === UserType.CANDIDATE) {
+      const profileMap =
+        await this.workerProfilesService.findProfileIdsByUserIds([user.id]);
+      workerProfileId = profileMap.get(user.id) ?? null;
+    }
+
+    return Object.assign(user, {
+      companyName,
+      companyRole,
+      companyId,
+      workerProfileId,
+    });
   }
 
+  /**
+   * Ban or Unban a user.
+   */
+  /**
+   * Updates the ban status of a user.
+   */
   async updateUserBanStatus(userId: string, isBanned: boolean): Promise<void> {
     await this.usersService.banUser(userId, isBanned);
   }
 
-  // Company Management
+  // ----- Company Management -----
+
+  /**
+   * Retrieves paginated companies enriched with active member and published job counts.
+   */
   async getCompanies(
     query: AdminCompaniesQueryDto,
-  ): Promise<PaginatedResult<Company>> {
-    return this.companiesService.findAllCompanies({
+  ): Promise<
+    PaginatedResult<
+      Company & {
+        memberCount?: number;
+        jobCount?: number;
+        subscriptionPlan?: string | null;
+      }
+    >
+  > {
+    const paginated = await this.companiesService.findAllCompanies({
       page: query.page,
       limit: query.limit,
       order: query.order,
       search: query.search,
+      industry: query.industry,
+      country: query.country,
+      city: query.city,
     });
+
+    const companyIds = paginated.data.map((c) => c.id);
+    if (companyIds.length === 0) {
+      return paginated;
+    }
+
+    const [memberMap, jobMap, planMap] = await Promise.all([
+      this.companyMembersService.countActiveMembersByCompanyIds(companyIds),
+      this.jobsService.countJobsByCompanyIds(companyIds, JobStatus.PUBLISHED),
+      this.subscriptionsService.getActivePlansByCompanyIds(companyIds),
+    ]);
+
+    const data = paginated.data.map((c) =>
+      Object.assign(c, {
+        memberCount: memberMap.get(c.id) ?? 0,
+        jobCount: jobMap.get(c.id) ?? 0,
+        subscriptionPlan: planMap.get(c.id) ?? null,
+      }),
+    );
+
+    return {
+      ...paginated,
+      data,
+    };
   }
 
-  async getCompanyById(companyId: string): Promise<Company> {
-    return this.companiesService.getCompanyById(companyId);
+  /**
+   * Retrieves a company by ID with its active member and job counts.
+   */
+  async getCompanyById(
+    companyId: string,
+  ): Promise<{
+    company: Company & { subscriptionPlan?: string | null };
+    memberCount: number;
+    jobCount: number;
+  }> {
+    const company = await this.companiesService.getCompanyById(companyId);
+    const [memberCount, jobMap, planMap] = await Promise.all([
+      this.companyMembersService.countActiveMembersByCompanyId(companyId),
+      this.jobsService.countJobsByCompanyIds([companyId]),
+      this.subscriptionsService.getActivePlansByCompanyIds([companyId]),
+    ]);
+    return {
+      company: Object.assign(company, {
+        subscriptionPlan: planMap.get(companyId) ?? null,
+      }),
+      memberCount,
+      jobCount: jobMap.get(companyId) ?? 0,
+    };
   }
 
-  // Job Management
+  /**
+   * Retrieves paginated members of a specific company.
+   */
+  async getCompanyMembers(
+    companyId: string,
+    query: GetCompanyMembersDto,
+  ): Promise<PaginatedResult<CompanyMember>> {
+    return this.companyMembersService.getMembers(
+      companyId,
+      query,
+      query.status,
+    );
+  }
+
+  // ----- Job Management -----
+
+  /**
+   * Retrieves paginated jobs based on administrative search and filter criteria.
+   */
   async getJobs(query: AdminJobsQueryDto): Promise<PaginatedResult<Job>> {
     return this.jobsService.findAllJobs(query, {
       search: query.search,
@@ -77,19 +243,32 @@ export class AdminService {
     });
   }
 
+  /**
+   * Retrieves a single job by ID.
+   */
   async getJobById(jobId: string): Promise<Job> {
     return this.jobsService.getJobById(jobId);
   }
 
+  /**
+   * Updates the status of a job (e.g., PUBLISHED, DRAFT, CLOSED).
+   */
   async updateJobStatus(jobId: string, status: JobStatus): Promise<Job> {
     return this.jobsService.adminUpdateJobStatus(jobId, status);
   }
 
+  /**
+   * Permanently deletes a job listing.
+   */
   async deleteJob(jobId: string): Promise<void> {
     return this.jobsService.adminDeleteJob(jobId);
   }
 
-  // Billing Management
+  // ----- Billing Management -----
+
+  /**
+   * Retrieves paginated billing subscriptions with joined company details and filters.
+   */
   async getSubscriptions(
     query: AdminBillingQueryDto,
   ): Promise<PaginatedResult<Subscription>> {
@@ -97,6 +276,7 @@ export class AdminService {
       query,
       query.status,
       query.planId,
+      query.search,
     );
   }
 }

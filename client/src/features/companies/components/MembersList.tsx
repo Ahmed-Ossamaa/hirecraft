@@ -3,12 +3,10 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import {
-  Button,
-  Pagination,
-  Tabs,
-  TableSkeleton,
-} from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { Tabs } from "@/shared/components/ui/Tabs";
+import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
 import { MdGroup, MdPersonAdd } from "react-icons/md";
 import {
   useGetMembers,

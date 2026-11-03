@@ -8,9 +8,11 @@ interface AuthState {
   organizationId: string | null;
   companyRole: string | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   setAuth: (user?: User | null, orgId?: string | null, role?: string | null) => void;
   setUser: (user: User | null) => void;
   setOrganizationId: (orgId: string | null) => void;
+  setHydrated: (isHydrated: boolean) => void;
   clearAuth: () => void;
 }
 
@@ -19,6 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   organizationId: null,
   companyRole: null,
   isAuthenticated: false,
+  isHydrated: false,
 
   setAuth: (user = null, orgId = null, role = null) => {
     setClientCookie(AUTH_COOKIES.HAS_SESSION, "true");
@@ -27,6 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       organizationId: orgId,
       companyRole: role,
       isAuthenticated: true,
+      isHydrated: true,
     });
   },
 
@@ -38,6 +42,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ organizationId: orgId });
   },
 
+  setHydrated: (isHydrated) => {
+    set({ isHydrated });
+  },
+
   clearAuth: () => {
     removeClientCookie(AUTH_COOKIES.HAS_SESSION);
     set({
@@ -45,6 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       organizationId: null,
       companyRole: null,
       isAuthenticated: false,
+      isHydrated: true,
     });
   },
 }));

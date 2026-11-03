@@ -35,6 +35,7 @@ export class UserOrmEntity {
   @Column()
   lastName!: string;
 
+  @Index('idx_users_user_type')
   @Column({ type: 'enum', enum: UserType })
   userType!: UserType;
 
@@ -59,6 +60,7 @@ export class UserOrmEntity {
   @OneToOne(() => WorkerProfileOrmEntity, (profile) => profile.user)
   workerProfile!: WorkerProfileOrmEntity;
 
+  @Index('idx_users_is_banned')
   @Column({ type: 'boolean', default: false })
   isBanned!: boolean;
 
@@ -83,6 +85,7 @@ export class UserOrmEntity {
   @Column({ type: 'timestamptz', select: false, nullable: true })
   inviteTokenExpiresAt?: Date | null;
 
+  @Index('idx_users_created_at')
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

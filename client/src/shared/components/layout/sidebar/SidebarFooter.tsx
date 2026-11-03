@@ -48,7 +48,9 @@ export function SidebarFooter({ collapsed }: SidebarFooterProps) {
     ? companyRole.replace(/_/g, " ").toLocaleLowerCase()
     : user?.userType === UserUserType.EMPLOYER
       ? "Employer"
-      : "Candidate";
+      : user?.userType === UserUserType.PLATFORM_ADMIN
+        ? "Super Admin"
+        : "Candidate";
 
   return (
     <div

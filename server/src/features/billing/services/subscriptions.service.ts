@@ -466,8 +466,14 @@ export class SubscriptionsService {
     options: PageOptionsDto,
     status?: SubscriptionStatus,
     planId?: PlanId,
+    search?: string,
   ): Promise<PaginatedResult<Subscription>> {
-    return this.subscriptionRepo.findSubscriptions(options, status, planId);
+    return this.subscriptionRepo.findSubscriptions(
+      options,
+      status,
+      planId,
+      search,
+    );
   }
 
   /**
@@ -1036,5 +1042,14 @@ export class SubscriptionsService {
       }
       periodStart = nextMonth;
     }
+  }
+
+  /**
+   * Retrieves a map of companyId -> active planId for a list of company IDs.
+   */
+  async getActivePlansByCompanyIds(
+    companyIds: string[],
+  ): Promise<Map<string, string>> {
+    return this.subscriptionRepo.findActivePlansByCompanyIds(companyIds);
   }
 }

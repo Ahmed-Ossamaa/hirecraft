@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetSubscriptionQueryKey } from "@/shared/api/generated/billing/billing";
 import { useConfirmCheckoutSession } from "@/features/billing/api/useBilling";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import {
   MdCheckCircle,
   MdArrowForward,

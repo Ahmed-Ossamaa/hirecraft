@@ -3,7 +3,7 @@
 import React from "react";
 import { CurrentSubscriptionDto } from "@/shared/api/generated/model";
 import { UsageMeter } from "./UsageMeter";
-import { Button } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
 import { useConfirm } from "@/shared/providers/confirm-provider";
 import { useCancelCompanySubscription } from "../api/useBilling";
 import {

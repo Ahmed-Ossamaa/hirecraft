@@ -5,7 +5,7 @@ import { Company } from '@/shared/api/generated/model';
 import { CompanyProfileForm } from '@/features/companies/components/CompanyProfileForm';
 import { CompanyProfilePreview } from '@/features/companies/components/CompanyProfilePreview';
 import { MdEdit, MdClose, MdVisibility, MdSettings } from 'react-icons/md';
-import { Button } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui/Button';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

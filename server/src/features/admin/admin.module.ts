@@ -9,6 +9,8 @@ import { CompaniesModule } from '@/features/companies/companies.module';
 import { JobsModule } from '@/features/jobs/jobs.module';
 import { BillingModule } from '@/features/billing/billing.module';
 import { PlansModule } from '@/features/plans/plans.module';
+import { CompanyMembersModule } from '@/features/company-members/company-members.module';
+import { WorkerProfilesModule } from '@/features/worker-profiles/worker-profiles.module';
 import { AdminService } from './services/admin.service';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
 import { AdminUsersController } from './controllers/admin-users.controller';
@@ -30,6 +32,8 @@ import { AdminAnalyticsController } from './controllers/admin-analytics.controll
     JobsModule,
     BillingModule,
     PlansModule,
+    CompanyMembersModule,
+    WorkerProfilesModule,
   ],
   controllers: [
     AdminUsersController,

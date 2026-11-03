@@ -1,26 +1,20 @@
 import React from "react";
 import Link from "next/link";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui";
-import { MdPeopleOutline } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
+import { Button } from "@/shared/components/ui/Button";
+import { JobStatusBadge } from "@/shared/components/ui/JobStatusBadge";
+import { MdOpenInNew, MdPeopleOutline } from "react-icons/md";
+import {
+  formatTimeAgo,
+  formatDateTimeTooltip,
+  getIsoString,
+} from "@/shared/utils/date-utils";
 import { JobActionMenu } from "./JobActionMenu";
 
 interface EmployerJobTableRowProps {
   job: JobWithStatsDto;
   onSelect: (job: JobWithStatsDto) => void;
 }
-
-const getStatusBadgeStyle = (status?: string) => {
-  switch (status) {
-    case "PUBLISHED":
-      return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-    case "DRAFT":
-      return "bg-muted text-muted-foreground border-border/60";
-    default:
-      return "bg-slate-500/10 text-slate-500 border-slate-500/20";
-  }
-};
 
 export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
   job,
@@ -29,12 +23,14 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
   return (
     <tr className="hover:bg-row-hover transition-colors group">
       {/* Job Title & Machine */}
-      <td className="px-5 py-3.5 align-middle">
+      <td className="px-5 py-3.5 align-middle ">
         <button
           onClick={() => onSelect(job)}
-          className="font-medium text-foreground hover:text-primary transition-colors text-[15px] text-left cursor-pointer"
+          className="font-medium text-foreground hover:text-primary transition-colors text-[15px] text-left inline-flex items-center gap-1 group max-w-60 sm:max-w-70 cursor-pointer"
+          title={job.title}
         >
-          {job.title}
+          <span className="truncate">{job.title}</span>
+          <MdOpenInNew className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </button>
         <div className="text-muted-foreground text-xs mt-0.5">
           {job.machineNameEn || "General Machine"}
@@ -44,11 +40,11 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
       {/* Status Badge */}
       <td className="px-5 py-3.5 align-middle">
         <span
-          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border tracking-wide ${getStatusBadgeStyle(
-            job.status,
-          )}`}
+          className="cursor-help"
+          title={`First publish: ${job.publishedAt ? formatDateTimeTooltip(job.publishedAt) : "Not published"}`}
+          suppressHydrationWarning
         >
-          {job.status}
+          <JobStatusBadge status={job.status} />
         </span>
       </td>
 
@@ -71,11 +67,15 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
       </td>
 
       {/* Posted Date */}
-      <td
-        className="px-5 py-3.5 align-middle text-muted-foreground text-sm whitespace-nowrap"
-        title={new Date(job.createdAt).toLocaleString()}
-      >
-        {formatTimeAgo(job.createdAt)}
+      <td className="px-5 py-3.5 align-middle text-muted-foreground text-sm whitespace-nowrap">
+        <time
+          dateTime={getIsoString(job.createdAt)}
+          className="cursor-help"
+          title={formatDateTimeTooltip(job.createdAt)}
+          suppressHydrationWarning
+        >
+          {formatTimeAgo(job.createdAt)}
+        </time>
       </td>
 
       {/* Actions */}

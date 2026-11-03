@@ -162,4 +162,13 @@ export class WorkerProfilesService {
     if (!profileId) throw new NotFoundException('Worker profile not found.');
     return profileId;
   }
+
+  async findProfileIdsByUserIds(
+    userIds: string[],
+  ): Promise<Map<string, string>> {
+    if (!userIds || userIds.length === 0) {
+      return new Map();
+    }
+    return this.profileRepository.findProfileIdsByUserIds(userIds);
+  }
 }

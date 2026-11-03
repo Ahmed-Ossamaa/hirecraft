@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import { useGetMyApplications } from "@/shared/api/generated/job-applications/job-applications";
 import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
-import { Button, Pagination, EmptyState } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui/Button";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/utils/date-utils";

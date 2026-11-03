@@ -17,7 +17,9 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/role.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { UserType } from '@/features/users/domain/user-type.enum';
-import { CompanyResponseDto } from '@/features/companies/dto/company-response.dto';
+import { AdminCompanyResponseDto } from '../dto/admin-company-response.dto';
+import { CompanyMemberResponseDto } from '@/features/company-members/dto/company-member-response.dto';
+import { GetCompanyMembersDto } from '@/features/company-members/dto/get-company-members.dto';
 import { AdminService } from '../services/admin.service';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
@@ -34,7 +36,7 @@ export class AdminCompaniesController {
   @ApiOperation({
     summary: 'Get paginated list of companies with filters (Admin only)',
   })
-  @ApiPaginatedResponse(CompanyResponseDto)
+  @ApiPaginatedResponse(AdminCompanyResponseDto)
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
@@ -44,7 +46,11 @@ export class AdminCompaniesController {
     return {
       ...result,
       data: result.data.map((company) =>
-        CompanyResponseDto.fromDomain(company),
+        AdminCompanyResponseDto.fromDomain(company, {
+          memberCount: company.memberCount,
+          jobCount: company.jobCount,
+          subscriptionPlan: company.subscriptionPlan,
+        }),
       ),
     };
   }
@@ -53,7 +59,7 @@ export class AdminCompaniesController {
   @ApiOperation({
     summary: 'Get details of a specific company by ID (Admin only)',
   })
-  @ApiStandardResponse(CompanyResponseDto)
+  @ApiStandardResponse(AdminCompanyResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Returns company details.',
@@ -64,7 +70,33 @@ export class AdminCompaniesController {
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
   async adminGetCompanyById(@Param('id', ParseUUIDPipe) id: string) {
-    const company = await this.adminService.getCompanyById(id);
-    return CompanyResponseDto.fromDomain(company);
+    const { company, memberCount, jobCount } =
+      await this.adminService.getCompanyById(id);
+    return AdminCompanyResponseDto.fromDomain(company, {
+      memberCount,
+      jobCount,
+      subscriptionPlan: company.subscriptionPlan,
+    });
+  }
+
+  @Get(':id/members')
+  @ApiOperation({
+    summary: 'Get paginated list of members for a company (Admin only)',
+  })
+  @ApiPaginatedResponse(CompanyMemberResponseDto)
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. Requires PLATFORM_ADMIN role.',
+  })
+  @ApiResponse({ status: 404, description: 'Company not found.' })
+  async getCompanyMembers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GetCompanyMembersDto,
+  ) {
+    const result = await this.adminService.getCompanyMembers(id, query);
+    return {
+      ...result,
+      data: result.data.map((m) => CompanyMemberResponseDto.fromDomain(m)),
+    };
   }
 }

@@ -14,6 +14,12 @@ export type CreateCompanyMemberParams = {
   status?: CompanyMemberStatus;
 };
 
+export interface CompanyMemberBasicInfo {
+  companyId: string;
+  companyName: string;
+  role: string;
+}
+
 export interface ICompanyMemberRepository {
   create(
     params: CreateCompanyMemberParams,
@@ -56,6 +62,16 @@ export interface ICompanyMemberRepository {
 
   acceptInvite(userId: string, tx?: EntityManager): Promise<boolean>;
 
+  findCompanyNamesByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, string>>;
+
+  findCompanyDetailsByUserIds(
+    userIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, CompanyMemberBasicInfo>>;
+
   countActiveAdminsInCompany(
     companyId: string,
     tx?: EntityManager,
@@ -64,6 +80,10 @@ export interface ICompanyMemberRepository {
     companyId: string,
     tx?: EntityManager,
   ): Promise<number>;
+  countActiveMembersByCompanyIds(
+    companyIds: string[],
+    tx?: EntityManager,
+  ): Promise<Map<string, number>>;
   countReservedMembersByCompanyId(
     companyId: string,
     tx?: EntityManager,

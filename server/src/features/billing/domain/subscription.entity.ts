@@ -8,6 +8,10 @@ export class Subscription {
   companyId!: string;
   provider!: string;
 
+  // Joined fields
+  companyName?: string | null;
+  companyLogo?: string | null;
+
   @Exclude()
   @ApiHideProperty()
   providerSubId?: string | null;
