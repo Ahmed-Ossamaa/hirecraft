@@ -21,7 +21,10 @@ export async function POST() {
         },
       });
     } catch (err) {
-      console.error('Error notifying backend during logout:', err);
+      console.error(
+        '[BFF Logout] Failed to notify backend',
+        err instanceof Error ? err.name : 'Unknown error',
+      );
     }
   }
 

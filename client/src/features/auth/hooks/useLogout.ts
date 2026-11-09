@@ -37,8 +37,7 @@ export function useLogout(options?: UseLogoutOptions) {
       router.refresh();
 
       toast.success("Logged out successfully", { duration: 500 });
-    } catch (error) {
-      console.error("Logout failed:", error);
+    } catch {
       clearAuth();
       queryClient.clear();
       router.push(options?.redirectTo ?? "/");

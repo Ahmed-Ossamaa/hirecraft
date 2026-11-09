@@ -31,7 +31,10 @@ export default async function PricingPage() {
       plans = json.data;
     }
   } catch (error) {
-    console.error("Failed to fetch plans for public pricing page:", error);
+    console.error(
+      "[Pricing Page] Failed to fetch plans",
+      error instanceof Error ? error.name : "Unknown error",
+    );
   }
 
   return (

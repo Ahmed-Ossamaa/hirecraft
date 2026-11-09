@@ -67,7 +67,6 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
       reset();
       onClose();
     } catch (error) {
-      console.error('Failed to add skill:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to add skill') });
     }
   };
@@ -93,7 +92,7 @@ export const AddSkillModal: React.FC<AddSkillModalProps> = ({ isOpen, onClose })
                   { value: '', label: 'Select a machine...' },
                   ...machines.map(m => ({
                     value: m.id,
-                    label: m.nameEn || m.id, // Fallback if nameEn is missing
+                    label: m.nameEn || m.nameAr,
                   }))
                 ]
           }

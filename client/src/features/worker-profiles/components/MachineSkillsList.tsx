@@ -28,7 +28,6 @@ export const MachineSkillsList: React.FC<MachineSkillsListProps> = ({ skills = [
       await deleteSkillMutation.mutateAsync({ skillId });
       toast.success("Skill removed successfully");
     } catch (error) {
-      console.error('Failed to delete skill:', error);
       toast.error(getApiError(error, 'Failed to delete skill. Please try again.'));
     }
   };

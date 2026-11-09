@@ -62,7 +62,10 @@ export async function POST() {
 
     return nextResponse;
   } catch (error) {
-    console.error('BFF Refresh Error:', error);
+    console.error(
+      '[BFF Refresh] Request failed',
+      error instanceof Error ? error.name : 'Unknown error',
+    );
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -51,7 +51,6 @@ export const AvatarUpload: React.FC = () => {
         setAuth(res.data.data as any, organizationId, companyRole);
       }
     } catch (error) {
-      console.error("Failed to upload avatar:", error);
       toast.error(getApiError(error, "Failed to upload avatar"));
     }
   };
@@ -66,7 +65,6 @@ export const AvatarUpload: React.FC = () => {
         setAuth(res.data.data as any, organizationId, companyRole);
       }
     } catch (error) {
-      console.error("Failed to remove avatar:", error);
       toast.error(getApiError(error, "Failed to remove avatar"));
     }
   };

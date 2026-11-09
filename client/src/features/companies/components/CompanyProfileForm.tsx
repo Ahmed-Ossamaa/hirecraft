@@ -98,7 +98,6 @@ export const CompanyProfileForm: React.FC<CompanyProfileProps> = ({ initialData,
         onSuccess();
       }
     } catch (error) {
-      console.error('Failed to update company:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to update company. Please try again.') });
     }
   };

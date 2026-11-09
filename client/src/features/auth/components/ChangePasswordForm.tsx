@@ -56,7 +56,6 @@ export const ChangePasswordForm: React.FC = () => {
       toast.success("Password changed successfully");
       reset(); // Clear the form
     } catch (error) {
-      console.error("Failed to change password:", error);
       setError("root", {
         type: "manual",
         message: getApiError(error, "Failed to change password. Please check your current password and try again."),

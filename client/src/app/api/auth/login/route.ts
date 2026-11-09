@@ -65,7 +65,10 @@ export async function POST(request: Request) {
 
     return nextResponse;
   } catch (error) {
-    console.error('BFF Login Error:', error);
+    console.error(
+      '[BFF Login] Request failed',
+      error instanceof Error ? error.name : 'Unknown error',
+    );
     return NextResponse.json(
       { message: 'Internal server error during login' },
       { status: 500 }
