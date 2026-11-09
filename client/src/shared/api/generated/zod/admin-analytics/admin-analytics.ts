@@ -9,8 +9,14 @@ import * as zod from 'zod';
 
 
 /**
- * @summary Get platform-wide overview aggregate metrics (Admin only)
+ * @summary Get platform-wide executive KPI metrics with period comparison (Admin only)
  */
+export const getOverviewStatsQueryRangeDefault = "30d";
+
+export const getOverviewStatsQueryParams = zod.object({
+  "range": zod.enum(['7d', '30d', '90d', '12m', 'all']).default(getOverviewStatsQueryRangeDefault).describe('Time range for analytics metrics')
+})
+
 export const getOverviewStatsResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
@@ -18,16 +24,32 @@ export const getOverviewStatsResponse = zod.object({
 })
 }).and(zod.object({
   "data": zod.object({
-  "totalUsers": zod.number(),
-  "totalCompanies": zod.number(),
-  "activeJobs": zod.number(),
-  "activeSubscriptions": zod.number()
+  "currentMrr": zod.number().describe('Current Monthly Recurring Revenue in platform currency'),
+  "currentArr": zod.number().describe('Current Annual Recurring Revenue in platform currency'),
+  "currency": zod.string(),
+  "activePaidSubscriptions": zod.number().describe('Total active paying subscriptions snapshot'),
+  "totalUsers": zod.number().describe('Total registered platform users snapshot'),
+  "newUsersInPeriod": zod.number().describe('New users registered in the selected period'),
+  "usersPeriodDelta": zod.number().nullable().describe('User registration growth % compared to prior equivalent period (null if prev is 0)'),
+  "activeJobs": zod.number().describe('Current active, published, non-expired jobs snapshot'),
+  "newJobsInPeriod": zod.number().describe('Job postings published in selected period'),
+  "jobsPeriodDelta": zod.number().nullable().describe('Job posting growth % compared to prior equivalent period'),
+  "totalApplicationsInPeriod": zod.number().describe('Total job applications submitted in selected period'),
+  "applicationsPeriodDelta": zod.number().nullable().describe('Application volume growth % compared to prior equivalent period'),
+  "placementsInPeriod": zod.number().describe('Offers accepted (placements) in selected period'),
+  "placementsPeriodDelta": zod.number().nullable().describe('Placement growth % compared to prior equivalent period')
 }).optional()
 }))
 
 /**
- * @summary Get user growth metrics over time (Admin only)
+ * @summary Get time-series user growth metrics (Admin only)
  */
+export const getUserGrowthMetricsQueryRangeDefault = "30d";
+
+export const getUserGrowthMetricsQueryParams = zod.object({
+  "range": zod.enum(['7d', '30d', '90d', '12m', 'all']).default(getUserGrowthMetricsQueryRangeDefault).describe('Time range for analytics metrics')
+})
+
 export const getUserGrowthMetricsResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
@@ -35,16 +57,25 @@ export const getUserGrowthMetricsResponse = zod.object({
 })
 }).and(zod.object({
   "data": zod.object({
-  "status": zod.string(),
-  "message": zod.string(),
-  "data": zod.object({
-
-}).nullable()
+  "range": zod.enum(['7d', '30d', '90d', '12m', 'all']),
+  "granularity": zod.enum(['week', 'day', 'month']),
+  "points": zod.array(zod.object({
+  "date": zod.string(),
+  "candidates": zod.number(),
+  "employers": zod.number(),
+  "total": zod.number()
+})),
+  "summary": zod.object({
+  "candidatesNew": zod.number(),
+  "employersNew": zod.number(),
+  "totalNew": zod.number(),
+  "periodDelta": zod.number().nullable()
+})
 }).optional()
 }))
 
 /**
- * @summary Get revenue metrics over time (Admin only)
+ * @summary Get current MRR, ARR, and active subscription plan distribution (Admin only)
  */
 export const getRevenueMetricsResponse = zod.object({
   "message": zod.string(),
@@ -53,11 +84,71 @@ export const getRevenueMetricsResponse = zod.object({
 })
 }).and(zod.object({
   "data": zod.object({
-  "status": zod.string(),
+  "currentMrr": zod.number(),
+  "currentArr": zod.number(),
+  "currency": zod.string(),
+  "activePaidSubscriptions": zod.number(),
+  "planDistribution": zod.array(zod.object({
+  "planId": zod.string(),
+  "planName": zod.string(),
+  "subscriberCount": zod.number(),
+  "monthlyRevenueContribution": zod.number(),
+  "revenuePercentage": zod.number().describe('Percentage share of total MRR')
+}))
+}).optional()
+}))
+
+/**
+ * @summary Get recruitment application status distribution (Admin only)
+ */
+export const getRecruitmentMetricsQueryRangeDefault = "30d";
+
+export const getRecruitmentMetricsQueryParams = zod.object({
+  "range": zod.enum(['7d', '30d', '90d', '12m', 'all']).default(getRecruitmentMetricsQueryRangeDefault).describe('Time range for analytics metrics')
+})
+
+export const getRecruitmentMetricsResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({
 
-}).nullable()
+})
+}).and(zod.object({
+  "data": zod.object({
+  "range": zod.enum(['7d', '30d', '90d', '12m', 'all']),
+  "totalApplications": zod.number(),
+  "placementsCount": zod.number(),
+  "rejectedCount": zod.number(),
+  "withdrawnCount": zod.number(),
+  "statusDistribution": zod.array(zod.object({
+  "status": zod.string(),
+  "label": zod.string(),
+  "count": zod.number(),
+  "percentage": zod.number()
+}))
+}).optional()
+}))
+
+/**
+ * @summary Get top industrial machinery job demand vs skilled worker supply (Admin only)
+ */
+export const getMachineryMetricsResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "machines": zod.array(zod.object({
+  "machineId": zod.string(),
+  "nameEn": zod.string(),
+  "nameAr": zod.string(),
+  "categoryEn": zod.string(),
+  "categoryAr": zod.string(),
+  "activeJobsDemand": zod.number().describe('Active published non-expired jobs requiring this machine'),
+  "distinctWorkersSupply": zod.number().describe('Distinct worker profiles skilled on this machine'),
+  "supplyToDemandRatio": zod.number().nullable().describe('Supply \/ Demand ratio (null if demand is 0)'),
+  "marketStatus": zod.enum(['SHORTAGE', 'BALANCED', 'SURPLUS'])
+}))
 }).optional()
 }))
 

@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { AdminOverviewStatsDto } from './adminOverviewStatsDto';
+import type { AdminKpiMetricsDto } from './adminKpiMetricsDto';
 
 export type GetOverviewStats200AllOf = {
-  data?: AdminOverviewStatsDto;
+  data?: AdminKpiMetricsDto;
 };

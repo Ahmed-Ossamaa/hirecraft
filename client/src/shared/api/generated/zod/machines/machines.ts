@@ -23,8 +23,8 @@ export const getMachinesQueryParams = zod.object({
   "order": zod.enum(['ASC', 'DESC']).default(getMachinesQueryOrderDefault),
   "page": zod.number().min(1).default(getMachinesQueryPageDefault),
   "limit": zod.number().min(1).max(getMachinesQueryLimitMax).default(getMachinesQueryLimitDefault),
-  "categoryId": zod.string().optional().describe('Filter by category UUID'),
-  "q": zod.string().optional().describe('Search term')
+  "q": zod.string().optional().describe('Search term'),
+  "categoryId": zod.string().optional().describe('Filter by category UUID')
 })
 
 export const getMachinesResponse = zod.object({
@@ -46,7 +46,8 @@ export const getMachinesResponse = zod.object({
   "id": zod.string().describe('The unique UUID of the machine'),
   "nameEn": zod.string().describe('Machine name in English'),
   "nameAr": zod.string().describe('Machine name in Arabic'),
-  "categoryId": zod.string().describe('The UUID of the category this machine belongs to')
+  "categoryId": zod.string().describe('The UUID of the category this machine belongs to'),
+  "createdAt": zod.string().datetime({}).describe('The date and time the machine was created')
 })).optional()
 })).optional()
 }))

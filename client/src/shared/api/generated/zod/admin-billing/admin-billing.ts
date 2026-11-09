@@ -20,7 +20,7 @@ export const getSubscriptionsQueryLimitMax = 100;
 
 export const getSubscriptionsQueryParams = zod.object({
   "search": zod.string().optional().describe('Search by company name'),
-  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']).optional().describe('Filter by subscription status'),
+  "status": zod.enum(['ACTIVE', 'PAST_DUE', 'UNPAID', 'CANCELLED', 'EXPIRED']).optional().describe('Filter by subscription status'),
   "planId": zod.enum(['free-monthly', 'free-yearly', 'starter-monthly', 'starter-yearly', 'professional-monthly', 'professional-yearly', 'enterprise-monthly', 'enterprise-yearly']).optional().describe('Filter by plan ID'),
   "sortBy": zod.string().optional(),
   "order": zod.enum(['ASC', 'DESC']).default(getSubscriptionsQueryOrderDefault),
@@ -49,8 +49,12 @@ export const getSubscriptionsResponse = zod.object({
   "companyName": zod.string().nullish(),
   "companyLogo": zod.string().nullish(),
   "planId": zod.string(),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "billingInterval": zod.enum(['year', 'month']),
+  "providerPriceId": zod.string().nullish(),
   "provider": zod.string(),
-  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "status": zod.enum(['ACTIVE', 'PAST_DUE', 'UNPAID', 'CANCELLED', 'EXPIRED']),
   "currentPeriodStart": zod.string().datetime({}),
   "currentPeriodEnd": zod.string().datetime({}),
   "cancelAtPeriodEnd": zod.boolean(),

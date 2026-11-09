@@ -13,4 +13,6 @@ export interface MachineCategory {
   nameEn: string;
   /** Category name in Arabic */
   nameAr: string;
+  /** Timestamp when the category was created */
+  createdAt: string;
 }

@@ -5,6 +5,7 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
+import type { AdminSubscriptionResponseDtoBillingInterval } from './adminSubscriptionResponseDtoBillingInterval';
 import type { AdminSubscriptionResponseDtoStatus } from './adminSubscriptionResponseDtoStatus';
 
 export interface AdminSubscriptionResponseDto {
@@ -15,6 +16,11 @@ export interface AdminSubscriptionResponseDto {
   /** @nullable */
   companyLogo?: string | null;
   planId: string;
+  amount: number;
+  currency: string;
+  billingInterval: AdminSubscriptionResponseDtoBillingInterval;
+  /** @nullable */
+  providerPriceId?: string | null;
   provider: string;
   status: AdminSubscriptionResponseDtoStatus;
   currentPeriodStart: string;

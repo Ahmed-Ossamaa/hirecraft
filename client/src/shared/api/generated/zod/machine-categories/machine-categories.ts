@@ -44,7 +44,8 @@ export const getMachineCategoriesResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.string().describe('The unique UUID of the category'),
   "nameEn": zod.string().describe('Category name in English'),
-  "nameAr": zod.string().describe('Category name in Arabic')
+  "nameAr": zod.string().describe('Category name in Arabic'),
+  "createdAt": zod.string().datetime({}).describe('Timestamp when the category was created')
 })).optional()
 })).optional()
 }))

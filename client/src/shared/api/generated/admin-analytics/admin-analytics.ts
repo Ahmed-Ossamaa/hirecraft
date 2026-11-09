@@ -21,9 +21,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetMachineryMetrics200,
   GetOverviewStats200,
+  GetOverviewStatsParams,
+  GetRecruitmentMetrics200,
+  GetRecruitmentMetricsParams,
   GetRevenueMetrics200,
-  GetUserGrowthMetrics200
+  GetUserGrowthMetrics200,
+  GetUserGrowthMetricsParams
 } from '.././model';
 
 import { customAxiosInstance } from '../../axios-instance';
@@ -34,16 +39,17 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Get platform-wide overview aggregate metrics (Admin only)
+ * @summary Get platform-wide executive KPI metrics with period comparison (Admin only)
  */
 export const getOverviewStats = (
-    
+    params?: GetOverviewStatsParams,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
       
       
       return customAxiosInstance<GetOverviewStats200>(
-      {url: `/api/v1/admin/analytics/overview`, method: 'GET', signal
+      {url: `/api/v1/admin/analytics/overview`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -51,23 +57,23 @@ export const getOverviewStats = (
 
 
 
-export const getGetOverviewStatsQueryKey = () => {
+export const getGetOverviewStatsQueryKey = (params?: GetOverviewStatsParams,) => {
     return [
-    `/api/v1/admin/analytics/overview`
+    `/api/v1/admin/analytics/overview`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetOverviewStatsQueryOptions = <TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export const getGetOverviewStatsQueryOptions = <TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>(params?: GetOverviewStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetOverviewStatsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetOverviewStatsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOverviewStats>>> = ({ signal }) => getOverviewStats(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOverviewStats>>> = ({ signal }) => getOverviewStats(params, requestOptions, signal);
 
       
 
@@ -81,7 +87,7 @@ export type GetOverviewStatsQueryError = void
 
 
 export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>> & Pick<
+ params: undefined |  GetOverviewStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOverviewStats>>,
           TError,
@@ -91,7 +97,7 @@ export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOvervie
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>> & Pick<
+ params?: GetOverviewStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getOverviewStats>>,
           TError,
@@ -101,19 +107,19 @@ export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOvervie
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetOverviewStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get platform-wide overview aggregate metrics (Admin only)
+ * @summary Get platform-wide executive KPI metrics with period comparison (Admin only)
  */
 
 export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOverviewStats>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetOverviewStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOverviewStats>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetOverviewStatsQueryOptions(options)
+  const queryOptions = getGetOverviewStatsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -126,16 +132,17 @@ export function useGetOverviewStats<TData = Awaited<ReturnType<typeof getOvervie
 
 
 /**
- * @summary Get user growth metrics over time (Admin only)
+ * @summary Get time-series user growth metrics (Admin only)
  */
 export const getUserGrowthMetrics = (
-    
+    params?: GetUserGrowthMetricsParams,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
       
       
       return customAxiosInstance<GetUserGrowthMetrics200>(
-      {url: `/api/v1/admin/analytics/user-growth`, method: 'GET', signal
+      {url: `/api/v1/admin/analytics/user-growth`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -143,23 +150,23 @@ export const getUserGrowthMetrics = (
 
 
 
-export const getGetUserGrowthMetricsQueryKey = () => {
+export const getGetUserGrowthMetricsQueryKey = (params?: GetUserGrowthMetricsParams,) => {
     return [
-    `/api/v1/admin/analytics/user-growth`
+    `/api/v1/admin/analytics/user-growth`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetUserGrowthMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export const getGetUserGrowthMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>(params?: GetUserGrowthMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetUserGrowthMetricsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetUserGrowthMetricsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserGrowthMetrics>>> = ({ signal }) => getUserGrowthMetrics(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserGrowthMetrics>>> = ({ signal }) => getUserGrowthMetrics(params, requestOptions, signal);
 
       
 
@@ -173,7 +180,7 @@ export type GetUserGrowthMetricsQueryError = void
 
 
 export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>> & Pick<
+ params: undefined |  GetUserGrowthMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserGrowthMetrics>>,
           TError,
@@ -183,7 +190,7 @@ export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUse
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>> & Pick<
+ params?: GetUserGrowthMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUserGrowthMetrics>>,
           TError,
@@ -193,19 +200,19 @@ export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUse
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetUserGrowthMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get user growth metrics over time (Admin only)
+ * @summary Get time-series user growth metrics (Admin only)
  */
 
 export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetUserGrowthMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserGrowthMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetUserGrowthMetricsQueryOptions(options)
+  const queryOptions = getGetUserGrowthMetricsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -218,7 +225,7 @@ export function useGetUserGrowthMetrics<TData = Awaited<ReturnType<typeof getUse
 
 
 /**
- * @summary Get revenue metrics over time (Admin only)
+ * @summary Get current MRR, ARR, and active subscription plan distribution (Admin only)
  */
 export const getRevenueMetrics = (
     
@@ -289,7 +296,7 @@ export function useGetRevenueMetrics<TData = Awaited<ReturnType<typeof getRevenu
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get revenue metrics over time (Admin only)
+ * @summary Get current MRR, ARR, and active subscription plan distribution (Admin only)
  */
 
 export function useGetRevenueMetrics<TData = Awaited<ReturnType<typeof getRevenueMetrics>>, TError = void>(
@@ -298,6 +305,191 @@ export function useGetRevenueMetrics<TData = Awaited<ReturnType<typeof getRevenu
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetRevenueMetricsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Get recruitment application status distribution (Admin only)
+ */
+export const getRecruitmentMetrics = (
+    params?: GetRecruitmentMetricsParams,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<GetRecruitmentMetrics200>(
+      {url: `/api/v1/admin/analytics/recruitment`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetRecruitmentMetricsQueryKey = (params?: GetRecruitmentMetricsParams,) => {
+    return [
+    `/api/v1/admin/analytics/recruitment`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getGetRecruitmentMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError = void>(params?: GetRecruitmentMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRecruitmentMetricsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentMetrics>>> = ({ signal }) => getRecruitmentMetrics(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRecruitmentMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentMetrics>>>
+export type GetRecruitmentMetricsQueryError = void
+
+
+export function useGetRecruitmentMetrics<TData = Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError = void>(
+ params: undefined |  GetRecruitmentMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentMetrics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRecruitmentMetrics<TData = Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError = void>(
+ params?: GetRecruitmentMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentMetrics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRecruitmentMetrics<TData = Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError = void>(
+ params?: GetRecruitmentMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get recruitment application status distribution (Admin only)
+ */
+
+export function useGetRecruitmentMetrics<TData = Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError = void>(
+ params?: GetRecruitmentMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetRecruitmentMetricsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Get top industrial machinery job demand vs skilled worker supply (Admin only)
+ */
+export const getMachineryMetrics = (
+    
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxiosInstance<GetMachineryMetrics200>(
+      {url: `/api/v1/admin/analytics/machinery`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGetMachineryMetricsQueryKey = () => {
+    return [
+    `/api/v1/admin/analytics/machinery`
+    ] as const;
+    }
+
+    
+export const getGetMachineryMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMachineryMetricsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMachineryMetrics>>> = ({ signal }) => getMachineryMetrics(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMachineryMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof getMachineryMetrics>>>
+export type GetMachineryMetricsQueryError = void
+
+
+export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMachineryMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getMachineryMetrics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMachineryMetrics>>,
+          TError,
+          Awaited<ReturnType<typeof getMachineryMetrics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get top industrial machinery job demand vs skilled worker supply (Admin only)
+ */
+
+export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMachineryMetricsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

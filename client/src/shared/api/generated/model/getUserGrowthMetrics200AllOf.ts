@@ -5,8 +5,8 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import type { DeferredAnalyticsResponseDto } from './deferredAnalyticsResponseDto';
+import type { AdminUserGrowthResponseDto } from './adminUserGrowthResponseDto';
 
 export type GetUserGrowthMetrics200AllOf = {
-  data?: DeferredAnalyticsResponseDto;
+  data?: AdminUserGrowthResponseDto;
 };

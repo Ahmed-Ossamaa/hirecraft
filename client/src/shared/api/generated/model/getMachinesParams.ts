@@ -20,11 +20,11 @@ page?: number;
  */
 limit?: number;
 /**
- * Filter by category UUID
- */
-categoryId?: string;
-/**
  * Search term
  */
 q?: string;
+/**
+ * Filter by category UUID
+ */
+categoryId?: string;
 };

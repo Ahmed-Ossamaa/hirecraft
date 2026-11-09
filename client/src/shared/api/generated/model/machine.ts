@@ -15,4 +15,6 @@ export interface Machine {
   nameAr: string;
   /** The UUID of the category this machine belongs to */
   categoryId: string;
+  /** The date and time the machine was created */
+  createdAt: string;
 }
