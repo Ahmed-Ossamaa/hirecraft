@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -12,8 +12,12 @@ import { UserType } from '@/features/users/domain/user-type.enum';
 import { AdminAnalyticsService } from '../services/admin-analytics.service';
 import { ApiStandardResponse } from '@/common/swagger/api-standard-response.decorator';
 import {
-  AdminOverviewStatsDto,
-  DeferredAnalyticsResponseDto,
+  AdminAnalyticsRangeQueryDto,
+  AdminKpiMetricsDto,
+  AdminUserGrowthResponseDto,
+  AdminRevenueAnalyticsResponseDto,
+  AdminRecruitmentAnalyticsResponseDto,
+  AdminMachineryAnalyticsResponseDto,
 } from '../dto/admin-analytics.dto';
 
 @ApiTags('Admin Analytics')
@@ -26,53 +30,92 @@ export class AdminAnalyticsController {
 
   @Get('overview')
   @ApiOperation({
-    summary: 'Get platform-wide overview aggregate metrics (Admin only)',
+    summary:
+      'Get platform-wide executive KPI metrics with period comparison (Admin only)',
   })
-  @ApiStandardResponse(AdminOverviewStatsDto)
+  @ApiStandardResponse(AdminKpiMetricsDto)
   @ApiResponse({
     status: 200,
     description:
-      'Returns total users, total companies, active jobs, and active subscriptions.',
+      'Returns MRR, ARR, active jobs, users, applications, and period deltas.',
   })
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getOverviewStats() {
-    return this.analyticsService.getOverviewStats();
+  async getOverviewStats(@Query() query: AdminAnalyticsRangeQueryDto) {
+    return this.analyticsService.getOverviewStats(query.range);
   }
 
   @Get('user-growth')
   @ApiOperation({
-    summary: 'Get user growth metrics over time (Admin only)',
+    summary: 'Get time-series user growth metrics (Admin only)',
   })
-  @ApiStandardResponse(DeferredAnalyticsResponseDto)
+  @ApiStandardResponse(AdminUserGrowthResponseDto)
   @ApiResponse({
     status: 200,
-    description: 'Returns user growth time-series data.',
+    description:
+      'Returns time-bucketed user signups by role (Candidates vs Employers).',
   })
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  getUserGrowthMetrics() {
-    return this.analyticsService.getUserGrowthMetrics();
+  async getUserGrowthMetrics(@Query() query: AdminAnalyticsRangeQueryDto) {
+    return this.analyticsService.getUserGrowthMetrics(query.range);
   }
 
   @Get('revenue')
   @ApiOperation({
-    summary: 'Get revenue metrics over time (Admin only)',
+    summary:
+      'Get current MRR, ARR, and active subscription plan distribution (Admin only)',
   })
-  @ApiStandardResponse(DeferredAnalyticsResponseDto)
+  @ApiStandardResponse(AdminRevenueAnalyticsResponseDto)
   @ApiResponse({
     status: 200,
-    description: 'Returns revenue time-series data.',
+    description:
+      'Returns current MRR/ARR in EGP and breakdown of subscribers by plan tier.',
   })
   @ApiResponse({
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  getRevenueMetrics() {
+  async getRevenueMetrics() {
     return this.analyticsService.getRevenueMetrics();
+  }
+
+  @Get('recruitment')
+  @ApiOperation({
+    summary: 'Get recruitment application status distribution (Admin only)',
+  })
+  @ApiStandardResponse(AdminRecruitmentAnalyticsResponseDto)
+  @ApiResponse({
+    status: 200,
+    description: 'Returns counts and percentages across application statuses.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. Requires PLATFORM_ADMIN role.',
+  })
+  async getRecruitmentMetrics(@Query() query: AdminAnalyticsRangeQueryDto) {
+    return this.analyticsService.getRecruitmentMetrics(query.range);
+  }
+
+  @Get('machinery')
+  @ApiOperation({
+    summary:
+      'Get top industrial machinery job demand vs skilled worker supply (Admin only)',
+  })
+  @ApiStandardResponse(AdminMachineryAnalyticsResponseDto)
+  @ApiResponse({
+    status: 200,
+    description: 'Returns top machines by demand and distinct worker counts.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. Requires PLATFORM_ADMIN role.',
+  })
+  async getMachineryMetrics() {
+    return this.analyticsService.getMachineryMetrics();
   }
 }
