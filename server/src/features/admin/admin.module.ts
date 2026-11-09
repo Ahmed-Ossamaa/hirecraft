@@ -12,6 +12,8 @@ import { PlansModule } from '@/features/plans/plans.module';
 import { CompanyMembersModule } from '@/features/company-members/company-members.module';
 import { WorkerProfilesModule } from '@/features/worker-profiles/worker-profiles.module';
 import { AnalyticsModule } from '@/features/analytics/analytics.module';
+import { MachinesModule } from '@/features/machines/machines.module';
+import { MachineCategoriesModule } from '@/features/machine-categories/machine-categories.module';
 import { AdminService } from './services/admin.service';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
 import { AdminUsersController } from './controllers/admin-users.controller';
@@ -19,6 +21,8 @@ import { AdminCompaniesController } from './controllers/admin-companies.controll
 import { AdminJobsController } from './controllers/admin-jobs.controller';
 import { AdminBillingController } from './controllers/admin-billing.controller';
 import { AdminAnalyticsController } from './controllers/admin-analytics.controller';
+import { AdminMachinesController } from './controllers/admin-machines.controller';
+import { AdminMachineCategoriesController } from './controllers/admin-machine-categories.controller';
 
 @Module({
   imports: [
@@ -36,6 +40,8 @@ import { AdminAnalyticsController } from './controllers/admin-analytics.controll
     CompanyMembersModule,
     WorkerProfilesModule,
     AnalyticsModule,
+    MachinesModule,
+    MachineCategoriesModule,
   ],
   controllers: [
     AdminUsersController,
@@ -43,6 +49,8 @@ import { AdminAnalyticsController } from './controllers/admin-analytics.controll
     AdminJobsController,
     AdminBillingController,
     AdminAnalyticsController,
+    AdminMachinesController,
+    AdminMachineCategoriesController,
   ],
   providers: [AdminService, AdminAnalyticsService],
   exports: [AdminService, AdminAnalyticsService],

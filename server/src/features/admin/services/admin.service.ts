@@ -4,7 +4,6 @@ import { CompaniesService } from '@/features/companies/companies.service';
 import { CompanyMembersService } from '@/features/company-members/company-members.service';
 import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from '@/features/billing/services/subscriptions.service';
-import { PlansService } from '@/features/plans/services/plans.service';
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
 import { AdminJobsQueryDto } from '../dto/admin-jobs-query.dto';
@@ -20,6 +19,14 @@ import { CompanyMember } from '@/features/company-members/domain/company-member.
 import { CompanyMemberBasicInfo } from '@/features/company-members/domain/company-member.repo.interface';
 import { GetCompanyMembersDto } from '@/features/company-members/dto/get-company-members.dto';
 import { WorkerProfilesService } from '@/features/worker-profiles/worker-profiles.service';
+import { MachinesService } from '@/features/machines/machines.service';
+import { MachineCategoriesService } from '@/features/machine-categories/machine-categories.service';
+import { CreateMachineDto } from '@/features/machines/dto/create-machine.dto';
+import { UpdateMachineDto } from '@/features/machines/dto/update-machine.dto';
+import { CreateMachineCategoryDto } from '@/features/machine-categories/dto/create-machine-category.dto';
+import { UpdateMachineCategoryDto } from '@/features/machine-categories/dto/update-machine-category.dto';
+import { Machine } from '@/features/machines/domain/machine.entity';
+import { MachineCategory } from '@/features/machine-categories/domain/machine-category.entity';
 
 export type AdminUserData = User & {
   companyName?: string | null;
@@ -37,7 +44,9 @@ export class AdminService {
     private readonly workerProfilesService: WorkerProfilesService,
     private readonly jobsService: JobsService,
     private readonly subscriptionsService: SubscriptionsService,
-    private readonly plansService: PlansService,
+    private readonly machinesService: MachinesService,
+    private readonly machineCategoriesService: MachineCategoriesService,
+    // private readonly plansService: PlansService,
   ) {}
 
   // ----- User Management -----
@@ -143,9 +152,7 @@ export class AdminService {
   /**
    * Retrieves paginated companies enriched with active member and published job counts.
    */
-  async getCompanies(
-    query: AdminCompaniesQueryDto,
-  ): Promise<
+  async getCompanies(query: AdminCompaniesQueryDto): Promise<
     PaginatedResult<
       Company & {
         memberCount?: number;
@@ -192,9 +199,7 @@ export class AdminService {
   /**
    * Retrieves a company by ID with its active member and job counts.
    */
-  async getCompanyById(
-    companyId: string,
-  ): Promise<{
+  async getCompanyById(companyId: string): Promise<{
     company: Company & { subscriptionPlan?: string | null };
     memberCount: number;
     jobCount: number;
@@ -278,5 +283,36 @@ export class AdminService {
       query.planId,
       query.search,
     );
+  }
+
+  // ----- Machine Catalog Management -----
+
+  async createMachine(dto: CreateMachineDto): Promise<Machine> {
+    return this.machinesService.create(dto);
+  }
+
+  async updateMachine(id: string, dto: UpdateMachineDto): Promise<void> {
+    return this.machinesService.update(id, dto);
+  }
+
+  async deleteMachine(id: string): Promise<void> {
+    return this.machinesService.delete(id);
+  }
+
+  async createMachineCategory(
+    dto: CreateMachineCategoryDto,
+  ): Promise<MachineCategory> {
+    return this.machineCategoriesService.create(dto);
+  }
+
+  async updateMachineCategory(
+    id: string,
+    dto: UpdateMachineCategoryDto,
+  ): Promise<void> {
+    return this.machineCategoriesService.update(id, dto);
+  }
+
+  async deleteMachineCategory(id: string): Promise<void> {
+    return this.machineCategoriesService.delete(id);
   }
 }

@@ -14,4 +14,7 @@ export class Machine {
     description: 'The UUID of the category this machine belongs to',
   })
   categoryId!: string;
+
+  @ApiProperty({ description: 'The date and time the machine was created' })
+  createdAt!: Date;
 }

@@ -1,9 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { MachinesService } from './machines.service';
-import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { Machine } from './domain/machine.entity';
 import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
+import { MachineQueryDto } from './dto/machine-query.dto';
 
 @ApiTags('Machines')
 @Controller('machines')
@@ -28,15 +28,11 @@ export class MachinesController {
     description: 'Search term',
   })
   @ApiPaginatedResponse(Machine)
-  async getMachines(
-    @Query() pageOptionsDto: PageOptionsDto,
-    @Query('categoryId') categoryId?: string,
-    @Query('q') searchQuery?: string,
-  ) {
+  async getMachines(@Query() pageOptionsDto: MachineQueryDto) {
     return this.machinesService.findAll(
       pageOptionsDto,
-      categoryId,
-      searchQuery,
+      pageOptionsDto.categoryId,
+      pageOptionsDto.q,
     );
   }
 }
