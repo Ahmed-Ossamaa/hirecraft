@@ -26,7 +26,7 @@ import {
   MdUnfoldMore,
 } from "react-icons/md";
 
-type SortField = "publishedAt" | "companyId" | "date";
+type SortField = "publishedAt" | "companyId" |"createdAt"| "date";
 type SortDirection = "asc" | "desc";
 
 export function AdminJobsTable() {
@@ -38,7 +38,7 @@ export function AdminJobsTable() {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounce(search, 400);
   const [statusTab, setStatusTab] = useState("ALL");
-  const [sortBy, setSortBy] = useState<SortField>("publishedAt");
+  const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const toggleSort = (field: SortField) => {
@@ -95,7 +95,7 @@ export function AdminJobsTable() {
   const handleStatusChange = async (job: Job, newStatus: JobStatus) => {
     if (job.status === newStatus) return;
     await updateJobStatus(job.id, {
-      status: newStatus as any,
+      status: newStatus ,
     });
   };
 
@@ -145,7 +145,7 @@ export function AdminJobsTable() {
           </div>
         </div>
 
-        {/* Company Filter Active Badge */}
+        {/* Company Filter */}
         {companyId && (
           <div className="flex items-center gap-2 p-2.5 px-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground">
             <MdFilterList className="text-primary text-base shrink-0" />
@@ -167,11 +167,11 @@ export function AdminJobsTable() {
                     : `/dashboard/admin/jobs`
                 );
               }}
-              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted text-[11px] font-medium transition-colors shadow-sm"
+              className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted text-xs cursor-pointer transition-colors shadow-sm"
               title="Clear company filter"
             >
               <MdClose className="text-xs" />
-              Clear company filter
+              Clear filter
             </button>
           </div>
         )}
@@ -223,7 +223,7 @@ export function AdminJobsTable() {
                 {jobs.map((job) => (
                   <tr
                     key={job.id}
-                    className="hover:bg-muted/30 transition-colors"
+                    className="hover:bg-row-hover transition-colors"
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -234,7 +234,7 @@ export function AdminJobsTable() {
                           <Link
                             href={`/jobs?jobId=${job.id}`}
                             target="_blank"
-                            className="font-semibold text-foreground hover:text-primary transition-colors max-w-[200px] sm:max-w-xs truncate inline-flex items-center gap-1 group"
+                            className="font-semibold text-foreground hover:text-primary transition-colors max-w-50 sm:max-w-70 truncate inline-flex items-center gap-1 group"
                             title="Open Public Job Listing"
                           >
                             <span className="truncate">{job.title}</span>

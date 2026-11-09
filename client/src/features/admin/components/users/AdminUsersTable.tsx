@@ -163,7 +163,7 @@ export function AdminUsersTable() {
                 {users.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-muted/30 transition-colors"
+                    className="hover:bg-row-hover transition-colors"
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
