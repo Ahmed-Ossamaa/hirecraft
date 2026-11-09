@@ -35,6 +35,25 @@ export class BillingSchedulerService {
   }
 
   /**
+   * Every 12 hours provider reconciliation sweep.
+   * Proactively verifies live Stripe status, dates, and amounts for all active/past-due subscriptions.
+   */
+  @Cron('0 */12 * * *')
+  async handlePeriodicProviderReconciliation(): Promise<void> {
+    this.logger.log(
+      'Executing 12-hour periodic provider subscription reconciliation...',
+    );
+    try {
+      await this.subscriptionsService.reconcileProviderSubscriptions();
+    } catch (error) {
+      this.logger.error(
+        'Failed periodic provider subscription reconciliation',
+        error,
+      );
+    }
+  }
+
+  /**
    * Sweeper for expired jobs and subscriptions.
    */
   async runDailySweep(now: Date = new Date()): Promise<{
