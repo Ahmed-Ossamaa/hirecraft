@@ -12,6 +12,7 @@ import {
   MdDashboard,
   MdWorkspacePremium,
   MdBarChart,
+  MdPrecisionManufacturing,
 } from "react-icons/md";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { UserUserType } from "@/shared/api/generated/model";
@@ -47,6 +48,11 @@ export const adminNav: NavItem[] = [
     label: "Job Moderation",
     href: "/dashboard/admin/jobs",
     icon: <MdWorkOutline className="text-lg" />,
+  },
+  {
+    label: "Machines",
+    href: "/dashboard/admin/machines",
+    icon: <MdPrecisionManufacturing className="text-lg" />,
   },
   {
     label: "Subscriptions",
@@ -113,8 +119,8 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
     user?.userType === UserUserType.PLATFORM_ADMIN
       ? adminNav
       : user?.userType === UserUserType.EMPLOYER
-      ? employerNav
-      : candidateNav;
+        ? employerNav
+        : candidateNav;
 
   const isActive = (href: string) => {
     if (href === "/jobs") return pathname === "/jobs";
