@@ -10,6 +10,7 @@ import { MdWorkOutline, MdLocationOn } from "react-icons/md";
 import Link from "next/link";
 import { formatTimeAgo } from "@/shared/utils/date-utils";
 import { CandidateApplicationResponseDto } from "@/shared/api/generated/model";
+import { getApiError } from "@/shared/utils/error";
 
 export const ApplicationsList: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -33,7 +34,7 @@ export const ApplicationsList: React.FC = () => {
       <div className="bg-card p-8 rounded-2xl border border-border shadow-sm text-center">
         <p className="text-red-500 mb-2">Failed to load applications.</p>
         <p className="text-sm text-muted-foreground">
-          {(error as any)?.response?.data?.message || "Please try again later."}
+          {getApiError(error, "Please try again later.")}
         </p>
       </div>
     );

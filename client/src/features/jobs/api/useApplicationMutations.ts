@@ -11,6 +11,7 @@ import type {
   GetApplicationsForJobTab,
 } from "@/shared/api/generated/model";
 import { toast } from "sonner";
+import { getApiError } from "@/shared/utils/error";
 
 export const useUpdateApplicationStatus = (jobId: string) => {
   const queryClient = useQueryClient();
@@ -46,13 +47,13 @@ export const useUpdateApplicationStatus = (jobId: string) => {
       onSuccess: () => {
         toast.success("Application status updated");
       },
-      onError: (_err, _variables, context) => {
+      onError: (error, _variables, context) => {
         if (context?.previousQueries) {
           context.previousQueries.forEach(([queryKey, oldData]: [any, any]) => {
             queryClient.setQueryData(queryKey, oldData);
           });
         }
-        toast.error("Failed to update status");
+        toast.error(getApiError(error, "Failed to update status"));
       },
       onSettled: () => {
         //applications list
@@ -100,13 +101,13 @@ export const useUpdateApplicationStar = (jobId: string) => {
       onSuccess: (_data, variables) => {
         toast.success(variables.data.isStarred ? "Applicant starred" : "Applicant unstarred");
       },
-      onError: (_err, _variables, context) => {
+      onError: (error, _variables, context) => {
         if (context?.previousQueries) {
           context.previousQueries.forEach(([queryKey, oldData]: [any, any]) => {
             queryClient.setQueryData(queryKey, oldData);
           });
         }
-        toast.error("Failed to update star");
+        toast.error(getApiError(error, "Failed to update star"));
       },
       onSettled: () => {
         queryClient.invalidateQueries({
@@ -162,13 +163,13 @@ export const useUpdateApplicationArchive = (
             : "Applicant unarchived and restored to active pipeline"
         );
       },
-      onError: (_err, _variables, context) => {
+      onError: (error, _variables, context) => {
         if (context?.previousQueries) {
           context.previousQueries.forEach(([queryKey, oldData]: [any, any]) => {
             queryClient.setQueryData(queryKey, oldData);
           });
         }
-        toast.error("Failed to update archive status");
+        toast.error(getApiError(error, "Failed to update archive status"));
       },
       onSettled: () => {
         queryClient.invalidateQueries({

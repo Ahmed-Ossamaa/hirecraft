@@ -20,6 +20,7 @@ import {
 } from "@/features/companies/api/useMemberMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getApiError } from "@/shared/utils/error";
 import { InviteMemberModal } from "./InviteMemberModal";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { useConfirm } from "@/shared/providers/confirm-provider";
@@ -82,7 +83,7 @@ export const MembersList: React.FC = () => {
       await removeMutation.mutateAsync({ userId: memberId });
       toast.success("Member removed successfully");
     } catch (error) {
-      toast.error("Failed to remove member");
+      toast.error(getApiError(error, "Failed to remove member"));
     }
   };
 
@@ -98,7 +99,7 @@ export const MembersList: React.FC = () => {
       await suspendMutation.mutateAsync({ userId: memberId });
       toast.success("Member suspended successfully");
     } catch (error) {
-      toast.error("Failed to suspend member");
+      toast.error(getApiError(error, "Failed to suspend member"));
     }
   };
 
@@ -114,7 +115,7 @@ export const MembersList: React.FC = () => {
       await activateMutation.mutateAsync({ userId: memberId });
       toast.success("Member unsuspended successfully");
     } catch (error) {
-      toast.error("Failed to unsuspend member");
+      toast.error(getApiError(error, "Failed to unsuspend member"));
     }
   };
 
@@ -129,7 +130,7 @@ export const MembersList: React.FC = () => {
       });
       toast.success("Role updated successfully");
     } catch (error) {
-      toast.error("Failed to update role");
+      toast.error(getApiError(error, "Failed to update role"));
     }
   };
 
