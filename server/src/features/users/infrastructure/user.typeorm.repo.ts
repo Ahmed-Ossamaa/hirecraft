@@ -10,6 +10,8 @@ import { User } from '../domain/user.entity';
 import { AuthUserData, UserTokenData } from '../domain/user-auth.types';
 import { UserOrmEntity } from './user.orm-entity';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { getPostgresErrorDetails } from '@/common/utils/database/postgres-error.util';
+import { EmailAlreadyExistsError } from '../domain/errors/unique-email.error';
 
 @Injectable()
 export class UserTypeormRepository implements IUserRepository {
@@ -19,10 +21,23 @@ export class UserTypeormRepository implements IUserRepository {
   ) {}
 
   async create(params: CreateUserParams, tx?: EntityManager): Promise<User> {
-    const manager = tx || this.repository.manager;
-    const ormEntity = manager.create(UserOrmEntity, params);
-    const savedEntity = await manager.save(ormEntity);
-    return this.mapToDomain(savedEntity);
+    try {
+      const manager = tx || this.repository.manager;
+      const ormEntity = manager.create(UserOrmEntity, params);
+      const savedEntity = await manager.save(ormEntity);
+      return this.mapToDomain(savedEntity);
+    } catch (error) {
+      const details = getPostgresErrorDetails(error);
+
+      if (
+        details?.code === '23505' &&
+        details.constraint === 'UQ_users_email'
+      ) {
+        throw new EmailAlreadyExistsError();
+      }
+
+      throw error;
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {

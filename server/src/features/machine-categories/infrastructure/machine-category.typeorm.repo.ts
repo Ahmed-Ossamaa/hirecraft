@@ -9,6 +9,8 @@ import { MachineCategory } from '../domain/machine-category.entity';
 import { MachineCategoryOrmEntity } from './machine-category.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { CategoryInUseError } from '../domain/errors/category-in-use.error';
+import { getPostgresErrorDetails } from '@/common/utils/database/postgres-error.util';
 
 @Injectable()
 export class MachineCategoryTypeormRepository implements MachineCategoryRepositoryInterface {
@@ -66,8 +68,23 @@ export class MachineCategoryTypeormRepository implements MachineCategoryReposito
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repository.delete(id);
-    return (result.affected ?? 0) > 0;
+    try {
+      const result = await this.repository.delete(id);
+      return (result.affected ?? 0) > 0;
+    } catch (error) {
+      const details = getPostgresErrorDetails(error);
+
+      if (
+        details?.code === '23503' &&
+        ['FK_machines_category', 'FK_jobs_category'].includes(
+          details.constraint ?? '',
+        )
+      ) {
+        throw new CategoryInUseError();
+      }
+
+      throw error;
+    }
   }
 
   private mapToDomain(ormEntity: MachineCategoryOrmEntity): MachineCategory {

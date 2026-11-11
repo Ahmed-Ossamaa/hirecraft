@@ -34,6 +34,7 @@ import { type AuthUserData } from '../users/domain/user-auth.types';
 import { type ConfigType } from '@nestjs/config';
 import { CreateCompanyParams } from '../companies/domain/company.repo.interface';
 import { JwtUser, JwtPayload } from '@/common/types/jwt.types';
+import { EmailAlreadyExistsError } from '../users/domain/errors/unique-email.error';
 
 @Injectable()
 export class AuthService {
@@ -61,8 +62,9 @@ export class AuthService {
 
     const passwordHash = await this.hashPassword(dto.password);
 
-    const result = await this.dataSource.transaction(
-      async (tx: EntityManager) => {
+    let result: { user: User; company: Company | null };
+    try {
+      result = await this.dataSource.transaction(async (tx: EntityManager) => {
         const user = await this.usersService.createUser(
           {
             email: dto.email,
@@ -82,8 +84,14 @@ export class AuthService {
         }
 
         return { user, company };
-      },
-    );
+      });
+    } catch (error) {
+      if (error instanceof EmailAlreadyExistsError) {
+        throw new ConflictException('A user with this email already exists.');
+      }
+
+      throw error;
+    }
 
     await this.requestEmailVerification(result.user.id);
   }

@@ -98,10 +98,16 @@ export class JobOrmEntity {
     onDelete: 'RESTRICT',
     nullable: false,
   })
-  @JoinColumn({ name: 'machineCategoryId' })
+  @JoinColumn({
+    name: 'machineCategoryId',
+    foreignKeyConstraintName: 'FK_jobs_category',
+  })
   category!: MachineCategoryOrmEntity;
 
   @ManyToOne(() => MachineOrmEntity, { onDelete: 'RESTRICT', nullable: false })
-  @JoinColumn({ name: 'machineId' })
+  @JoinColumn({
+    name: 'machineId',
+    foreignKeyConstraintName: 'FK_jobs_machine',
+  })
   machine!: MachineOrmEntity;
 }

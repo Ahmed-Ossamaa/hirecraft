@@ -11,7 +11,7 @@ import {
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { CreateMachineCategoryDto } from './dto/create-machine-category.dto';
 import { UpdateMachineCategoryDto } from './dto/update-machine-category.dto';
-import { isPostgresError } from '@/common/utils/postgres-error.util';
+import { CategoryInUseError } from './domain/errors/category-in-use.error';
 
 @Injectable()
 export class MachineCategoriesService {
@@ -51,9 +51,9 @@ export class MachineCategoriesService {
         throw new NotFoundException(`Category with ID ${id} not found`);
       }
     } catch (error) {
-      if (isPostgresError(error, '23503')) {
+      if (error instanceof CategoryInUseError) {
         throw new ConflictException(
-          'Cannot delete category because it has associated machines',
+          'Cannot delete this category because it is associated with existing machines or jobs.',
         );
       }
 

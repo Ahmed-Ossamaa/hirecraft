@@ -26,11 +26,15 @@ export interface ICompanyMemberRepository {
     tx?: EntityManager,
   ): Promise<CompanyMember>;
 
-  findByUserId(userId: string): Promise<CompanyMember | null>;
+  findByUserId(
+    userId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null>;
   findActiveByUserId(
     userId: string,
     tx?: EntityManager,
   ): Promise<CompanyMember | null>;
+
   findByUserIdAndCompanyId(
     userId: string,
     companyId: string,

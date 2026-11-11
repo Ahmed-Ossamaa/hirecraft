@@ -12,7 +12,7 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { CreateMachineDto } from './dto/create-machine.dto';
 import { UpdateMachineDto } from './dto/update-machine.dto';
 import { Machine } from './domain/machine.entity';
-import { isPostgresError } from '@/common/utils/postgres-error.util';
+import { MachineInUseError } from './domain/errors/machine-in-use.error';
 
 @Injectable()
 export class MachinesService {
@@ -55,9 +55,9 @@ export class MachinesService {
         throw new NotFoundException(`Machine with ID ${id} not found`);
       }
     } catch (error) {
-      if (isPostgresError(error, '23503')) {
+      if (error instanceof MachineInUseError) {
         throw new ConflictException(
-          'Cannot delete this Machine because its used in some jobs',
+          'Cannot delete this machine because it is associated with existing jobs.',
         );
       }
 

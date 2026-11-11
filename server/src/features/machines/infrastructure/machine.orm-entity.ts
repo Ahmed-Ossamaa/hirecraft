@@ -28,6 +28,9 @@ export class MachineOrmEntity {
   @ManyToOne(() => MachineCategoryOrmEntity, (category) => category.machines, {
     onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'categoryId' })
+  @JoinColumn({
+    name: 'categoryId',
+    foreignKeyConstraintName: 'FK_machines_category',
+  })
   category!: MachineCategoryOrmEntity;
 }

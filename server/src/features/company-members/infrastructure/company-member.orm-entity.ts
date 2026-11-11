@@ -7,6 +7,7 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { CompanyRole } from '../domain/company-role.enum';
 import { CompanyMemberStatus } from '../domain/company-member-status.enum';
@@ -14,11 +15,7 @@ import { UserOrmEntity } from '@/features/users/infrastructure/user.orm-entity';
 import { CompanyOrmEntity } from '@/features/companies/infrastructure/company.orm-entity';
 
 @Entity('company_members')
-@Index(['userId', 'companyId'], { unique: true })
-@Index('IDX_one_active_company_per_user', ['userId'], {
-  unique: true,
-  where: '"status" = \'ACTIVE\'',
-})
+@Unique('UQ_company_members_user', ['userId'])
 export class CompanyMemberOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -56,6 +53,7 @@ export class CompanyMemberOrmEntity {
   @JoinColumn({ name: 'companyId' })
   company?: CompanyOrmEntity;
 
+  @Index()
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

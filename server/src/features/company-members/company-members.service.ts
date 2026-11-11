@@ -31,6 +31,8 @@ import appConfig from '@/config/app.config';
 import { CompanyRole } from './domain/company-role.enum';
 import { CompanyMemberStatus } from './domain/company-member-status.enum';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
+import { EmailAlreadyExistsError } from '../users/domain/errors/unique-email.error';
+import { UserAlreadyReservedByCompanyError } from './domain/errors/user-already-reserved-by-company.error';
 
 @Injectable()
 export class CompanyMembersService {
@@ -95,8 +97,10 @@ export class CompanyMembersService {
 
   async acceptInvite(userId: string): Promise<void> {
     await this.dataSource.transaction(async (tx) => {
-      const membership =
-        await this.companyMemberRepository.findByUserId(userId);
+      const membership = await this.companyMemberRepository.findByUserId(
+        userId,
+        tx,
+      );
 
       if (!membership) {
         throw new NotFoundException('Company membership not found.');
@@ -276,9 +280,16 @@ export class CompanyMembersService {
       throw new NotFoundException('Company not found.');
     }
 
+    const email = dto.email.trim().toLowerCase();
+
+    let result: {
+      finalUser: User;
+      finalInviteToken: string | null;
+    };
+
     const user = await this.usersService.findByEmail(dto.email);
-    const { finalUser, finalInviteToken } = await this.dataSource.transaction(
-      async (tx) => {
+    try {
+      result = await this.dataSource.transaction(async (tx) => {
         await this.subscriptionLimitsService.lockCompany(companyId, tx);
         await this.subscriptionLimitsService.checkCompanyMemberReservationLimit(
           companyId,
@@ -287,11 +298,11 @@ export class CompanyMembersService {
 
         let txUser = user;
         let txInviteToken: string | null = null;
-
+        //----user does not exist in the platform (new)---
         if (!txUser) {
-          // Create new invited user
+          // New platform user: create account and invitation token.
           const result = await this.createInvitedUser(
-            dto.email,
+            email,
             dto.firstName,
             dto.lastName,
             UserType.EMPLOYER,
@@ -299,17 +310,23 @@ export class CompanyMembersService {
           );
           txUser = result.user;
           txInviteToken = result.inviteToken;
+          //-----if user already exists in the platform---
         } else {
+          // existing user must be an employer.
+          if (txUser.userType !== UserType.EMPLOYER) {
+            throw new ConflictException(
+              'This user account type cannot be added as a company member.',
+            );
+          }
           // Check if existing user is already a member of any company
           const existingMembership =
-            await this.companyMemberRepository.findActiveByUserId(
-              txUser.id,
-              tx,
-            );
+            await this.companyMemberRepository.findByUserId(txUser.id, tx);
           if (existingMembership) {
             if (existingMembership.companyId === companyId) {
               throw new ConflictException(
-                'This user is already a member of your company.',
+                existingMembership.status === CompanyMemberStatus.PENDING
+                  ? 'An invitation for this user is already pending.'
+                  : 'This user is already a member of your company.',
               );
             } else {
               throw new ConflictException(
@@ -325,17 +342,33 @@ export class CompanyMembersService {
             userId: txUser.id,
             companyId,
             role: dto.role,
-            status: CompanyMemberStatus.PENDING,
+            status: txInviteToken
+              ? CompanyMemberStatus.PENDING
+              : CompanyMemberStatus.ACTIVE,
           },
           tx,
         );
 
         return { finalUser: txUser, finalInviteToken: txInviteToken };
-      },
-    );
+      });
+    } catch (error) {
+      if (error instanceof EmailAlreadyExistsError) {
+        throw new ConflictException(
+          'A user with this email already exists. Please try again.',
+        );
+      }
+      if (error instanceof UserAlreadyReservedByCompanyError) {
+        throw new ConflictException(
+          'This user is already associated with a company',
+        );
+      }
 
+      throw error;
+    }
+
+    const { finalUser, finalInviteToken } = result;
     if (finalInviteToken) {
-      // new user -> send invite email
+      // New user => send invitation with acceptance link
       const clientUrl = this.config.clientURL;
       const inviteLink = `${clientUrl}/accept-invite?token=${finalInviteToken}`;
 
@@ -349,7 +382,7 @@ export class CompanyMembersService {
         ),
       );
     } else {
-      // Existing user -> send notification email
+      // Existing user -> send notification email that they were added
       this.eventEmitter.emit(
         'user.added_to_company',
         new UserAddedToCompanyEvent(finalUser.email, company.name, dto.role),

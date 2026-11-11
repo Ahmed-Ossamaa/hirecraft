@@ -7,6 +7,7 @@ import {
   OneToMany,
   OneToOne,
   Index,
+  Unique,
 } from 'typeorm';
 import { UserType } from '../domain/user-type.enum';
 import { CompanyMemberOrmEntity } from '@/features/company-members/infrastructure/company-member.orm-entity';
@@ -14,11 +15,12 @@ import { WorkerProfileOrmEntity } from '@/features/worker-profiles/infrastructur
 import { Gender } from '../domain/gender.enum';
 
 @Entity('users')
+@Unique('UQ_users_email', ['email'])
 export class UserOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column()
   email!: string;
 
   @Column({ select: false })

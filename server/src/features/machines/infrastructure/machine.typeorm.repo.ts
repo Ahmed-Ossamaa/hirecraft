@@ -9,6 +9,8 @@ import { Machine } from '../domain/machine.entity';
 import { MachineOrmEntity } from './machine.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { getPostgresErrorDetails } from '@/common/utils/database/postgres-error.util';
+import { MachineInUseError } from '../domain/errors/machine-in-use.error';
 
 @Injectable()
 export class MachineTypeormRepository implements MachineRepositoryInterface {
@@ -68,8 +70,20 @@ export class MachineTypeormRepository implements MachineRepositoryInterface {
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repository.delete(id);
-    return (result.affected ?? 0) > 0;
+    try {
+      const result = await this.repository.delete(id);
+      return (result.affected ?? 0) > 0;
+    } catch (error) {
+      const details = getPostgresErrorDetails(error);
+
+      if (
+        details?.code === '23503' &&
+        details.constraint === 'FK_jobs_machine'
+      ) {
+        throw new MachineInUseError();
+      }
+      throw error;
+    }
   }
 
   private mapToDomain(ormEntity: MachineOrmEntity): Machine {
