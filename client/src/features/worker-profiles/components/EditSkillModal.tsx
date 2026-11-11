@@ -69,7 +69,6 @@ export const EditSkillModal: React.FC<EditSkillModalProps> = ({ isOpen, onClose,
       reset();
       onClose();
     } catch (error) {
-      console.error('Failed to update skill:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to update skill') });
     }
   };

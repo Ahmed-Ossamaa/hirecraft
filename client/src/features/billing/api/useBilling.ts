@@ -15,8 +15,8 @@ import {
 } from "@/shared/api/generated/plans/plans";
 import { useAuthStore } from "@/shared/stores/auth-store";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
 import type { Plan, PlanId, CreateCheckoutSessionDtoPlanId } from "@/shared/api/generated/model";
+import { getApiError } from "@/shared/utils/error";
 
 export const useCompanySubscription = () => {
   const companyId = useAuthStore((s) => s.organizationId);
@@ -58,7 +58,7 @@ export const useCreateCheckout = () => {
   const companyId = useAuthStore((s) => s.organizationId);
   const activeAttemptKeyRef = useRef<string | null>(null);
 
-  const mutation = useOrvalCreateCheckoutSession({
+  const mutation = useOrvalCreateCheckoutSession<unknown>({
     mutation: {
       onSuccess: (response) => {
         activeAttemptKeyRef.current = null;
@@ -70,14 +70,15 @@ export const useCreateCheckout = () => {
           toast.error("Failed to generate checkout session URL");
         }
       },
-      onError: (error: AxiosError<{ message?: string }>) => {
+      onError: (error) => {
         // We preserve activeAttemptKeyRef.current so retrying the exact same
         // failed or timed-out action reuses the same idempotency key
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Could not start checkout session. Please try again.";
-        toast.error(message);
+        toast.error(
+          getApiError(
+            error,
+            "Could not start checkout session. Please try again.",
+          ),
+        );
       },
     },
   });
@@ -126,7 +127,7 @@ export const useCreateCheckout = () => {
 export const useCancelCompanySubscription = () => {
   const queryClient = useQueryClient();
 
-  return useOrvalCancelSubscription({
+  return useOrvalCancelSubscription<unknown>({
     mutation: {
       onSuccess: () => {
         toast.success(
@@ -136,12 +137,8 @@ export const useCancelCompanySubscription = () => {
           queryKey: getGetSubscriptionQueryKey(),
         });
       },
-      onError: (error: AxiosError<{ message?: string }>) => {
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to cancel subscription.";
-        toast.error(message);
+      onError: (error) => {
+        toast.error(getApiError(error, "Failed to cancel subscription."));
       },
     },
   });
@@ -150,19 +147,17 @@ export const useCancelCompanySubscription = () => {
 export const useConfirmCheckoutSession = () => {
   const queryClient = useQueryClient();
 
-  return useOrvalConfirmCheckout({
+  return useOrvalConfirmCheckout<unknown>({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: getGetSubscriptionQueryKey(),
         });
       },
-      onError: (error: AxiosError<{ message?: string }>) => {
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to confirm subscription checkout.";
-        toast.error(message);
+      onError: (error) => {
+        toast.error(
+          getApiError(error, "Failed to confirm subscription checkout."),
+        );
       },
     },
   });
@@ -172,7 +167,7 @@ export const useChangeSubscriptionPlan = () => {
   const queryClient = useQueryClient();
   const activeAttemptKeyRef = useRef<string | null>(null);
 
-  const mutation = useOrvalChangePlan({
+  const mutation = useOrvalChangePlan<unknown>({
     mutation: {
       onSuccess: (response) => {
         activeAttemptKeyRef.current = null;
@@ -196,17 +191,18 @@ export const useChangeSubscriptionPlan = () => {
           );
         }
       },
-      onError: (error: AxiosError<{ message?: string }>) => {
-        const message =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to change subscription plan. Please try again.";
-        toast.error(message);
+      onError: (error) => {
+        toast.error(
+          getApiError(
+            error,
+            "Failed to change subscription plan. Please try again.",
+          ),
+        );
       },
     },
   });
 
-  const changePlan = async (
+  const changePlan = (
     planId: PlanId,
     customIdempotencyKey?: string,
   ) => {
@@ -220,7 +216,7 @@ export const useChangeSubscriptionPlan = () => {
 
     const idempotencyKey = customIdempotencyKey || activeAttemptKeyRef.current;
 
-    return mutation.mutateAsync({
+    mutation.mutate({
       data: {
         planId,
         idempotencyKey,
@@ -234,5 +230,3 @@ export const useChangeSubscriptionPlan = () => {
     isPending: mutation.isPending,
   };
 };
-
-

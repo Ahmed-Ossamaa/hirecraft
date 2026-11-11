@@ -88,7 +88,6 @@ export const BasicInfoForm: React.FC<BasicInfoFormProps> = ({ user }) => {
       
       reset(data);
     } catch (error) {
-      console.error('Failed to update basic info:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to update basic info. Please try again.') });
     }
   };

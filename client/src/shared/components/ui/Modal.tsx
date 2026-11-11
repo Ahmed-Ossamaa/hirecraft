@@ -10,6 +10,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  closeOnclick?: boolean;
   maxWidth?: string;
 }
 
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   title, 
   children,
   footer,
+  closeOnclick=true,
   maxWidth = 'max-w-md'
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
   }, [isOpen, onClose]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (overlayRef.current === e.target) {
+    if (overlayRef.current === e.target && closeOnclick) {
       onClose();
     }
   };

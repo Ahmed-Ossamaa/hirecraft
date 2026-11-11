@@ -157,7 +157,6 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
       router.push("/dashboard/company/jobs");
     } catch (error) {
-      console.error(isEdit ? "Failed to update job:" : "Failed to create job:", error);
       setError("root", {
         type: "manual",
         message: getApiError(error, isEdit ? "Failed to update job." : "Failed to post job."),

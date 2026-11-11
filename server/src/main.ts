@@ -57,4 +57,11 @@ async function bootstrap() {
   await app.listen(port);
   Logger.log(`Application is running on: ${baseUrl}/${apiPrefix}`, 'Bootstrap');
 }
-bootstrap().catch((err) => console.error(err));
+bootstrap().catch((err) => {
+  Logger.error(
+    'Application failed to start',
+    err instanceof Error ? err.stack : String(err),
+    'Bootstrap',
+  );
+  process.exit(1);
+});

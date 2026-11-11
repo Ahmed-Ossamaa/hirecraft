@@ -40,7 +40,6 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
     });
 
     if (!refreshRes.ok) {
-      console.warn(`[Proxy] Refresh token rejected with status ${refreshRes.status}`);
       return redirectToAuthAndClearCookies(request);
     }
 
@@ -103,7 +102,10 @@ export async function handleSilentRefresh(request: NextRequest): Promise<NextRes
 
     return response;
   } catch (error) {
-    console.error('[Proxy] Error during silent refresh:', error);
+    console.error(
+      '[Proxy] Silent refresh failed',
+      error instanceof Error ? error.name : 'Unknown error',
+    );
     return redirectToAuthAndClearCookies(request);
   }
 }

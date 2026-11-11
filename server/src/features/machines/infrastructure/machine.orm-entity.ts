@@ -5,6 +5,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 
 @Entity('machines')
@@ -21,9 +22,15 @@ export class MachineOrmEntity {
   @Column({ type: 'uuid' })
   categoryId!: string;
 
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date;
+
   @ManyToOne(() => MachineCategoryOrmEntity, (category) => category.machines, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
-  @JoinColumn({ name: 'categoryId' })
+  @JoinColumn({
+    name: 'categoryId',
+    foreignKeyConstraintName: 'FK_machines_category',
+  })
   category!: MachineCategoryOrmEntity;
 }

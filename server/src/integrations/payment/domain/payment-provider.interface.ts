@@ -5,6 +5,10 @@ export enum PaymentSubscriptionStatus {
   CANCELED = 'CANCELED',
   PAST_DUE = 'PAST_DUE',
   UNPAID = 'UNPAID',
+  INCOMPLETE = 'INCOMPLETE',
+  INCOMPLETE_EXPIRED = 'INCOMPLETE_EXPIRED',
+  PAUSED = 'PAUSED',
+  UNSUPPORTED = 'UNSUPPORTED',
 }
 
 export interface PaymentSubscription {
@@ -15,6 +19,9 @@ export interface PaymentSubscription {
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
   priceId: string | null;
+  unitAmount?: number | null;
+  currency?: string | null;
+  interval?: 'month' | 'year' | null;
 }
 
 export enum PaymentProviderName {
@@ -26,6 +33,8 @@ export enum PaymentEventType {
   SUBSCRIPTION_CREATED = 'SUBSCRIPTION_CREATED',
   SUBSCRIPTION_UPDATED = 'SUBSCRIPTION_UPDATED',
   SUBSCRIPTION_DELETED = 'SUBSCRIPTION_DELETED',
+  INVOICE_PAID = 'INVOICE_PAID',
+  INVOICE_PAYMENT_FAILED = 'INVOICE_PAYMENT_FAILED',
 }
 
 export interface PaymentEvent {

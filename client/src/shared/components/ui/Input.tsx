@@ -43,7 +43,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={inputType}
             className={cn(
-              "w-full bg-input border rounded-xl px-3.5 py-2.5 text-xs focus:ring-1 focus:outline-none transition",
+              "w-full bg-input border rounded-xl px-3.5 py-2.5 text-xs  focus:outline-none transition",
               "text-foreground",
               "placeholder:text-muted-foreground",
               canToggle && "pr-10",

@@ -99,7 +99,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ initialData, onSuccess
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Failed to save profile:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to save profile. Please try again.') });
     }
   };

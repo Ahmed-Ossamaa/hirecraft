@@ -18,6 +18,18 @@ export class AdminSubscriptionResponseDto {
   @ApiProperty({ example: 'STARTER_MONTHLY' })
   planId!: string;
 
+  @ApiProperty({ example: 1500 })
+  amount!: number;
+
+  @ApiProperty({ example: 'EGP' })
+  currency!: string;
+
+  @ApiProperty({ example: 'month' })
+  billingInterval!: 'month' | 'year';
+
+  @ApiPropertyOptional({ example: 'price_1Oxxx' })
+  providerPriceId?: string | null;
+
   @ApiProperty({ example: 'STRIPE' })
   provider!: string;
 
@@ -46,6 +58,10 @@ export class AdminSubscriptionResponseDto {
     dto.companyName = sub.companyName ?? null;
     dto.companyLogo = sub.companyLogo ?? null;
     dto.planId = sub.planId;
+    dto.amount = sub.amount;
+    dto.currency = sub.currency;
+    dto.billingInterval = sub.billingInterval;
+    dto.providerPriceId = sub.providerPriceId ?? null;
     dto.provider = sub.provider;
     dto.status = sub.status;
     dto.currentPeriodStart = sub.currentPeriodStart;

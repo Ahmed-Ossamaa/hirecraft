@@ -47,7 +47,7 @@ export const CurrentPlanCard: React.FC<CurrentPlanCardProps> = ({
     });
 
     if (isConfirmed) {
-      await cancelMutation.mutateAsync();
+      cancelMutation.mutate();
     }
   };
 

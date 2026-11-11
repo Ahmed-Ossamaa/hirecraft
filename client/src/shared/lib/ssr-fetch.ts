@@ -20,14 +20,19 @@ export async function fetchServer<T>(endpoint: string, init?: RequestInit): Prom
     });
     
     if (!res.ok) {
-      console.error(`SSR Fetch Error for ${endpoint}: ${res.status} ${res.statusText}`);
+      if (res.status >= 500) {
+        console.error('[SSR Fetch] Upstream server error', res.status);
+      }
       return null;
     }
     
     const data = await res.json();
     return data as T;
   } catch (error) {
-    console.error(`SSR Fetch Error forrr ${endpoint}:`, error);
+    console.error(
+      '[SSR Fetch] Request failed',
+      error instanceof Error ? error.name : 'Unknown error',
+    );
     return null;
   }
 }

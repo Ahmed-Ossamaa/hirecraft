@@ -13,9 +13,9 @@ import { SubscriptionStatus } from '../domain/subscription-status.enum';
 import { PlanId } from '@/features/plans/domain/plan-id.enum';
 
 @Entity('subscriptions')
-@Index('IDX_UNIQUE_ACTIVE_SUBSCRIPTION', ['companyId'], {
+@Index('IDX_UNIQUE_ACTIVE_OR_PAST_DUE_SUBSCRIPTION', ['companyId'], {
   unique: true,
-  where: "status = 'ACTIVE'",
+  where: "status IN ('ACTIVE', 'PAST_DUE')",
 })
 export class SubscriptionOrmEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -36,6 +36,18 @@ export class SubscriptionOrmEntity {
 
   @Column({ type: 'enum', enum: PlanId })
   planId!: PlanId;
+
+  @Column({ type: 'int', default: 0 })
+  amount!: number;
+
+  @Column({ type: 'varchar', length: 10, default: 'EGP' })
+  currency!: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'month' })
+  billingInterval!: 'month' | 'year';
+
+  @Column({ type: 'varchar', nullable: true })
+  providerPriceId?: string | null;
 
   @Column({
     type: 'enum',

@@ -104,6 +104,69 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
     []) as EmployerApplicationResponseDto[];
   const totalPages = applicationsData?.data?.totalPages || 1;
   const stats = statsData?.data;
+  const [pendingStarIds, setPendingStarIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [pendingStatusIds, setPendingStatusIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [pendingArchiveIds, setPendingArchiveIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  const handleToggleStar = (id: string, isStarred: boolean) => {
+    if (pendingStarIds.has(id)) return;
+    setPendingStarIds((current) => new Set(current).add(id));
+    updateStarMutation.mutate(
+      { id, data: { isStarred } },
+      {
+        onSettled: () => {
+          setPendingStarIds((current) => {
+            const next = new Set(current);
+            next.delete(id);
+            return next;
+          });
+        },
+      },
+    );
+  };
+
+  const handleStatusChange = (
+    id: string,
+    newStatus: EmployerApplicationResponseDto["status"],
+  ) => {
+    if (pendingStatusIds.has(id)) return;
+    setPendingStatusIds((current) => new Set(current).add(id));
+    updateStatusMutation.mutate(
+      { id, data: { status: newStatus } },
+      {
+        onSettled: () => {
+          setPendingStatusIds((current) => {
+            const next = new Set(current);
+            next.delete(id);
+            return next;
+          });
+        },
+      },
+    );
+  };
+
+  const handleToggleArchive = (id: string, isArchived: boolean) => {
+    if (pendingArchiveIds.has(id)) return;
+    setPendingArchiveIds((current) => new Set(current).add(id));
+    updateArchiveMutation.mutate(
+      { id, data: { isArchived } },
+      {
+        onSettled: () => {
+          setPendingArchiveIds((current) => {
+            const next = new Set(current);
+            next.delete(id);
+            return next;
+          });
+        },
+      },
+    );
+  };
 
   const updateFilters = (updates: {
     tab?: GetApplicationsForJobTab;
@@ -348,24 +411,12 @@ export const JobApplicantsView: React.FC<JobApplicantsViewProps> = ({
                         application={app}
                         onSelectApplicant={(selected) => setSelectedApplication(selected)}
                         onViewCoverLetter={(selected) => setViewingCoverLetterApp(selected)}
-                        onToggleStar={(id, isStarred) =>
-                          updateStarMutation.mutate({
-                            id,
-                            data: { isStarred },
-                          })
-                        }
-                        onStatusChange={(id, newStatus) =>
-                          updateStatusMutation.mutate({
-                            id,
-                            data: { status: newStatus },
-                          })
-                        }
-                        onToggleArchive={(id, isArchived) =>
-                          updateArchiveMutation.mutate({
-                            id,
-                            data: { isArchived },
-                          })
-                        }
+                        onToggleStar={handleToggleStar}
+                        onStatusChange={handleStatusChange}
+                        onToggleArchive={handleToggleArchive}
+                        isStarPending={pendingStarIds.has(app.id)}
+                        isStatusPending={pendingStatusIds.has(app.id)}
+                        isArchivePending={pendingArchiveIds.has(app.id)}
                       />
                     ))}
                   </tbody>

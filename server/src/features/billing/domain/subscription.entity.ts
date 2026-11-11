@@ -17,6 +17,10 @@ export class Subscription {
   providerSubId?: string | null;
 
   planId!: PlanId;
+  amount!: number;
+  currency!: string;
+  billingInterval!: 'month' | 'year';
+  providerPriceId?: string | null;
   status!: SubscriptionStatus;
   currentPeriodStart!: Date;
   currentPeriodEnd!: Date;

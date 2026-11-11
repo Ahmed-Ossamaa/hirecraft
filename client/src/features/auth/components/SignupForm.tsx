@@ -151,7 +151,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         if (onSuccess) onSuccess();
       }, 3000);
     } catch (error) {
-      console.error("Signup failed:", error);
       setError("root", {
         type: "manual",
         message: getApiError(error, "Failed to register. Please try again."),

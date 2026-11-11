@@ -1,24 +1,25 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Input } from "@/shared/components/ui/Input";
-import { Button } from "@/shared/components/ui/Button";
-import { Checkbox } from "@/shared/components/ui/Checkbox";
-import { MdLogin } from "react-icons/md";
-import { useLogin } from "@/shared/api/generated/auth/auth";
-import { useAuthStore } from "@/shared/stores/auth-store";
-import { useRouter } from "next/navigation";
-import { ForgotPasswordModal } from "./ForgotPasswordModal";
-import { FormError } from "@/shared/components/ui/FormError";
-import { getApiError } from "@/shared/utils/error";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '@/shared/components/ui/Input';
+import { Button } from '@/shared/components/ui/Button';
+import { Checkbox } from '@/shared/components/ui/Checkbox';
+import { MdLogin } from 'react-icons/md';
+import { useLogin } from '@/shared/api/generated/auth/auth';
+import { useAuthStore } from '@/shared/stores/auth-store';
+import { useRouter } from 'next/navigation';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
+import { getAuthTokenClaims } from '@/shared/utils/auth-token';
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().nonempty("Password is required"),
+  email: z.string().email('Invalid email address'),
+  password: z.string().nonempty('Password is required'),
   keepSession: z.boolean().optional(),
 });
 
@@ -37,7 +38,7 @@ export const LoginForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: "onBlur",
+    mode: 'onBlur',
     defaultValues: {
       keepSession: true,
     },
@@ -45,9 +46,9 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: data.email,
           password: data.password,
@@ -61,34 +62,31 @@ export const LoginForm = () => {
 
       const { user, accessToken } = await response.json();
 
-      let companyId = null;
-      let role = null;
-      if (accessToken) {
-        try {
-          const payload = JSON.parse(atob(accessToken.split(".")[1]));
-          companyId = payload.companyId || null;
-          role = payload.role || null;
-        } catch (e) {
-          console.error("Failed to parse token payload", e);
-        }
-      }
+      const { companyId, role } = accessToken
+        ? getAuthTokenClaims(accessToken)
+        : { companyId: null, role: null };
 
       setAuth(user, companyId, role);
 
-      if (user.userType === "EMPLOYER") {
-        router.push("/dashboard/company");
-      } else if (user.userType === "CANDIDATE") {
-        router.push("/dashboard/profile");
-      } else if (user.userType === "PLATFORM_ADMIN") {
-        router.push("/dashboard/admin");
+      switch (user.userType) {
+        case 'EMPLOYER':
+          router.push('/dashboard/company');
+          break;
+
+        case 'CANDIDATE':
+          router.push('/dashboard/profile');
+          break;
+
+        case 'PLATFORM_ADMIN':
+          router.push('/dashboard/admin');
+          break;
       }
     } catch (error) {
-      console.error("Login failed:", error);
-      setError("root", {
-        type: "manual",
+      setError('root', {
+        type: 'manual',
         message: getApiError(
           error,
-          "Invalid email or password. Please try again.",
+          'Invalid email or password. Please try again.',
         ),
       });
     }
@@ -131,7 +129,7 @@ export const LoginForm = () => {
             label="Email"
             type="email"
             placeholder="name@workshop.pro"
-            {...register("email")}
+            {...register('email')}
             error={errors.email?.message}
           />
 
@@ -153,13 +151,13 @@ export const LoginForm = () => {
             <Input
               type="password"
               placeholder="••••••••••••"
-              {...register("password")}
+              {...register('password')}
               error={errors.password?.message}
             />
           </div>
 
           <div className="flex items-center justify-between text-xs pt-0.5">
-            <Checkbox label="Keep me signed in" {...register("keepSession")} />
+            <Checkbox label="Keep me signed in" {...register('keepSession')} />
           </div>
 
           <Button
@@ -169,7 +167,7 @@ export const LoginForm = () => {
             disabled={isSubmitting}
             rightIcon={<MdLogin className="text-sm" />}
           >
-            {isSubmitting ? "Signing In..." : "Sign In"}
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
         </form>
       </div>

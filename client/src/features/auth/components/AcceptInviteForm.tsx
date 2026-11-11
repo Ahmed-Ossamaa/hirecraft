@@ -57,7 +57,6 @@ const AcceptInviteFormInner: React.FC = () => {
         router.push('/auth');
       }, 3000);
     } catch (error) {
-      console.error('Invite acceptance failed:', error);
       setError('root', {
         type: 'manual',
         message: getApiError(error, 'Failed to accept invite. The link might be expired.'),

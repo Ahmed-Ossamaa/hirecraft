@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useUpdateJobStatus, useDeleteJob } from "@/features/jobs/api/useJobMutations";
 import { toast } from "sonner";
 import { useConfirm } from "@/shared/providers/confirm-provider";
+import { getApiError } from "@/shared/utils/error";
 
 interface JobActionMenuProps {
   job: JobWithStatsDto;
@@ -72,12 +73,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
           : `Job moved to ${status.toLowerCase()}`,
       );
       setOpen(false);
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to update status";
-      toast.error(message);
+    } catch (error) {
+      toast.error(getApiError(error, "Failed to update status"));
     }
   };
 
@@ -94,8 +91,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
           toast.success("Job deleted successfully");
           setOpen(false);
         },
-        onError: () => {
-          toast.error("Failed to delete job");
+        onError: (err) => {
+          toast.error(getApiError(err, "Failed to delete job"));
         }
       });
     }

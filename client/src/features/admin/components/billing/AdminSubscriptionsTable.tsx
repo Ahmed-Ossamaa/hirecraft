@@ -48,7 +48,7 @@ export function AdminSubscriptionsTable() {
       query: {
         staleTime: 30 * 1000,
       },
-    }
+    },
   );
 
   const subscriptions =
@@ -122,7 +122,9 @@ export function AdminSubscriptionsTable() {
         </div>
       ) : subscriptions.length === 0 ? (
         <EmptyState
-          icon={<MdWorkspacePremium className="text-3xl text-muted-foreground" />}
+          icon={
+            <MdWorkspacePremium className="text-3xl text-muted-foreground" />
+          }
           title="No subscriptions found"
           description="There are currently no subscriptions matching the selected criteria."
         />
@@ -134,6 +136,7 @@ export function AdminSubscriptionsTable() {
                 <tr>
                   <th className="px-5 py-3.5">Company</th>
                   <th className="px-5 py-3.5">Plan</th>
+                  <th className="px-5 py-3.5">Amount</th>
                   <th className="px-5 py-3.5">Provider</th>
                   <th className="px-5 py-3.5">Status</th>
                   <th className="px-5 py-3.5">Current Period Ends</th>
@@ -148,7 +151,7 @@ export function AdminSubscriptionsTable() {
                   return (
                     <tr
                       key={sub.id}
-                      className="hover:bg-muted/30 transition-colors"
+                      className="hover:bg-row-hover transition-colors"
                     >
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-2.5">
@@ -169,7 +172,10 @@ export function AdminSubscriptionsTable() {
                             <div className="font-semibold text-foreground">
                               {companyName}
                             </div>
-                            <div className="text-muted-foreground text-[10px] font-mono">
+                            <div
+                              className="text-muted-foreground text-[10px] font-mono"
+                              title={sub.companyId}
+                            >
                               {sub.companyId.slice(0, 13)}...
                             </div>
                           </div>
@@ -178,6 +184,19 @@ export function AdminSubscriptionsTable() {
 
                       <td className="px-5 py-3.5">
                         <AdminPlanBadge plan={sub.planId} />
+                      </td>
+
+                      <td className="px-5 py-3.5 font-semibold text-foreground text-[11px]">
+                        {sub.amount > 0 ? (
+                          <span>
+                            {sub.currency || "EGP"}{" "}
+                            {sub.amount.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground font-normal">
+                            Free
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-5 py-3.5 text-muted-foreground uppercase font-mono text-[11px]">
@@ -190,7 +209,11 @@ export function AdminSubscriptionsTable() {
 
                       <td className="px-5 py-3.5 text-foreground text-[11px]">
                         <div className="space-y-0.5">
-                          <div>{new Date(sub.currentPeriodEnd).toLocaleDateString()}</div>
+                          <div>
+                            {new Date(
+                              sub.currentPeriodEnd,
+                            ).toLocaleDateString()}
+                          </div>
                           {sub.cancelAtPeriodEnd && (
                             <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-medium">
                               <MdWarning className="text-xs" /> Cancels at end
@@ -242,4 +265,3 @@ export function AdminSubscriptionsTable() {
     </div>
   );
 }
-

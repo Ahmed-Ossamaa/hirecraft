@@ -11,6 +11,7 @@ import {
   getGetSavedJobsQueryKey,
 } from "@/shared/api/generated/saved-jobs/saved-jobs";
 import { useAuthStore } from "@/shared/stores/auth-store";
+import { getApiError } from "@/shared/utils/error";
 import type {
   GetSavedJobsParams,
   Job,
@@ -121,12 +122,11 @@ export const useToggleSaveJob = () => {
             toast.success("Job removed from saved");
             queryClient.invalidateQueries({ queryKey });
           },
-          onError: (err: any) => {
+          onError: (err) => {
             previousSavedQueries.forEach(([key, oldData]) => {
               queryClient.setQueryData(key, oldData);
             });
-            const msg = err?.response?.data?.message || "Failed to remove saved job";
-            toast.error(msg);
+            toast.error(getApiError(err, "Failed to remove saved job"));
           },
         }
       );
@@ -180,13 +180,11 @@ export const useToggleSaveJob = () => {
             toast.success("Job saved for later");
             queryClient.invalidateQueries({ queryKey });
           },
-          onError: (err: any) => {
+          onError: (err) => {
             previousSavedQueries.forEach(([key, oldData]) => {
               queryClient.setQueryData(key, oldData);
             });
-            const msg =
-              err?.response?.data?.message || "Failed to save job";
-            toast.error(msg);
+            toast.error(getApiError(err, "Failed to save job"));
           },
         }
       );

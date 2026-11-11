@@ -17,5 +17,6 @@ import { MachineTypeormRepository } from './infrastructure/machine.typeorm.repo'
       useClass: MachineTypeormRepository,
     },
   ],
+  exports: [MachinesService],
 })
 export class MachinesModule {}

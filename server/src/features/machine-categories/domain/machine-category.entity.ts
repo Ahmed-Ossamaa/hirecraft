@@ -9,4 +9,7 @@ export class MachineCategory {
 
   @ApiProperty({ description: 'Category name in Arabic' })
   nameAr!: string;
+
+  @ApiProperty({ description: 'Timestamp when the category was created' })
+  createdAt!: Date;
 }

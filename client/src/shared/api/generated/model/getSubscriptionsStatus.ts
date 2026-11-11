@@ -12,6 +12,8 @@ export type GetSubscriptionsStatus = typeof GetSubscriptionsStatus[keyof typeof 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetSubscriptionsStatus = {
   ACTIVE: 'ACTIVE',
+  PAST_DUE: 'PAST_DUE',
+  UNPAID: 'UNPAID',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
 } as const;

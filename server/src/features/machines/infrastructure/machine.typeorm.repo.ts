@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MachineRepositoryInterface } from '../domain/machine.repo.interface';
+import {
+  CreateMachineData,
+  MachineRepositoryInterface,
+} from '../domain/machine.repo.interface';
 import { Machine } from '../domain/machine.entity';
 import { MachineOrmEntity } from './machine.orm-entity';
 import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
+import { getPostgresErrorDetails } from '@/common/utils/database/postgres-error.util';
+import { MachineInUseError } from '../domain/errors/machine-in-use.error';
 
 @Injectable()
 export class MachineTypeormRepository implements MachineRepositoryInterface {
@@ -32,7 +37,7 @@ export class MachineTypeormRepository implements MachineRepositoryInterface {
       );
     }
 
-    qb.orderBy('machine.nameEn', options.order)
+    qb.orderBy('machine.createdAt', options.order)
       .skip(options.skip)
       .take(options.limit);
 
@@ -50,6 +55,35 @@ export class MachineTypeormRepository implements MachineRepositoryInterface {
   async findById(id: string): Promise<Machine | null> {
     const machine = await this.repository.findOne({ where: { id } });
     return machine ? this.mapToDomain(machine) : null;
+  }
+
+  async create(data: CreateMachineData): Promise<Machine> {
+    const machine = this.repository.create(data);
+    const saved = await this.repository.save(machine);
+    return this.mapToDomain(saved);
+  }
+
+  async update(id: string, data: Partial<CreateMachineData>): Promise<boolean> {
+    const result = await this.repository.update(id, data);
+
+    return (result.affected ?? 0) > 0;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    try {
+      const result = await this.repository.delete(id);
+      return (result.affected ?? 0) > 0;
+    } catch (error) {
+      const details = getPostgresErrorDetails(error);
+
+      if (
+        details?.code === '23503' &&
+        details.constraint === 'FK_jobs_machine'
+      ) {
+        throw new MachineInUseError();
+      }
+      throw error;
+    }
   }
 
   private mapToDomain(ormEntity: MachineOrmEntity): Machine {

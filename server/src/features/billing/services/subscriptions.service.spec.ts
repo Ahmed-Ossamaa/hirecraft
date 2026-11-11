@@ -10,7 +10,11 @@ import { SubscriptionsService } from './subscriptions.service';
 import { SUBSCRIPTION_REPOSITORY } from '../domain/subscription.repo.interface';
 import { CompaniesService } from '@/features/companies/companies.service';
 import { DataSource } from 'typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import {
   PAYMENT_PROVIDER,
   PaymentProvider,
@@ -58,6 +62,10 @@ describe('SubscriptionsService', () => {
 
     subscriptionRepo = {
       findOneByCompanyIdAndStatus: jest.fn(),
+      findActiveOrPastDueByCompanyId: jest.fn().mockResolvedValue(null),
+      findActiveAndPastDueProviderSubscriptions: jest
+        .fn()
+        .mockResolvedValue([]),
       findOneByProviderSubId: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
@@ -75,6 +83,7 @@ describe('SubscriptionsService', () => {
     plansService = {
       getPlanById: jest.fn(),
       getPlanByPaymentPriceId: jest.fn(),
+      getPlansWithPrices: jest.fn().mockResolvedValue([]),
     } as any;
 
     eventEmitter = {
@@ -200,6 +209,18 @@ describe('SubscriptionsService', () => {
         }),
       );
     });
+
+    it('throws ConflictException (409) if company already has an active or past-due subscription', async () => {
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValueOnce({
+        id: 'sub_active_123',
+        companyId: 'comp_1',
+        status: SubscriptionStatus.ACTIVE,
+      });
+
+      await expect(
+        service.createCheckoutSession('comp_1', PlanId.PRO_MONTHLY),
+      ).rejects.toThrow(ConflictException);
+    });
   });
 
   describe('changeSubscriptionPlan', () => {
@@ -246,13 +267,16 @@ describe('SubscriptionsService', () => {
         planId: PlanId.STARTER_MONTHLY,
         status: SubscriptionStatus.ACTIVE,
         providerSubId: 'sub_stripe_1',
-        currentPeriodStart: new Date('2026-10-01'),
-        currentPeriodEnd: new Date('2026-11-01'),
+        currentPeriodStart: new Date('2026-11-01'),
+        currentPeriodEnd: new Date('2026-12-01'),
         cancelAtPeriodEnd: false,
         scheduledPlanId: null,
       };
 
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
       subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
 
       plansService.getPlanById.mockImplementation((id: PlanId) => {
@@ -306,6 +330,39 @@ describe('SubscriptionsService', () => {
       expect(result.subscription?.planId).toBe(PlanId.PRO_MONTHLY);
     });
 
+    it('throws BadRequestException if payment provider returns non-active status on upgrade', async () => {
+      companiesService.getCompanyById.mockResolvedValue(companyData);
+
+      const activeSub = {
+        id: 'sub_rec_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
+        providerSubId: 'sub_stripe_1',
+      };
+
+      subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      plansService.getPlanById.mockImplementation((id: PlanId) => {
+        if (id === PlanId.STARTER_MONTHLY) return starterPlan as any;
+        if (id === PlanId.PRO_MONTHLY) return proPlan as any;
+        return freePlan as any;
+      });
+
+      paymentProvider.upgradeSubscription.mockResolvedValue({
+        id: 'sub_stripe_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_pro_123',
+      });
+
+      await expect(
+        service.changeSubscriptionPlan('comp_1', PlanId.PRO_MONTHLY),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('scheduled downgrade keeps current tier and sets scheduledPlanId for period end', async () => {
       companiesService.getCompanyById.mockResolvedValue(companyData);
 
@@ -315,13 +372,16 @@ describe('SubscriptionsService', () => {
         planId: PlanId.PRO_MONTHLY,
         status: SubscriptionStatus.ACTIVE,
         providerSubId: 'sub_stripe_1',
-        currentPeriodStart: new Date('2026-10-01'),
-        currentPeriodEnd: new Date('2026-11-01'),
+        currentPeriodStart: new Date('2026-11-01'),
+        currentPeriodEnd: new Date('2026-12-01'),
         cancelAtPeriodEnd: false,
         scheduledPlanId: null,
       };
 
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
       subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
 
       plansService.getPlanById.mockImplementation((id: PlanId) => {
@@ -367,13 +427,16 @@ describe('SubscriptionsService', () => {
         planId: PlanId.PRO_MONTHLY,
         status: SubscriptionStatus.ACTIVE,
         providerSubId: 'sub_stripe_1',
-        currentPeriodStart: new Date('2026-10-01'),
-        currentPeriodEnd: new Date('2026-11-01'),
+        currentPeriodStart: new Date('2026-11-01'),
+        currentPeriodEnd: new Date('2026-12-01'),
         cancelAtPeriodEnd: false,
         scheduledPlanId: null,
       };
 
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
       subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
 
       plansService.getPlanById.mockImplementation((id: PlanId) => {
@@ -545,6 +608,172 @@ describe('SubscriptionsService', () => {
       });
       expect(dataSource.transaction).toHaveBeenCalled();
     });
+
+    it('sets status to PAST_DUE on payment failure without triggering resource downgrade', async () => {
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
+
+      const event = {
+        id: 'evt_invoice_failed',
+        provider: 'stripe',
+        type: PaymentEventType.INVOICE_PAYMENT_FAILED,
+        subscriptionId: 'sub_past_due_1',
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_past_due_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.PAST_DUE,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue({
+        id: 'sub_past_due_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+      });
+
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      await service.handlePaymentWebhook(event);
+
+      expect(subscriptionRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubscriptionStatus.PAST_DUE,
+        }),
+        expect.anything(),
+      );
+      // PAST_DUE must NOT trigger reconcile / downgrade!
+      expect(eventEmitter.emit).not.toHaveBeenCalledWith(
+        'subscription.reconcile',
+        expect.anything(),
+      );
+    });
+
+    it('sets status to UNPAID and triggers reconciliation when retries exhausted', async () => {
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
+
+      const event = {
+        id: 'evt_unpaid_1',
+        provider: 'stripe',
+        type: PaymentEventType.SUBSCRIPTION_UPDATED,
+        subscriptionId: 'sub_unpaid_1',
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_unpaid_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.UNPAID,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue({
+        id: 'sub_unpaid_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+      });
+
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      await service.handlePaymentWebhook(event);
+
+      expect(subscriptionRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubscriptionStatus.UNPAID,
+        }),
+        expect.anything(),
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
+        companyId: 'comp_1',
+      });
+    });
+  });
+
+  describe('reconcileProviderSubscriptions', () => {
+    it('syncs live provider state and triggers reconcile for cancelled subscriptions', async () => {
+      subscriptionRepo.findActiveAndPastDueProviderSubscriptions.mockResolvedValue(
+        [
+          {
+            id: 'sub_local_1',
+            companyId: 'comp_1',
+            providerSubId: 'sub_stripe_1',
+            provider: 'stripe',
+          },
+        ],
+      );
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_stripe_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.CANCELED,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: true,
+        priceId: 'price_starter_123',
+      });
+
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue({
+        id: 'sub_local_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+      });
+
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      const res = await service.reconcileProviderSubscriptions();
+
+      expect(res.reconciledCount).toBe(1);
+      expect(subscriptionRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: SubscriptionStatus.CANCELLED,
+        }),
+        expect.anything(),
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
+        companyId: 'comp_1',
+      });
+    });
   });
 
   describe('cancelSubscriptionAtPeriodEnd', () => {
@@ -570,6 +799,9 @@ describe('SubscriptionsService', () => {
       };
 
       subscriptionRepo.findOneByCompanyIdAndStatus.mockResolvedValue(activeSub);
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
       subscriptionRepo.save.mockImplementation(async (sub: any) => sub);
       paymentProvider.cancelSubscriptionAtPeriodEnd.mockResolvedValue(
         undefined as any,

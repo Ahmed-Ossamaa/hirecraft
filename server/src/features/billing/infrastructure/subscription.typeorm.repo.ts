@@ -28,6 +28,35 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
 
+  async findActiveOrPastDueByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<Subscription | null> {
+    const manager = tx || this.repository.manager;
+    const ormEntity = await manager
+      .createQueryBuilder(SubscriptionOrmEntity, 'sub')
+      .where('sub.companyId = :companyId', { companyId })
+      .andWhere('sub.status IN (:...statuses)', {
+        statuses: [SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE],
+      })
+      .getOne();
+    return ormEntity ? this.mapToDomain(ormEntity) : null;
+  }
+
+  async findActiveAndPastDueProviderSubscriptions(
+    tx?: EntityManager,
+  ): Promise<Subscription[]> {
+    const manager = tx || this.repository.manager;
+    const ormEntities = await manager
+      .createQueryBuilder(SubscriptionOrmEntity, 'sub')
+      .where('sub.providerSubId IS NOT NULL')
+      .andWhere('sub.status IN (:...statuses)', {
+        statuses: [SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE],
+      })
+      .getMany();
+    return ormEntities.map((e) => this.mapToDomain(e));
+  }
+
   async findOneByProviderSubId(
     providerSubId: string,
     tx?: EntityManager,
@@ -107,6 +136,7 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
       .where('sub.status = :status', { status: SubscriptionStatus.ACTIVE })
       .andWhere('sub.currentPeriodEnd IS NOT NULL')
       .andWhere('sub.currentPeriodEnd <= :now', { now })
+      .andWhere('(sub.cancelAtPeriodEnd = true OR sub.providerSubId IS NULL)')
       .getMany();
     return ormEntities.map((e) => this.mapToDomain(e));
   }

@@ -26,7 +26,10 @@ export default async function HomePage() {
       initialJobs = result.data.data;
     }
   } catch (error) {
-    console.error("Failed to fetch initial jobs:", error);
+    console.error(
+      "[Home Page] Failed to fetch initial jobs",
+      error instanceof Error ? error.name : "Unknown error",
+    );
   }
 
   return (

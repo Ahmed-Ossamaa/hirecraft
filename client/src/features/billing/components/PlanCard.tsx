@@ -17,7 +17,7 @@ export interface PlanCardProps {
   isScheduledPlan?: boolean;
   billingInterval: "month" | "year";
   isAdmin: boolean;
-  onSelectPlan: (planId: PlanId) => Promise<void>;
+  onSelectPlan: (planId: PlanId) => void;
   isLoading: boolean;
 }
 
@@ -64,7 +64,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       });
 
       if (isConfirmed) {
-        await onSelectPlan(plan.id);
+        onSelectPlan(plan.id);
       }
     } else {
       const formattedEndDate = currentPeriodEnd
@@ -84,7 +84,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       });
 
       if (isConfirmed) {
-        await onSelectPlan(plan.id);
+        onSelectPlan(plan.id);
       }
     }
   };

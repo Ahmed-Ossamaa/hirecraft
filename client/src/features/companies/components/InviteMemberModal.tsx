@@ -61,7 +61,6 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
       handleClose();
       onSuccess();
     } catch (error) {
-      console.error('Failed to invite member:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to send invitation.') });
     }
   };

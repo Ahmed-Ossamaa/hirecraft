@@ -12,6 +12,8 @@ export type AdminSubscriptionResponseDtoStatus = typeof AdminSubscriptionRespons
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const AdminSubscriptionResponseDtoStatus = {
   ACTIVE: 'ACTIVE',
+  PAST_DUE: 'PAST_DUE',
+  UNPAID: 'UNPAID',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
 } as const;

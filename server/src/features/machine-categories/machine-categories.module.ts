@@ -16,5 +16,6 @@ import { MachineCategoryTypeormRepository } from './infrastructure/machine-categ
       useClass: MachineCategoryTypeormRepository,
     },
   ],
+  exports: [MachineCategoriesService],
 })
 export class MachineCategoriesModule {}

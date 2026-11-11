@@ -43,7 +43,6 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
       });
       setSuccess(true);
     } catch (error) {
-      console.error('Reset password request failed:', error);
       setError('root', {
         type: 'manual',
         message: getApiError(error, 'Failed to send reset link. Please try again.'),

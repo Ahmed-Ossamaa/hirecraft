@@ -84,6 +84,11 @@ export class StripePaymentProvider implements PaymentProvider {
           success_url: params.successUrl || this.config.successUrl,
           cancel_url: params.cancelUrl || this.config.cancelUrl,
           client_reference_id: params.clientReferenceId,
+          subscription_data: {
+            metadata: {
+              companyId: params.clientReferenceId,
+            },
+          },
         },
         params.idempotencyKey
           ? { idempotencyKey: params.idempotencyKey }
@@ -137,24 +142,7 @@ export class StripePaymentProvider implements PaymentProvider {
       const stripeSub =
         await this.stripe.subscriptions.retrieve(subscriptionId);
 
-      return {
-        id: stripeSub.id,
-        customerId:
-          typeof stripeSub.customer === 'string'
-            ? stripeSub.customer
-            : stripeSub.customer.id,
-        status: this.mapStripeStatus(stripeSub.status),
-        currentPeriodStart: new Date(
-          (stripeSub.items.data[0]?.current_period_start ?? stripeSub.created) *
-            1000,
-        ),
-        currentPeriodEnd: new Date(
-          (stripeSub.items.data[0]?.current_period_end ?? stripeSub.created) *
-            1000,
-        ),
-        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-        priceId: stripeSub.items.data[0]?.price?.id || null,
-      };
+      return this.mapStripeSubscription(stripeSub);
     } catch {
       throw new InternalServerErrorException(
         'Failed to retrieve subscription from Stripe.',
@@ -170,24 +158,7 @@ export class StripePaymentProvider implements PaymentProvider {
         cancel_at_period_end: true,
       });
 
-      return {
-        id: stripeSub.id,
-        customerId:
-          typeof stripeSub.customer === 'string'
-            ? stripeSub.customer
-            : stripeSub.customer.id,
-        status: this.mapStripeStatus(stripeSub.status),
-        currentPeriodStart: new Date(
-          (stripeSub.items.data[0]?.current_period_start ?? stripeSub.created) *
-            1000,
-        ),
-        currentPeriodEnd: new Date(
-          (stripeSub.items.data[0]?.current_period_end ?? stripeSub.created) *
-            1000,
-        ),
-        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-        priceId: stripeSub.items.data[0]?.price?.id || null,
-      };
+      return this.mapStripeSubscription(stripeSub);
     } catch (error) {
       this.logger.error(
         `Failed to cancel subscription ${subscriptionId} at period end.`,
@@ -220,33 +191,22 @@ export class StripePaymentProvider implements PaymentProvider {
         ],
         proration_behavior: 'none',
         billing_cycle_anchor: 'now',
+        payment_behavior: 'error_if_incomplete',
         cancel_at_period_end: false,
       });
 
-      return {
-        id: stripeSub.id,
-        customerId:
-          typeof stripeSub.customer === 'string'
-            ? stripeSub.customer
-            : stripeSub.customer.id,
-        status: this.mapStripeStatus(stripeSub.status),
-        currentPeriodStart: new Date(
-          (stripeSub.items.data[0]?.current_period_start ?? stripeSub.created) *
-            1000,
-        ),
-        currentPeriodEnd: new Date(
-          (stripeSub.items.data[0]?.current_period_end ?? stripeSub.created) *
-            1000,
-        ),
-        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-        priceId: stripeSub.items.data[0]?.price?.id || null,
-      };
+      return this.mapStripeSubscription(stripeSub);
     } catch (error) {
       this.logger.error(
         `Failed to upgrade subscription ${subscriptionId} to price ${newPriceId}.`,
         error instanceof Error ? error.stack : error,
       );
       if (error instanceof BadRequestException) throw error;
+      if (error instanceof Stripe.errors.StripeCardError) {
+        throw new BadRequestException(
+          `Upgrade payment failed: ${error.message}`,
+        );
+      }
       throw new InternalServerErrorException(
         'Failed to upgrade subscription with payment provider.',
       );
@@ -275,24 +235,7 @@ export class StripePaymentProvider implements PaymentProvider {
         proration_behavior: 'none',
       });
 
-      return {
-        id: stripeSub.id,
-        customerId:
-          typeof stripeSub.customer === 'string'
-            ? stripeSub.customer
-            : stripeSub.customer.id,
-        status: this.mapStripeStatus(stripeSub.status),
-        currentPeriodStart: new Date(
-          (stripeSub.items.data[0]?.current_period_start ?? stripeSub.created) *
-            1000,
-        ),
-        currentPeriodEnd: new Date(
-          (stripeSub.items.data[0]?.current_period_end ?? stripeSub.created) *
-            1000,
-        ),
-        cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-        priceId: stripeSub.items.data[0]?.price?.id || null,
-      };
+      return this.mapStripeSubscription(stripeSub);
     } catch (error) {
       this.logger.error(
         `Failed to schedule downgrade for subscription ${subscriptionId} to price ${newPriceId}.`,
@@ -348,6 +291,14 @@ export class StripePaymentProvider implements PaymentProvider {
         mappedType = PaymentEventType.SUBSCRIPTION_DELETED;
         break;
 
+      case 'invoice.paid':
+        mappedType = PaymentEventType.INVOICE_PAID;
+        break;
+
+      case 'invoice.payment_failed':
+        mappedType = PaymentEventType.INVOICE_PAYMENT_FAILED;
+        break;
+
       default:
         if (
           event.type.startsWith('price.') ||
@@ -365,17 +316,25 @@ export class StripePaymentProvider implements PaymentProvider {
 
     const eventData = event.data.object;
     let subscriptionId: string | undefined;
+    let clientReferenceId: string | undefined;
 
     if (event.type.startsWith('customer.subscription.')) {
       const subscription = eventData as Stripe.Subscription;
       subscriptionId = subscription.id;
+      clientReferenceId = subscription.metadata?.companyId || undefined;
+    } else if (event.type === 'checkout.session.completed') {
+      const session = eventData as Stripe.Checkout.Session;
+      subscriptionId =
+        typeof session.subscription === 'string'
+          ? session.subscription
+          : session.subscription?.id;
+      clientReferenceId = session.client_reference_id ?? undefined;
     } else if (
-      eventData !== null &&
-      typeof eventData === 'object' &&
-      'id' in eventData &&
-      typeof eventData.id === 'string'
+      event.type === 'invoice.paid' ||
+      event.type === 'invoice.payment_failed'
     ) {
-      subscriptionId = eventData.id;
+      const invoice = eventData as Stripe.Invoice;
+      subscriptionId = this.extractInvoiceSubscriptionId(invoice);
     }
 
     return {
@@ -383,6 +342,7 @@ export class StripePaymentProvider implements PaymentProvider {
       provider: PaymentProviderName.STRIPE,
       type: mappedType,
       subscriptionId,
+      clientReferenceId,
     };
   }
 
@@ -442,6 +402,47 @@ export class StripePaymentProvider implements PaymentProvider {
     }
   }
 
+  private mapStripeSubscription(
+    stripeSub: Stripe.Subscription,
+  ): PaymentSubscription {
+    const item = stripeSub.items?.data?.[0];
+    const price = item?.price;
+    const unitAmount =
+      price?.unit_amount !== null && price?.unit_amount !== undefined
+        ? price.unit_amount / 100
+        : null;
+    const currency = price?.currency ? price.currency.toUpperCase() : 'EGP';
+    const interval = price?.recurring?.interval === 'year' ? 'year' : 'month';
+
+    const periodStartUnix =
+      item?.current_period_start ??
+      (stripeSub as unknown as { current_period_start?: number })
+        .current_period_start ??
+      stripeSub.created;
+
+    const periodEndUnix =
+      item?.current_period_end ??
+      (stripeSub as unknown as { current_period_end?: number })
+        .current_period_end ??
+      stripeSub.created;
+
+    return {
+      id: stripeSub.id,
+      customerId:
+        typeof stripeSub.customer === 'string'
+          ? stripeSub.customer
+          : stripeSub.customer.id,
+      status: this.mapStripeStatus(stripeSub.status),
+      currentPeriodStart: new Date(periodStartUnix * 1000),
+      currentPeriodEnd: new Date(periodEndUnix * 1000),
+      cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+      priceId: price?.id || null,
+      unitAmount,
+      currency,
+      interval,
+    };
+  }
+
   private mapStripeStatus(
     status: Stripe.Subscription.Status,
   ): PaymentSubscriptionStatus {
@@ -449,17 +450,47 @@ export class StripePaymentProvider implements PaymentProvider {
       case 'active':
       case 'trialing':
         return PaymentSubscriptionStatus.ACTIVE;
-      case 'canceled':
-        return PaymentSubscriptionStatus.CANCELED;
       case 'past_due':
         return PaymentSubscriptionStatus.PAST_DUE;
       case 'unpaid':
         return PaymentSubscriptionStatus.UNPAID;
-      case 'incomplete':
-      case 'incomplete_expired':
-      case 'paused':
-      default:
+      case 'canceled':
         return PaymentSubscriptionStatus.CANCELED;
+      case 'incomplete':
+        return PaymentSubscriptionStatus.INCOMPLETE;
+      case 'incomplete_expired':
+        return PaymentSubscriptionStatus.INCOMPLETE_EXPIRED;
+      case 'paused':
+        return PaymentSubscriptionStatus.PAUSED;
+      default:
+        this.logger.warn(
+          `Unrecognized Stripe subscription status: ${String(status)}. Mapping to UNSUPPORTED.`,
+        );
+        return PaymentSubscriptionStatus.UNSUPPORTED;
     }
+  }
+
+  private extractInvoiceSubscriptionId(
+    invoice: Stripe.Invoice,
+  ): string | undefined {
+    // 1. Modern Stripe API (2025+/Dahlia): on parent.subscription_details
+    if (
+      invoice.parent &&
+      'subscription_details' in invoice.parent &&
+      invoice.parent.subscription_details?.subscription
+    ) {
+      const sub = invoice.parent.subscription_details.subscription;
+      return typeof sub === 'string' ? sub : sub.id;
+    }
+
+    // 2. Classic/Standard Stripe API: on root invoice.subscription
+    const rootSub = (
+      invoice as { subscription?: string | Stripe.Subscription | null }
+    ).subscription;
+    if (rootSub) {
+      return typeof rootSub === 'string' ? rootSub : rootSub.id;
+    }
+
+    return undefined;
   }
 }

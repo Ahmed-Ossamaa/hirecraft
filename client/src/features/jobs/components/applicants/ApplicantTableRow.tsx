@@ -33,6 +33,9 @@ interface ApplicantTableRowProps {
     newStatus: EmployerApplicationResponseDtoStatus,
   ) => void;
   onToggleArchive: (applicationId: string, isArchived: boolean) => void;
+  isStarPending: boolean;
+  isStatusPending: boolean;
+  isArchivePending: boolean;
 }
 
 export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
@@ -42,6 +45,9 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
   onToggleStar,
   onStatusChange,
   onToggleArchive,
+  isStarPending,
+  isStatusPending,
+  isArchivePending,
 }) => {
   return (
     <tr className="hover:bg-row-hover transition-colors">
@@ -55,9 +61,23 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
               e.stopPropagation();
               onToggleStar(app.id, !app.isStarred);
             }}
-            className="text-lg transition-transform hover:scale-110 cursor-pointer p-1 text-muted-foreground hover:text-amber-400 focus:outline-none shrink-0"
-            title={app.isStarred ? "Starred candidate" : "Star candidate"}
-            aria-label={app.isStarred ? "Unstar applicant" : "Star applicant"}
+            disabled={isStarPending}
+            aria-busy={isStarPending}
+            className="text-lg transition-transform hover:scale-110 cursor-pointer p-1 text-muted-foreground hover:text-amber-400 focus:outline-none shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
+            title={
+              isStarPending
+                ? "Updating applicant star"
+                : app.isStarred
+                  ? "Starred candidate"
+                  : "Star candidate"
+            }
+            aria-label={
+              isStarPending
+                ? "Updating applicant star"
+                : app.isStarred
+                  ? "Unstar applicant"
+                  : "Star applicant"
+            }
           >
             {app.isStarred ? (
               <MdStar className="text-amber-400" />
@@ -135,6 +155,8 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
       <td className="px-5 py-3.5">
         <select
           value={app.status}
+          disabled={isStatusPending}
+          aria-busy={isStatusPending}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) =>
             onStatusChange(
@@ -142,7 +164,7 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
               e.target.value as EmployerApplicationResponseDtoStatus,
             )
           }
-          className={`px-2.5 py-1 rounded-lg border text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors ${getApplicationStatusColor(
+          className={`px-2.5 py-1 rounded-lg border text-xs font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${getApplicationStatusColor(
             app.status,
           )}`}
         >
@@ -167,10 +189,12 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
               e.stopPropagation();
               onToggleArchive(app.id, false);
             }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary font-medium transition-colors cursor-pointer"
-            title="Restore to active pipeline"
+            disabled={isArchivePending}
+            aria-busy={isArchivePending}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary font-medium transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title={isArchivePending ? "Updating archive status" : "Restore to active pipeline"}
           >
-            <MdUnarchive className="text-sm" /> Unarchive
+            <MdUnarchive className="text-sm" /> {isArchivePending ? "Updating..." : "Unarchive"}
           </button>
         ) : (
           <button
@@ -179,10 +203,12 @@ export const ApplicantTableRow: React.FC<ApplicantTableRowProps> = ({
               e.stopPropagation();
               onToggleArchive(app.id, true);
             }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border border-border/60 hover:bg-card-hover text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            title="Archive application"
+            disabled={isArchivePending}
+            aria-busy={isArchivePending}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border border-border/60 hover:bg-card-hover text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title={isArchivePending ? "Updating archive status" : "Archive application"}
           >
-            <MdArchive className="text-sm" /> Archive
+            <MdArchive className="text-sm" /> {isArchivePending ? "Updating..." : "Archive"}
           </button>
         )}
       </td>

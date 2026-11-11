@@ -14,6 +14,15 @@ export interface ISubscriptionRepository {
     tx?: EntityManager,
   ): Promise<Subscription | null>;
 
+  findActiveOrPastDueByCompanyId(
+    companyId: string,
+    tx?: EntityManager,
+  ): Promise<Subscription | null>;
+
+  findActiveAndPastDueProviderSubscriptions(
+    tx?: EntityManager,
+  ): Promise<Subscription[]>;
+
   findOneByProviderSubId(
     providerSubId: string,
     tx?: EntityManager,

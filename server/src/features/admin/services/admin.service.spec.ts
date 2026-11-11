@@ -7,6 +7,8 @@ import { WorkerProfilesService } from '@/features/worker-profiles/worker-profile
 import { JobsService } from '@/features/jobs/jobs.service';
 import { SubscriptionsService } from '@/features/billing/services/subscriptions.service';
 import { PlansService } from '@/features/plans/services/plans.service';
+import { MachinesService } from '@/features/machines/machines.service';
+import { MachineCategoriesService } from '@/features/machine-categories/machine-categories.service';
 
 import { AdminUsersQueryDto } from '../dto/admin-users-query.dto';
 import { AdminCompaniesQueryDto } from '../dto/admin-companies-query.dto';
@@ -21,6 +23,8 @@ describe('AdminService', () => {
   let jobsService: jest.Mocked<Partial<JobsService>>;
   let subscriptionsService: jest.Mocked<Partial<SubscriptionsService>>;
   let plansService: jest.Mocked<Partial<PlansService>>;
+  let machinesService: jest.Mocked<Partial<MachinesService>>;
+  let machineCategoriesService: jest.Mocked<Partial<MachineCategoriesService>>;
 
   beforeEach(async () => {
     usersService = {
@@ -101,6 +105,18 @@ describe('AdminService', () => {
       getPlans: jest.fn().mockReturnValue([]),
     };
 
+    machinesService = {
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
+    machineCategoriesService = {
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
@@ -111,6 +127,11 @@ describe('AdminService', () => {
         { provide: JobsService, useValue: jobsService },
         { provide: SubscriptionsService, useValue: subscriptionsService },
         { provide: PlansService, useValue: plansService },
+        { provide: MachinesService, useValue: machinesService },
+        {
+          provide: MachineCategoriesService,
+          useValue: machineCategoriesService,
+        },
       ],
     }).compile();
 
@@ -149,5 +170,34 @@ describe('AdminService', () => {
     const res = await service.getJobs(query);
     expect(jobsService.findAllJobs).toHaveBeenCalled();
     expect(res.data).toEqual([]);
+  });
+
+  it('should delegate machine catalog mutations to their feature services', async () => {
+    const machineDto = {
+      nameEn: 'Press',
+      nameAr: 'مطبعة',
+      categoryId: 'cat-1',
+    };
+    const categoryDto = { nameEn: 'Printing', nameAr: 'طباعة' };
+
+    await service.createMachine(machineDto);
+    await service.updateMachine('machine-1', machineDto);
+    await service.deleteMachine('machine-1');
+    await service.createMachineCategory(categoryDto);
+    await service.updateMachineCategory('category-1', categoryDto);
+    await service.deleteMachineCategory('category-1');
+
+    expect(machinesService.create).toHaveBeenCalledWith(machineDto);
+    expect(machinesService.update).toHaveBeenCalledWith(
+      'machine-1',
+      machineDto,
+    );
+    expect(machinesService.delete).toHaveBeenCalledWith('machine-1');
+    expect(machineCategoriesService.create).toHaveBeenCalledWith(categoryDto);
+    expect(machineCategoriesService.update).toHaveBeenCalledWith(
+      'category-1',
+      categoryDto,
+    );
+    expect(machineCategoriesService.delete).toHaveBeenCalledWith('category-1');
   });
 });

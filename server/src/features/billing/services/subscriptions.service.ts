@@ -149,7 +149,21 @@ export class SubscriptionsService {
         targetPlan.paymentPriceId!,
       );
 
+      if (paymentSub.status !== PaymentSubscriptionStatus.ACTIVE) {
+        this.logger.warn(
+          `Upgrade payment for subscription ${activeSub.id} did not complete actively. Status: ${paymentSub.status}`,
+        );
+        throw new BadRequestException(
+          'Upgrade payment could not be completed actively. Your card was not charged.',
+        );
+      }
+
       activeSub.planId = targetPlan.id;
+      activeSub.amount = paymentSub.unitAmount ?? targetPlan.price;
+      activeSub.currency = paymentSub.currency ?? 'EGP';
+      activeSub.billingInterval = paymentSub.interval ?? targetPlan.interval;
+      activeSub.providerPriceId =
+        paymentSub.priceId ?? targetPlan.paymentPriceId;
       activeSub.currentPeriodStart = paymentSub.currentPeriodStart;
       activeSub.currentPeriodEnd = paymentSub.currentPeriodEnd;
       activeSub.cancelAtPeriodEnd = false;
@@ -207,22 +221,8 @@ export class SubscriptionsService {
     userEmail?: string,
     idempotencyKey?: string,
   ): Promise<string> {
+    await this.ensureNoActiveSubscription(companyId);
     const company = await this.companiesService.getCompanyById(companyId);
-
-    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
-      companyId,
-      SubscriptionStatus.ACTIVE,
-    );
-
-    if (activeSub) {
-      const result = await this.changeSubscriptionPlan(
-        companyId,
-        planId,
-        userEmail,
-        idempotencyKey,
-      );
-      return result.url || '';
-    }
 
     const plan = this.validatePaidPlan(planId);
 
@@ -333,11 +333,8 @@ export class SubscriptionsService {
    * or falls back to the Free plan with a deterministic rolling billing cycle.
    */
   async getSubscriptionForCompany(companyId: string, tx?: EntityManager) {
-    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
-      companyId,
-      SubscriptionStatus.ACTIVE,
-      tx,
-    );
+    const activeSub =
+      await this.subscriptionRepo.findActiveOrPastDueByCompanyId(companyId, tx);
 
     const now = new Date();
 
@@ -360,7 +357,7 @@ export class SubscriptionsService {
           activeSub.currentPeriodEnd = nextEnd;
           await this.subscriptionRepo.save(activeSub, tx);
           this.eventEmitter.emit('subscription.reconcile', { companyId });
-        } else {
+        } else if (activeSub.cancelAtPeriodEnd || !activeSub.providerSubId) {
           this.logger.log(
             `Subscription ${activeSub.id} for company ${companyId} passed period end (${activeSub.currentPeriodEnd.toISOString()}). Marking EXPIRED JIT.`,
           );
@@ -368,7 +365,12 @@ export class SubscriptionsService {
           await this.subscriptionRepo.save(activeSub, tx);
           this.eventEmitter.emit('subscription.reconcile', { companyId });
         }
-      } else {
+      }
+
+      if (
+        activeSub.status === SubscriptionStatus.ACTIVE ||
+        activeSub.status === SubscriptionStatus.PAST_DUE
+      ) {
         const plan = this.plansService.getPlanById(activeSub.planId);
         const scheduledPlan = activeSub.scheduledPlanId
           ? this.plansService.getPlanById(activeSub.scheduledPlanId)
@@ -553,6 +555,55 @@ export class SubscriptionsService {
     return this.subscriptionRepo.findExpiredActiveSubscriptions(now, tx);
   }
 
+  /**
+   * Periodic reconciliation: retrieves live subscription state from payment provider
+   * for all active and past-due provider subscriptions and syncs local state, dates, and prices.
+   */
+  async reconcileProviderSubscriptions(): Promise<{ reconciledCount: number }> {
+    const subs =
+      await this.subscriptionRepo.findActiveAndPastDueProviderSubscriptions();
+    let reconciledCount = 0;
+
+    for (const sub of subs) {
+      if (!sub.providerSubId) continue;
+      try {
+        const paymentSub = await this.paymentProvider.retrieveSubscription(
+          sub.providerSubId,
+        );
+
+        const shouldReconcile = await this.dataSource.transaction(
+          async (tx) => {
+            const syncResult = await this.syncSubscriptionState(
+              paymentSub,
+              sub.companyId,
+              tx,
+              (sub.provider as PaymentProviderName) ||
+                PaymentProviderName.STRIPE,
+            );
+            return syncResult?.shouldReconcile ?? false;
+          },
+        );
+
+        if (shouldReconcile) {
+          this.eventEmitter.emit('subscription.reconcile', {
+            companyId: sub.companyId,
+          });
+        }
+        reconciledCount++;
+      } catch (err) {
+        this.logger.error(
+          `Failed periodic reconciliation for subscription ${sub.id} (providerSubId: ${sub.providerSubId})`,
+          err instanceof Error ? err.stack : err,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Periodic provider reconciliation complete. Checked ${subs.length} subscriptions, successfully synced ${reconciledCount}.`,
+    );
+    return { reconciledCount };
+  }
+
   async markSubscriptionExpired(
     subscription: Subscription,
     tx?: EntityManager,
@@ -616,14 +667,12 @@ export class SubscriptionsService {
    * - Throws ConflictException if an active subscription is found.
    */
   private async ensureNoActiveSubscription(companyId: string): Promise<void> {
-    const activeSub = await this.subscriptionRepo.findOneByCompanyIdAndStatus(
-      companyId,
-      SubscriptionStatus.ACTIVE,
-    );
+    const existing =
+      await this.subscriptionRepo.findActiveOrPastDueByCompanyId(companyId);
 
-    if (activeSub) {
+    if (existing) {
       throw new ConflictException(
-        'Company already has an active subscription.',
+        'Company already has an active or past-due subscription. Please use the plan change endpoint to modify your plan.',
       );
     }
   }
@@ -686,9 +735,15 @@ export class SubscriptionsService {
       type === PaymentEventType.CHECKOUT_COMPLETED ||
       type === PaymentEventType.SUBSCRIPTION_CREATED ||
       type === PaymentEventType.SUBSCRIPTION_UPDATED ||
-      type === PaymentEventType.SUBSCRIPTION_DELETED
+      type === PaymentEventType.SUBSCRIPTION_DELETED ||
+      type === PaymentEventType.INVOICE_PAID ||
+      type === PaymentEventType.INVOICE_PAYMENT_FAILED
     ) {
-      if (type === PaymentEventType.CHECKOUT_COMPLETED) {
+      if (
+        type === PaymentEventType.CHECKOUT_COMPLETED ||
+        type === PaymentEventType.SUBSCRIPTION_CREATED ||
+        type === PaymentEventType.SUBSCRIPTION_UPDATED
+      ) {
         companyId = event.clientReferenceId ?? null;
       }
 
@@ -888,6 +943,11 @@ export class SubscriptionsService {
           },
           shouldReconcile,
         };
+      } else if (localStatus === SubscriptionStatus.PAST_DUE) {
+        return {
+          notificationData: null,
+          shouldReconcile: false,
+        };
       } else {
         shouldReconcile = true;
         return {
@@ -908,13 +968,24 @@ export class SubscriptionsService {
     status: PaymentSubscriptionStatus,
   ): SubscriptionStatus {
     switch (status) {
-      case PaymentSubscriptionStatus.UNPAID:
+      case PaymentSubscriptionStatus.ACTIVE:
+        return SubscriptionStatus.ACTIVE;
       case PaymentSubscriptionStatus.PAST_DUE:
-        return SubscriptionStatus.EXPIRED;
+        return SubscriptionStatus.PAST_DUE;
+      case PaymentSubscriptionStatus.UNPAID:
+        return SubscriptionStatus.UNPAID;
       case PaymentSubscriptionStatus.CANCELED:
         return SubscriptionStatus.CANCELLED;
+      case PaymentSubscriptionStatus.INCOMPLETE_EXPIRED:
+        return SubscriptionStatus.EXPIRED;
+      case PaymentSubscriptionStatus.INCOMPLETE:
+      case PaymentSubscriptionStatus.PAUSED:
+      case PaymentSubscriptionStatus.UNSUPPORTED:
       default:
-        return SubscriptionStatus.ACTIVE;
+        this.logger.warn(
+          `Mapping non-active or unhandled provider status ${status} to EXPIRED.`,
+        );
+        return SubscriptionStatus.EXPIRED;
     }
   }
 
@@ -942,25 +1013,48 @@ export class SubscriptionsService {
       entityManager,
     );
 
+    const plan = this.plansService.getPlanById(planId);
+
+    let amount = paymentSub.unitAmount ?? 0;
+    let currency = paymentSub.currency ?? 'EGP';
+    let billingInterval: 'month' | 'year' =
+      paymentSub.interval ?? plan.interval ?? 'month';
+
+    if (amount <= 0 && !plan.isFree) {
+      const plansWithPrices = await this.plansService.getPlansWithPrices();
+      const matched = plansWithPrices.find((p) => p.id === planId);
+      if (matched && matched.price > 0) {
+        amount = matched.price;
+        currency = matched.currency;
+        billingInterval = matched.interval;
+      }
+    }
+
     if (localSub) {
       localSub.status = localStatus;
       localSub.currentPeriodStart = paymentSub.currentPeriodStart;
       localSub.currentPeriodEnd = paymentSub.currentPeriodEnd;
       localSub.cancelAtPeriodEnd = paymentSub.cancelAtPeriodEnd;
       localSub.planId = planId;
+      localSub.amount = amount;
+      localSub.currency = currency;
+      localSub.billingInterval = billingInterval;
+      localSub.providerPriceId = paymentSub.priceId;
       await this.subscriptionRepo.save(localSub, entityManager);
     } else {
-      //mark the old record for this company as cancelled and insert new record
+      // mark any active or past-due record for this company as cancelled and insert new record
       if (localStatus === SubscriptionStatus.ACTIVE) {
-        const existingActive =
-          await this.subscriptionRepo.findOneByCompanyIdAndStatus(
+        const existingActiveOrPastDue =
+          await this.subscriptionRepo.findActiveOrPastDueByCompanyId(
             companyId,
-            SubscriptionStatus.ACTIVE,
             entityManager,
           );
-        if (existingActive) {
-          existingActive.status = SubscriptionStatus.CANCELLED;
-          await this.subscriptionRepo.save(existingActive, entityManager);
+        if (existingActiveOrPastDue) {
+          existingActiveOrPastDue.status = SubscriptionStatus.CANCELLED;
+          await this.subscriptionRepo.save(
+            existingActiveOrPastDue,
+            entityManager,
+          );
         }
       }
 
@@ -970,6 +1064,10 @@ export class SubscriptionsService {
           providerSubId: paymentSub.id,
           provider,
           planId,
+          amount,
+          currency,
+          billingInterval,
+          providerPriceId: paymentSub.priceId,
           status: localStatus,
           currentPeriodStart: paymentSub.currentPeriodStart,
           currentPeriodEnd: paymentSub.currentPeriodEnd,

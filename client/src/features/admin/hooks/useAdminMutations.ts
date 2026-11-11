@@ -1,78 +1,96 @@
-"use client";
+'use client';
 
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { getApiError } from "@/shared/utils/error";
-import { useUpdateUserBanStatus } from "@/shared/api/generated/admin-manage-users/admin-manage-users";
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getApiError } from '@/shared/utils/error';
+import {
+  getGetUsersQueryKey,
+  useUpdateUserBanStatus,
+} from '@/shared/api/generated/admin-manage-users/admin-manage-users';
 import {
   useAdminUpdateJobStatus as useOrvalUpdateJobStatus,
   useDeleteJob as useOrvalDeleteJob,
-} from "@/shared/api/generated/admin-jobs/admin-jobs";
+  getGetAdminJobsQueryKey,
+} from '@/shared/api/generated/admin-jobs/admin-jobs';
 import type {
   UpdateUserStatusDto,
   UpdateJobStatusDto,
-} from "@/shared/api/generated/model";
+} from '@/shared/api/generated/model';
+import { getGetOverviewStatsQueryKey } from '@/shared/api/generated/admin-analytics/admin-analytics';
 
 export function useAdminMutations() {
   const queryClient = useQueryClient();
 
+  const invalidateUsers = () =>
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: getGetUsersQueryKey(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: getGetOverviewStatsQueryKey(),
+      }),
+    ]);
+
+  const invalidateJobs = () =>
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: getGetAdminJobsQueryKey(),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: getGetOverviewStatsQueryKey(),
+      }),
+    ]);
+
+  const handleError = (error: unknown, message: string) => {
+    toast.error(getApiError(error, message));
+  };
+
   const banUserMutation = useUpdateUserBanStatus({
     mutation: {
-      onSuccess: (_, variables) => {
-        const action = variables.data.isBanned ? "banned" : "unbanned";
+      onSuccess: async (_, variables) => {
+        const action = variables.data.isBanned ? 'banned' : 'unbanned';
         toast.success(`User successfully ${action}`);
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/users"] });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/v1/admin/analytics/overview"],
-        });
+        await invalidateUsers();
       },
-      onError: (err) => {
-        toast.error(getApiError(err, "Failed to update user ban status"));
-      },
+      onError: (error) =>
+        handleError(error, 'Failed to update user ban status'),
     },
   });
 
   const updateJobStatusMutation = useOrvalUpdateJobStatus({
     mutation: {
-      onSuccess: () => {
-        toast.success("Job status updated successfully");
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/jobs"] });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/v1/admin/analytics/overview"],
-        });
+      onSuccess: async () => {
+        toast.success('Job status updated successfully');
+        await invalidateJobs();
       },
-      onError: (err) => {
-        toast.error(getApiError(err, "Failed to update job status"));
-      },
+      onError: (error) => handleError(error, 'Failed to update job status'),
     },
   });
 
   const deleteJobMutation = useOrvalDeleteJob({
     mutation: {
-      onSuccess: () => {
-        toast.success("Job deleted permanently");
-        queryClient.invalidateQueries({ queryKey: ["/api/v1/admin/jobs"] });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/v1/admin/analytics/overview"],
-        });
+      onSuccess: async () => {
+        toast.success('Job deleted permanently');
+        await invalidateJobs();
       },
-      onError: (err) => {
-        toast.error(getApiError(err, "Failed to delete job"));
-      },
+      onError: (error) => handleError(error, 'Failed to delete job'),
     },
   });
 
   return {
-    banUser: (id: string, data: UpdateUserStatusDto) =>
-      banUserMutation.mutateAsync({ id, data }),
+    banUser: (
+      id: string,
+      data: UpdateUserStatusDto,
+      onSuccess?: () => void,
+    ) =>
+      banUserMutation.mutate({ id, data }, { onSuccess }),
     isBanningUser: banUserMutation.isPending,
 
     updateJobStatus: (id: string, data: UpdateJobStatusDto) =>
-      updateJobStatusMutation.mutateAsync({ id, data }),
+      updateJobStatusMutation.mutate({ id, data }),
     isUpdatingJobStatus: updateJobStatusMutation.isPending,
 
-    deleteJob: (id: string) => deleteJobMutation.mutateAsync({ id }),
+    deleteJob: (id: string) => deleteJobMutation.mutate({ id }),
     isDeletingJob: deleteJobMutation.isPending,
   };
 }
-

@@ -59,7 +59,6 @@ export const CompanyImageUpload: React.FC<CompanyImageUploadProps> = ({
         toast.success("Cover uploaded successfully");
       }
     } catch (error) {
-      console.error(`Failed to upload ${type}:`, error);
       toast.error(getApiError(error, `Failed to upload ${type}`));
     }
   };
@@ -76,7 +75,6 @@ export const CompanyImageUpload: React.FC<CompanyImageUploadProps> = ({
         toast.success("Cover removed successfully");
       }
     } catch (error) {
-      console.error(`Failed to remove ${type}:`, error);
       toast.error(getApiError(error, `Failed to remove ${type}`));
     }
   };

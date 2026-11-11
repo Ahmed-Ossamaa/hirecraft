@@ -33,7 +33,7 @@ export const getSubscriptionResponse = zod.object({
   "maxUsers": zod.number().describe('Maximum team member seats')
 })
 }),
-  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "status": zod.enum(['ACTIVE', 'PAST_DUE', 'UNPAID', 'CANCELLED', 'EXPIRED']),
   "currentPeriodStart": zod.string().datetime({}).nullish(),
   "currentPeriodEnd": zod.string().datetime({}).nullish(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -126,7 +126,7 @@ export const confirmCheckoutResponse = zod.object({
   "maxUsers": zod.number().describe('Maximum team member seats')
 })
 }),
-  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "status": zod.enum(['ACTIVE', 'PAST_DUE', 'UNPAID', 'CANCELLED', 'EXPIRED']),
   "currentPeriodStart": zod.string().datetime({}).nullish(),
   "currentPeriodEnd": zod.string().datetime({}).nullish(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -184,7 +184,7 @@ export const changePlanResponse = zod.object({
   "maxUsers": zod.number().describe('Maximum team member seats')
 })
 }),
-  "status": zod.enum(['ACTIVE', 'CANCELLED', 'EXPIRED']),
+  "status": zod.enum(['ACTIVE', 'PAST_DUE', 'UNPAID', 'CANCELLED', 'EXPIRED']),
   "currentPeriodStart": zod.string().datetime({}).nullish(),
   "currentPeriodEnd": zod.string().datetime({}).nullish(),
   "cancelAtPeriodEnd": zod.boolean(),

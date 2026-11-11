@@ -57,7 +57,6 @@ const ResetPasswordFormInner: React.FC = () => {
         router.push('/auth');
       }, 3000);
     } catch (error) {
-      console.error('Password reset failed:', error);
       setError('root', {
         type: 'manual',
         message: getApiError(error, 'Failed to reset password. The link might be expired.'),

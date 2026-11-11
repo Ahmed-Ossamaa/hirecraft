@@ -12,6 +12,8 @@ import { PageOptionsDto } from '@/common/pagination/page-options.dto';
 import { PaginatedResult } from '@/common/pagination/paginated-results';
 import { CompanyRole } from '../domain/company-role.enum';
 import { CompanyMemberStatus } from '../domain/company-member-status.enum';
+import { UserAlreadyReservedByCompanyError } from '../domain/errors/user-already-reserved-by-company.error';
+import { getPostgresErrorDetails } from '@/common/utils/database/postgres-error.util';
 
 @Injectable()
 export class CompanyMemberTypeormRepository implements ICompanyMemberRepository {
@@ -27,10 +29,23 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
     params: CreateCompanyMemberParams,
     tx?: EntityManager,
   ): Promise<CompanyMember> {
-    const manager = tx || this.repository.manager;
-    const member = manager.create(CompanyMemberOrmEntity, params);
-    const savedMember = await manager.save(member);
-    return this.mapToDomain(savedMember);
+    try {
+      const manager = tx || this.repository.manager;
+      const member = manager.create(CompanyMemberOrmEntity, params);
+      const savedMember = await manager.save(member);
+      return this.mapToDomain(savedMember);
+    } catch (error) {
+      const details = getPostgresErrorDetails(error);
+
+      if (
+        details?.code === '23505' &&
+        details.constraint === 'UQ_company_members_user'
+      ) {
+        throw new UserAlreadyReservedByCompanyError();
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -76,12 +91,14 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
   /**
    * Finds a company member by user ID.
    */
-  async findByUserId(userId: string): Promise<CompanyMember | null> {
-    const member = await this.repository
-      .createQueryBuilder('member')
+  async findByUserId(
+    userId: string,
+    tx?: EntityManager,
+  ): Promise<CompanyMember | null> {
+    const manager = tx || this.repository.manager;
+    const member = await manager
+      .createQueryBuilder(CompanyMemberOrmEntity, 'member')
       .where('member.userId = :userId', { userId })
-      .leftJoin('member.user', 'user')
-      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
       .getOne();
 
     return member ? this.mapToDomain(member) : null;
@@ -101,8 +118,6 @@ export class CompanyMemberTypeormRepository implements ICompanyMemberRepository 
       .andWhere('member.status = :status', {
         status: CompanyMemberStatus.ACTIVE,
       })
-      .leftJoin('member.user', 'user')
-      .addSelect(['user.firstName', 'user.lastName', 'user.email'])
       .getOne();
 
     return member ? this.mapToDomain(member) : null;

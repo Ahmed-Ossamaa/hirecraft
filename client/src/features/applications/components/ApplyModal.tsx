@@ -62,7 +62,6 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({
       
       handleClose();
     } catch (error) {
-      console.error('Failed to submit application:', error);
       setError('root', { type: 'manual', message: getApiError(error, 'Failed to submit application. Please make sure your worker profile is complete.') });
     }
   };

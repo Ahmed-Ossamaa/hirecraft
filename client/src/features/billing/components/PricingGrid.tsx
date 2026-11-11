@@ -25,16 +25,10 @@ export const PricingGrid: React.FC<PricingGridProps> = ({
   isAdmin,
 }) => {
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
-  const { changePlan, isPending } = useChangeSubscriptionPlan();
-  const [selectedPlanId, setSelectedPlanId] = useState<PlanId | null>(null);
+  const { changePlan, isPending, variables } = useChangeSubscriptionPlan();
 
-  const handleSelectPlan = async (planId: PlanId) => {
-    setSelectedPlanId(planId);
-    try {
-      await changePlan(planId);
-    } finally {
-      setSelectedPlanId(null);
-    }
+  const handleSelectPlan = (planId: PlanId) => {
+    changePlan(planId);
   };
 
   // Find plans for the selected interval
@@ -95,7 +89,7 @@ export const PricingGrid: React.FC<PricingGridProps> = ({
               isScheduledPlan={scheduledPlanId === plan.id}
               isAdmin={isAdmin}
               onSelectPlan={handleSelectPlan}
-              isLoading={isPending && selectedPlanId === plan.id}
+              isLoading={isPending && variables?.data.planId === plan.id}
             />
           );
         })}

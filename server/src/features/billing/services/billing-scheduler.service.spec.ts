@@ -21,6 +21,7 @@ describe('BillingSchedulerService', () => {
   let subscriptionsServiceMock: {
     findExpiredActiveSubscriptions: jest.Mock;
     markSubscriptionExpired: jest.Mock;
+    reconcileProviderSubscriptions: jest.Mock;
   };
   let reconciliationServiceMock: {
     reconcileCompanyResources: jest.Mock;
@@ -36,6 +37,9 @@ describe('BillingSchedulerService', () => {
     subscriptionsServiceMock = {
       findExpiredActiveSubscriptions: jest.fn().mockResolvedValue([]),
       markSubscriptionExpired: jest.fn().mockResolvedValue({}),
+      reconcileProviderSubscriptions: jest
+        .fn()
+        .mockResolvedValue({ reconciledCount: 0 }),
     };
 
     reconciliationServiceMock = {
@@ -149,6 +153,13 @@ describe('BillingSchedulerService', () => {
       const result = await service.runDailySweep(now);
 
       expect(result.reconciledSubscriptions).toBe(1);
+    });
+
+    it('should invoke reconcileProviderSubscriptions on periodic 12h reconciliation', async () => {
+      await service.handlePeriodicProviderReconciliation();
+      expect(
+        subscriptionsServiceMock.reconcileProviderSubscriptions,
+      ).toHaveBeenCalled();
     });
   });
 });

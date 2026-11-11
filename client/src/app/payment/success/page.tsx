@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetSubscriptionQueryKey } from "@/shared/api/generated/billing/billing";
 import { useConfirmCheckoutSession } from "@/features/billing/api/useBilling";
+import { getApiError } from "@/shared/utils/error";
 import { Button } from "@/shared/components/ui/Button";
 import {
   MdCheckCircle,
@@ -46,11 +47,9 @@ function PaymentSuccessContent() {
             setCountdown(5);
           },
           onError: (err) => {
-            const msg =
-              (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message ||
-              (err as Error)?.message ||
-              "Could not verify your checkout session.";
-            setErrorMessage(msg);
+            setErrorMessage(
+              getApiError(err, "Could not verify your checkout session."),
+            );
           },
         },
       );
