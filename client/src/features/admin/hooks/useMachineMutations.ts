@@ -30,9 +30,6 @@ export function useMachineMutations() {
         toast.success("Machine created successfully");
         invalidateMachines();
       },
-      onError: (err) => {
-        handleError(err, " Failed to create machine");
-      },
     },
   });
 
@@ -41,9 +38,6 @@ export function useMachineMutations() {
       onSuccess: () => {
         toast.success("Machine updated successfully");
         invalidateMachines();
-      },
-      onError: (err) => {
-        handleError(err, "Failed to update machine");
       },
     },
   });
@@ -87,9 +81,6 @@ export function useMachineCategoryMutations() {
         toast.success("Machine category created successfully");
         await invalidateCategories();
       },
-      onError: (err) => {
-        handleError(err, "Failed to create machine category");
-      },
     },
   });
 
@@ -98,9 +89,6 @@ export function useMachineCategoryMutations() {
       onSuccess: async () => {
         toast.success("Machine category updated successfully");
         await invalidateCategories();
-      },
-      onError: (err) => {
-        handleError(err, "Failed to update machine category");
       },
     },
   });

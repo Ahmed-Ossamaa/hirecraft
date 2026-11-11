@@ -92,14 +92,12 @@ export function AdminJobsTable() {
   const total = data?.data?.total || 0;
   const totalPages = data?.data?.totalPages || 1;
 
-  const handleStatusChange = async (job: Job, newStatus: JobStatus) => {
+  const handleStatusChange = (job: Job, newStatus: JobStatus) => {
     if (job.status === newStatus) return;
-    await updateJobStatus(job.id, {
-      status: newStatus ,
-    });
+    updateJobStatus(job.id, { status: newStatus });
   };
 
-  const handleDeleteJob = async (job: Job) => {
+  const handleDeleteJob = async (job: Job): Promise<void> => {
     const confirmed = await confirm({
       title: "Permanently Delete Job",
       message: `Are you sure you want to permanently delete "${job.title}"? This action is irreversible and will completely delete the job and its application records.`,
@@ -108,7 +106,7 @@ export function AdminJobsTable() {
     });
 
     if (confirmed) {
-      await deleteJob(job.id);
+      deleteJob(job.id);
     }
   };
 
@@ -298,4 +296,3 @@ export function AdminJobsTable() {
     </div>
   );
 }
-

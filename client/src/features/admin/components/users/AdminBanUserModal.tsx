@@ -9,7 +9,7 @@ interface AdminBanUserModalProps {
   user: AdminUserResponseDto | null;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (isBanned: boolean) => Promise<void>;
+  onConfirm: (isBanned: boolean) => void;
   isPending: boolean;
 }
 
@@ -24,9 +24,8 @@ export function AdminBanUserModal({
 
   const willBan = !user.isBanned;
 
-  const handleAction = async () => {
-    await onConfirm(willBan);
-    onClose();
+  const handleAction = () => {
+    onConfirm(willBan);
   };
 
   return (
@@ -108,4 +107,3 @@ export function AdminBanUserModal({
     </Modal>
   );
 }
-

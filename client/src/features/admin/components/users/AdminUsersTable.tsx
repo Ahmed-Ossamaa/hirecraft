@@ -91,10 +91,14 @@ export function AdminUsersTable() {
     setIsBanModalOpen(true);
   };
 
-  const handleConfirmBan = async (willBan: boolean) => {
+  const handleConfirmBan = (willBan: boolean) => {
     if (!selectedUser) return;
-    await banUser(selectedUser.id, { isBanned: willBan });
-    setSelectedUser((prev) => (prev ? { ...prev, isBanned: willBan } : null));
+    banUser(selectedUser.id, { isBanned: willBan }, () => {
+      setSelectedUser((prev) =>
+        prev ? { ...prev, isBanned: willBan } : null,
+      );
+      setIsBanModalOpen(false);
+    });
   };
 
   return (
@@ -340,4 +344,3 @@ export function AdminUsersTable() {
     </div>
   );
 }
-

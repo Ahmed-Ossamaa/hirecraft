@@ -15,8 +15,11 @@ import {
 
 interface AdminJobActionMenuProps {
   job: Job;
-  onStatusChange: (job: Job, newStatus: JobStatus) => Promise<void>;
-  onDeleteJob: (job: Job) => Promise<void>;
+  onStatusChange: (
+    job: Job,
+    newStatus: JobStatus,
+  ) => void | Promise<void>;
+  onDeleteJob: (job: Job) => void | Promise<void>;
   disabled?: boolean;
 }
 
@@ -160,4 +163,3 @@ export function AdminJobActionMenu({
     </div>
   );
 }
-

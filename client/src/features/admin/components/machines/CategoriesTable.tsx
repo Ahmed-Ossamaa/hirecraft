@@ -54,7 +54,7 @@ export function CategoriesTable() {
       variant: "danger",
     });
     if (!isConfirmed) return;
-    await deleteMutation.mutateAsync({ id: category.id });
+    deleteMutation.mutate({ id: category.id });
   };
   const closeDialog = () => {
     setIsDialogOpen(false);

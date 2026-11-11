@@ -78,15 +78,19 @@ export function useAdminMutations() {
   });
 
   return {
-    banUser: (id: string, data: UpdateUserStatusDto) =>
-      banUserMutation.mutateAsync({ id, data }),
+    banUser: (
+      id: string,
+      data: UpdateUserStatusDto,
+      onSuccess?: () => void,
+    ) =>
+      banUserMutation.mutate({ id, data }, { onSuccess }),
     isBanningUser: banUserMutation.isPending,
 
     updateJobStatus: (id: string, data: UpdateJobStatusDto) =>
-      updateJobStatusMutation.mutateAsync({ id, data }),
+      updateJobStatusMutation.mutate({ id, data }),
     isUpdatingJobStatus: updateJobStatusMutation.isPending,
 
-    deleteJob: (id: string) => deleteJobMutation.mutateAsync({ id }),
+    deleteJob: (id: string) => deleteJobMutation.mutate({ id }),
     isDeletingJob: deleteJobMutation.isPending,
   };
 }

@@ -83,7 +83,7 @@ export function MachinesTable() {
       variant: "danger",
     });
     if (!isConfirmed) return;
-    await deleteMutation.mutateAsync({ id: machine.id });
+    deleteMutation.mutate({ id: machine.id });
   };
 
   const closeDialog = () => {

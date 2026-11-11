@@ -13,8 +13,6 @@ export const useApplyToJob = () => {
         queryClient.invalidateQueries({
           queryKey: getGetMyApplicationsQueryKey(),
         });
-        // may need to invalidate job by id [jobId]
-        queryClient.invalidateQueries({ queryKey: ["getJobById"] });
       },
     },
   });
