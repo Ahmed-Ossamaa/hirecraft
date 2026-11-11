@@ -1,5 +1,6 @@
-import { SetMetadata } from '@nestjs/common';
+import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { CompanyRole } from '@/features/company-members/domain/company-role.enum';
+import { ApiExtension } from 'node_modules/@nestjs/swagger/dist/decorators/api-extension.decorator';
 
 export const COMPANY_ROLES_KEY = 'company_roles';
 
@@ -9,4 +10,7 @@ export const COMPANY_ROLES_KEY = 'company_roles';
  * or   @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
  */
 export const RequireCompanyRole = (...roles: CompanyRole[]) =>
-  SetMetadata(COMPANY_ROLES_KEY, roles);
+  applyDecorators(
+    SetMetadata(COMPANY_ROLES_KEY, roles),
+    ApiExtension('x-required-company-roles', roles),
+  );
