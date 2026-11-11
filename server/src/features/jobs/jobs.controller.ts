@@ -41,7 +41,11 @@ export class JobsController {
   @Post()
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, CompanyRoleGuard)
-  @RequireCompanyRole(CompanyRole.ADMIN, CompanyRole.HIRING_MANAGER)
+  @RequireCompanyRole(
+    CompanyRole.ADMIN,
+    CompanyRole.HIRING_MANAGER,
+    CompanyRole.STAFF,
+  )
   @ApiOperation({
     summary: 'Create a new job posting for a company (always created as DRAFT)',
   })
