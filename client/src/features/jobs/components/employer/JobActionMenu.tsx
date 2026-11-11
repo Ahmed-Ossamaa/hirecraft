@@ -91,8 +91,8 @@ export function JobActionMenu({ job }: JobActionMenuProps) {
           toast.success("Job deleted successfully");
           setOpen(false);
         },
-        onError: () => {
-          toast.error("Failed to delete job");
+        onError: (err) => {
+          toast.error(getApiError(err, "Failed to delete job"));
         }
       });
     }

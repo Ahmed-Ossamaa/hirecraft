@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   MdBookmark,
   MdLocationOn,
@@ -11,16 +11,17 @@ import {
   MdWorkOutline,
   MdArrowForward,
   MdBusiness,
-} from "react-icons/md";
+} from 'react-icons/md';
 import {
   useSavedJobs,
   useToggleSaveJob,
-} from "@/features/jobs/api/useSavedJobs";
-import { Button } from "@/shared/components/ui/Button";
-import { Pagination } from "@/shared/components/ui/Pagination";
-import { EmptyState } from "@/shared/components/ui/EmptyState";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
-import type { SavedJobResponseDto } from "@/shared/api/generated/model";
+} from '@/features/jobs/api/useSavedJobs';
+import { Button } from '@/shared/components/ui/Button';
+import { Pagination } from '@/shared/components/ui/Pagination';
+import { EmptyState } from '@/shared/components/ui/EmptyState';
+import { formatTimeAgo } from '@/shared/utils/date-utils';
+import type { SavedJobResponseDto } from '@/shared/api/generated/model';
+import { getApiError } from '@/shared/utils/error';
 
 export const SavedJobsList: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -79,7 +80,7 @@ export const SavedJobsList: React.FC = () => {
           Failed to load saved jobs.
         </p>
         <p className="text-sm text-muted-foreground">
-          {(error as any)?.response?.data?.message || "Please try again later."}
+          {getApiError(error, 'Please try again later.')}
         </p>
       </div>
     );
@@ -102,8 +103,8 @@ export const SavedJobsList: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">
-          Showing <span className="text-foreground font-semibold">{total}</span>{" "}
-          saved {total === 1 ? "role" : "roles"}
+          Showing <span className="text-foreground font-semibold">{total}</span>{' '}
+          saved {total === 1 ? 'role' : 'roles'}
         </p>
       </div>
 
@@ -126,7 +127,7 @@ export const SavedJobsList: React.FC = () => {
                       <div className="w-11 h-11 rounded-xl overflow-hidden border border-border bg-input shrink-0 mt-0.5">
                         <Image
                           src={job.companyLogo}
-                          alt={job.companyName || "Company Logo"}
+                          alt={job.companyName || 'Company Logo'}
                           width={44}
                           height={44}
                           className="w-full h-full object-cover"
@@ -141,12 +142,12 @@ export const SavedJobsList: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <h3 className="font-headline font-semibold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors truncate">
                         <Link href={`/jobs?jobId=${item.jobId}`}>
-                          {job?.title || "Job Opportunity"}
+                          {job?.title || 'Job Opportunity'}
                         </Link>
                       </h3>
 
                       <div className="flex items-center text-xs sm:text-sm text-muted-foreground font-medium flex-wrap gap-x-2 gap-y-1 mt-0.5">
-                        <span>{job?.companyName || "Unknown Company"}</span>
+                        <span>{job?.companyName || 'Unknown Company'}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <MdLocationOn className="shrink-0 text-muted-foreground" />
