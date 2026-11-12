@@ -1,26 +1,46 @@
-import React from "react";
-import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui/Button";
-import { MdDeleteOutline } from "react-icons/md";
-import { formatTimeAgo } from "@/shared/utils/date-utils";
-import { MemberRoleIcon } from "./MemberRoleIcon";
+import React from 'react';
+import { CompanyMember, CompanyMemberRole } from '@/shared/api/generated/model';
+import { Button } from '@/shared/components/ui/Button';
+import { MdDeleteOutline } from 'react-icons/md';
+import { formatTimeAgo } from '@/shared/utils/date-utils';
+import { MemberRoleIcon } from './MemberRoleIcon';
 
 interface MemberTableRowProps {
   member: CompanyMember;
   currentUserId: string | undefined;
   isCurrentUserAdmin: boolean;
-  currentStatus: "ACTIVE" | "PENDING" | "SUSPENDED";
+  showDeactivated?: boolean;
   onRoleChange: (memberId: string, newRole: CompanyMemberRole) => void;
   onSuspend: (memberId: string, memberName: string) => void;
-  onActivate: (memberId: string, memberName: string) => void;
+  onActivate: (
+    memberId: string,
+    memberName: string,
+    status: CompanyMember['status'],
+  ) => void;
   onRemove: (memberId: string, memberName: string) => void;
 }
+
+const statusLabels: Record<CompanyMember['status'], string> = {
+  ACTIVE: 'Active',
+  PENDING: 'Pending',
+  SUSPENDED: 'Suspended',
+  DEACTIVATED: 'Deactivated',
+};
+
+const statusClasses: Record<CompanyMember['status'], string> = {
+  ACTIVE:
+    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+  PENDING:
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  SUSPENDED: 'bg-muted text-muted-foreground border-border',
+  DEACTIVATED: 'bg-destructive/10 text-destructive border-destructive/20',
+};
 
 export const MemberTableRow: React.FC<MemberTableRowProps> = ({
   member,
   currentUserId,
   isCurrentUserAdmin,
-  currentStatus,
+  showDeactivated = false,
   onRoleChange,
   onSuspend,
   onActivate,
@@ -45,7 +65,26 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
         </div>
       </td>
       <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground">
-        {formatTimeAgo(member.joinedAt)}
+        <span title={new Date(member.joinedAt).toLocaleString()}>
+          {formatTimeAgo(member.joinedAt)}
+        </span>
+      </td>
+      {showDeactivated && (
+        <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground">
+          <span
+            title={new Date(member.deactivatedAt as string).toLocaleString()}
+          >
+            {formatTimeAgo(member.deactivatedAt)}
+          </span>
+        </td>
+      )}
+      <td className="px-5 py-3.5">
+        <span
+          title= {member.status === 'DEACTIVATED' && member.deactivatedAt ? `Deactivated on ${new Date(member.deactivatedAt).toLocaleString()}` : ''}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-medium ${statusClasses[member.status]}`}
+        >
+          {statusLabels[member.status]}
+        </span>
       </td>
       <td className="px-5 py-3.5">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-xs">
@@ -55,7 +94,7 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
             onChange={(e) =>
               onRoleChange(member.userId, e.target.value as CompanyMemberRole)
             }
-            disabled={isMe || !isCurrentUserAdmin || member.status !== "ACTIVE"}
+            disabled={isMe || !isCurrentUserAdmin || member.status !== 'ACTIVE'}
             className="bg-transparent border-none outline-none cursor-pointer text-foreground font-medium disabled:cursor-not-allowed"
           >
             <option value="ADMIN" className="bg-card text-foreground">
@@ -73,7 +112,7 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
       {isCurrentUserAdmin && (
         <td className="px-5 py-3.5">
           <div className="flex items-center justify-end gap-2">
-            {!isMe && currentStatus === "ACTIVE" && (
+            {!isMe && member.status === 'ACTIVE' && (
               <Button
                 variant="ghost"
                 onClick={() => onSuspend(member.userId, memberName)}
@@ -82,24 +121,28 @@ export const MemberTableRow: React.FC<MemberTableRowProps> = ({
                 Suspend
               </Button>
             )}
-            {!isMe && currentStatus === "SUSPENDED" && (
-              <Button
-                variant="ghost"
-                onClick={() => onActivate(member.userId, memberName)}
-                className="text-xs px-2 py-1 h-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-              >
-                Unsuspend
-              </Button>
-            )}
+            {!isMe &&
+              (member.status === 'SUSPENDED' ||
+                member.status === 'DEACTIVATED') && (
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    onActivate(member.userId, memberName, member.status)
+                  }
+                  className="text-xs px-2 py-1 h-8 rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                >
+                  {member.status === 'DEACTIVATED' ? 'Reactivate' : 'Unsuspend'}
+                </Button>
+              )}
             {!isMe && (
               <Button
                 variant="ghost"
                 onClick={() => onRemove(member.userId, memberName)}
                 className="w-8 h-8 p-0 text-red-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg inline-flex items-center justify-center shrink-0"
                 title={
-                  currentStatus === "PENDING"
-                    ? "Cancel Invite"
-                    : "Remove Permanently"
+                  member.status === 'PENDING'
+                    ? 'Cancel Invite'
+                    : 'Remove Permanently'
                 }
               >
                 <MdDeleteOutline className="text-lg" />

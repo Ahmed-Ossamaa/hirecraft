@@ -7,9 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/shared/components/ui/Input';
 import { Button } from '@/shared/components/ui/Button';
-import { Checkbox } from '@/shared/components/ui/Checkbox';
 import { MdLogin } from 'react-icons/md';
-import { useLogin } from '@/shared/api/generated/auth/auth';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
@@ -20,7 +18,6 @@ import { getAuthTokenClaims } from '@/shared/utils/auth-token';
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().nonempty('Password is required'),
-  keepSession: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -28,7 +25,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export const LoginForm = () => {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const loginMutation = useLogin();
   const [isForgotModalOpen, setIsForgotModalOpen] = useState<boolean>(false);
 
   const {
@@ -39,9 +35,6 @@ export const LoginForm = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: 'onBlur',
-    defaultValues: {
-      keepSession: true,
-    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -156,10 +149,6 @@ export const LoginForm = () => {
             />
           </div>
 
-          <div className="flex items-center justify-between text-xs pt-0.5">
-            <Checkbox label="Keep me signed in" {...register('keepSession')} />
-          </div>
-
           <Button
             type="submit"
             fullWidth
@@ -173,11 +162,11 @@ export const LoginForm = () => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-border/40 text-center text-[10px] text-muted-foreground shrink-0 pb-2">
-        By continuing, you agree to Technically&apos;s
+        <span>By continuing, you agree to Technically&apos;s </span>
         <Link href="/terms" className="underline hover:text-primary transition">
           Terms of Service
         </Link>
-        and
+        <span> and </span>
         <Link
           href="/privacy"
           className="underline hover:text-primary transition"

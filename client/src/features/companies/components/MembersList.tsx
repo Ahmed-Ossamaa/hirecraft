@@ -1,52 +1,65 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { CompanyMember, CompanyMemberRole } from "@/shared/api/generated/model";
-import { Button } from "@/shared/components/ui/Button";
-import { Pagination } from "@/shared/components/ui/Pagination";
-import { Tabs } from "@/shared/components/ui/Tabs";
-import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
-import { MdGroup, MdPersonAdd } from "react-icons/md";
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { CompanyMember, CompanyMemberRole } from '@/shared/api/generated/model';
+import { Button } from '@/shared/components/ui/Button';
+import { Pagination } from '@/shared/components/ui/Pagination';
+import { Tabs } from '@/shared/components/ui/Tabs';
+import { TableSkeleton } from '@/shared/components/ui/TableSkeleton';
+import { MdGroup, MdPersonAdd } from 'react-icons/md';
 import {
   useGetMembers,
   getGetMembersQueryKey,
-} from "@/shared/api/generated/company-members/company-members";
+} from '@/shared/api/generated/company-members/company-members';
 import {
   useRemoveMember,
   useUpdateMemberRole,
   useSuspendMember,
   useActivateMember,
-} from "@/features/companies/api/useMemberMutations";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { getApiError } from "@/shared/utils/error";
-import { InviteMemberModal } from "./InviteMemberModal";
-import { useAuthStore } from "@/shared/stores/auth-store";
-import { useConfirm } from "@/shared/providers/confirm-provider";
-import { MemberTableRow } from "./MemberTableRow";
+} from '@/features/companies/api/useMemberMutations';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getApiError } from '@/shared/utils/error';
+import { InviteMemberModal } from './InviteMemberModal';
+import { useAuthStore } from '@/shared/stores/auth-store';
+import { useConfirm } from '@/shared/providers/confirm-provider';
+import { MemberTableRow } from './MemberTableRow';
+
+const memberStatusTabs = [
+  { id: 'ALL', label: 'All' },
+  { id: 'ACTIVE', label: 'Active' },
+  { id: 'PENDING', label: 'Pending' },
+  { id: 'SUSPENDED', label: 'Suspended' },
+  { id: 'DEACTIVATED', label: 'Deactivated' },
+] as const;
+
+type MemberStatusTab = (typeof memberStatusTabs)[number]['id'];
 
 export const MembersList: React.FC = () => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const companyRole = useAuthStore((s) => s.companyRole);
 
-  const isCurrentUserAdmin = companyRole === "ADMIN";
+  const isCurrentUserAdmin = companyRole === 'ADMIN';
   const canInviteMembers =
-    isCurrentUserAdmin || companyRole === "HIRING_MANAGER";
+    isCurrentUserAdmin || companyRole === 'HIRING_MANAGER';
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pageParam = Number(searchParams.get("page")) || 1;
-  const currentStatus = searchParams.get("status") || "ACTIVE";
+  const pageParam = Number(searchParams.get('page')) || 1;
+  const requestedStatus = searchParams.get('status');
+  const currentStatus: MemberStatusTab =
+    memberStatusTabs.find(({ id }) => id === requestedStatus)?.id ?? 'ALL';
   const { confirm } = useConfirm();
   const queryClient = useQueryClient();
 
-  const { data: membersRes, isLoading } = useGetMembers({
-    page: pageParam,
-    limit: 10,
-    status: currentStatus as any,
-  });
+  const membersQueryParams =
+    currentStatus === 'ALL'
+      ? { page: pageParam, limit: 10 }
+      : { page: pageParam, limit: 10, status: currentStatus };
+  
+  const { data: membersRes, isLoading } = useGetMembers(membersQueryParams);
 
   const members = (membersRes?.data?.data || []) as CompanyMember[];
   const currentPage = membersRes?.data?.page || 1;
@@ -60,62 +73,82 @@ export const MembersList: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("page", page.toString());
+    params.set('page', page.toString());
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleTabChange = (status: string) => {
+    const selectedStatus = memberStatusTabs.find(({ id }) => id === status)?.id;
+    if (!selectedStatus) return;
+
     const params = new URLSearchParams(searchParams.toString());
-    params.set("status", status);
-    params.set("page", "1");
+    params.set('status', selectedStatus);
+    params.set('page', '1');
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleRemove = async (memberId: string, memberName?: string) => {
     const isConfirmed = await confirm({
-      title: "Remove Member",
-      message: `Are you sure you want to permanently remove ${memberName || "this member"}?`,
-      confirmText: "Remove",
-      variant: "danger",
+      title: 'Remove Member',
+      message: `Are you sure you want to permanently remove ${memberName || 'this member'}?`,
+      confirmText: 'Remove',
+      variant: 'danger',
     });
     if (!isConfirmed) return;
     try {
       await removeMutation.mutateAsync({ userId: memberId });
-      toast.success("Member removed successfully");
+      toast.success('Member removed successfully');
     } catch (error) {
-      toast.error(getApiError(error, "Failed to remove member"));
+      toast.error(getApiError(error, 'Failed to remove member'));
     }
   };
 
   const handleSuspend = async (memberId: string, memberName?: string) => {
     const isConfirmed = await confirm({
-      title: "Suspend Member",
-      message: `Are you sure you want to suspend ${memberName || "this member"}? They will temporarily lose access.`,
-      confirmText: "Suspend",
-      variant: "danger",
+      title: 'Suspend Member',
+      message: `Are you sure you want to suspend ${memberName || 'this member'}? They will temporarily lose access.`,
+      confirmText: 'Suspend',
+      variant: 'danger',
     });
     if (!isConfirmed) return;
     try {
       await suspendMutation.mutateAsync({ userId: memberId });
-      toast.success("Member suspended successfully");
+      toast.success('Member suspended successfully');
     } catch (error) {
-      toast.error(getApiError(error, "Failed to suspend member"));
+      toast.error(getApiError(error, 'Failed to suspend member'));
     }
   };
 
-  const handleActivate = async (memberId: string, memberName?: string) => {
+  const handleActivate = async (
+    memberId: string,
+    memberName: string,
+    status: CompanyMember['status'],
+  ) => {
+    const action = status === 'DEACTIVATED' ? 'reactivate' : 'unsuspend';
+    const actionLabel = action === 'reactivate' ? 'Reactivate' : 'Unsuspend';
     const isConfirmed = await confirm({
-      title: "Unsuspend Member",
-      message: `Are you sure you want to unsuspend ${memberName || "this member"} and restore their access?`,
-      confirmText: "Unsuspend",
-      variant: "primary",
+      title: `${actionLabel} Member`,
+      message: `Are you sure you want to ${action} ${memberName}? They will regain access if your company has an available member seat.`,
+      confirmText: actionLabel,
+      variant: 'primary',
     });
     if (!isConfirmed) return;
     try {
       await activateMutation.mutateAsync({ userId: memberId });
-      toast.success("Member unsuspended successfully");
+      toast.success(
+        action === 'reactivate'
+          ? 'Member reactivated successfully'
+          : 'Member unsuspended successfully',
+      );
     } catch (error) {
-      toast.error(getApiError(error, "Failed to unsuspend member"));
+      toast.error(
+        getApiError(
+          error,
+          action === 'reactivate'
+            ? 'Failed to reactivate member'
+            : 'Failed to unsuspend member',
+        ),
+      );
     }
   };
 
@@ -128,9 +161,9 @@ export const MembersList: React.FC = () => {
         userId: memberId,
         data: { role: newRole },
       });
-      toast.success("Role updated successfully");
+      toast.success('Role updated successfully');
     } catch (error) {
-      toast.error(getApiError(error, "Failed to update role"));
+      toast.error(getApiError(error, 'Failed to update role'));
     }
   };
 
@@ -150,7 +183,7 @@ export const MembersList: React.FC = () => {
               <span className="w-14 h-5 bg-muted/60 animate-pulse rounded-full inline-block align-middle" />
             ) : (
               <span className="text-xs text-muted-foreground font-medium">
-                ({total} {total === 1 ? "member" : "members"})
+                ({total} {total === 1 ? 'member' : 'members'})
               </span>
             )}
           </div>
@@ -171,11 +204,7 @@ export const MembersList: React.FC = () => {
               </div>
             ) : (
               <Tabs
-                tabs={[
-                  { id: "ACTIVE", label: "Active" },
-                  { id: "PENDING", label: "Pending" },
-                  { id: "SUSPENDED", label: "Suspended" },
-                ]}
+                tabs={[...memberStatusTabs]}
                 activeTab={currentStatus}
                 onTabChange={handleTabChange}
               />
@@ -204,8 +233,16 @@ export const MembersList: React.FC = () => {
                 <tr>
                   <th className="px-5 py-3 font-medium">Member</th>
                   <th className="px-5 py-3 font-medium">
-                    {currentStatus === "PENDING" ? "Invited" : "Joined"}
+                    {currentStatus === 'ALL'
+                      ? 'Added'
+                      : currentStatus === 'PENDING'
+                        ? 'Invited'
+                        : 'Joined'}
                   </th>
+                  {requestedStatus === 'DEACTIVATED' && (
+                    <th className="px-5 py-3 font-medium">Deactivated</th>
+                  )}
+                  <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Role</th>
                   {isCurrentUserAdmin && (
                     <th className="px-5 py-3 font-medium text-right">
@@ -221,9 +258,7 @@ export const MembersList: React.FC = () => {
                     member={member}
                     currentUserId={user?.id}
                     isCurrentUserAdmin={isCurrentUserAdmin}
-                    currentStatus={
-                      currentStatus as "ACTIVE" | "PENDING" | "SUSPENDED"
-                    }
+                    showDeactivated={requestedStatus === 'DEACTIVATED'}
                     onRoleChange={handleRoleChange}
                     onSuspend={handleSuspend}
                     onActivate={handleActivate}
@@ -233,7 +268,7 @@ export const MembersList: React.FC = () => {
                 {members.length === 0 && (
                   <tr>
                     <td
-                      colSpan={isCurrentUserAdmin ? 4 : 3}
+                      colSpan={isCurrentUserAdmin ? 5 : 4}
                       className="px-5 py-8 text-center text-muted-foreground"
                     >
                       No members found.
