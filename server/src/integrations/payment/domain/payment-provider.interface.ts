@@ -2,6 +2,7 @@ export const PAYMENT_PROVIDER = Symbol('PAYMENT_PROVIDER');
 
 export enum PaymentSubscriptionStatus {
   ACTIVE = 'ACTIVE',
+  TRIALING = 'TRIALING',
   CANCELED = 'CANCELED',
   PAST_DUE = 'PAST_DUE',
   UNPAID = 'UNPAID',
@@ -37,12 +38,27 @@ export enum PaymentEventType {
   INVOICE_PAYMENT_FAILED = 'INVOICE_PAYMENT_FAILED',
 }
 
+export enum PaymentInvoiceBillingReason {
+  SUBSCRIPTION_CYCLE = 'SUBSCRIPTION_CYCLE',
+  SUBSCRIPTION_CREATE = 'SUBSCRIPTION_CREATE',
+  SUBSCRIPTION_UPDATE = 'SUBSCRIPTION_UPDATE',
+  OTHER = 'OTHER',
+}
+
+export interface PaymentInvoiceContext {
+  id: string;
+  billingReason: PaymentInvoiceBillingReason;
+  periodStart: Date;
+  periodEnd: Date;
+}
+
 export interface PaymentEvent {
   id: string;
   provider: PaymentProviderName;
   type: PaymentEventType;
   subscriptionId?: string;
   clientReferenceId?: string;
+  invoice?: PaymentInvoiceContext;
 }
 
 export interface PaymentPriceDetails {
@@ -91,6 +107,11 @@ export interface PaymentProvider {
     newPriceId: string,
   ): Promise<PaymentSubscription>;
 
+  /**
+   * Schedules a plan change for the current period boundary without changing
+   * the effective price in the current period. Providers that cannot guarantee
+   * this must reject the request.
+   */
   scheduleDowngrade(
     subscriptionId: string,
     newPriceId: string,

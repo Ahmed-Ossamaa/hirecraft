@@ -214,7 +214,7 @@ describe('SubscriptionsService', () => {
       subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValueOnce({
         id: 'sub_active_123',
         companyId: 'comp_1',
-        status: SubscriptionStatus.ACTIVE,
+        status: SubscriptionStatus.PAST_DUE,
       });
 
       await expect(
@@ -600,6 +600,25 @@ describe('SubscriptionsService', () => {
         tierLevel: 2,
         interval: 'month',
       } as any);
+      plansService.getPlanById.mockImplementation((id: PlanId) =>
+        id === PlanId.STARTER_MONTHLY
+          ? ({
+              id: PlanId.STARTER_MONTHLY,
+              name: 'Starter Monthly',
+              tierLevel: 1,
+              interval: 'month',
+              isFree: false,
+              paymentPriceId: 'price_starter_123',
+            } as any)
+          : ({
+              id: PlanId.PRO_MONTHLY,
+              name: 'Pro Monthly',
+              tierLevel: 2,
+              interval: 'month',
+              isFree: false,
+              paymentPriceId: 'price_pro_123',
+            } as any),
+      );
 
       await service.handlePaymentWebhook(event);
 
@@ -607,6 +626,166 @@ describe('SubscriptionsService', () => {
         companyId: 'comp_1',
       });
       expect(dataSource.transaction).toHaveBeenCalled();
+    });
+
+    it('does not treat an unrelated invoice event as a paid renewal', async () => {
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
+      const currentPeriodStart = new Date('2026-10-01T00:00:00Z');
+      const currentPeriodEnd = new Date('2026-11-01T00:00:00Z');
+      const localSub = {
+        id: 'sub_local_1',
+        companyId: 'comp_1',
+        providerSubId: 'sub_past_due_1',
+        planId: PlanId.PRO_MONTHLY,
+        scheduledPlanId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart,
+        currentPeriodEnd,
+        cancelAtPeriodEnd: false,
+        amount: 3000,
+        currency: 'EGP',
+        billingInterval: 'month',
+      };
+      const event = {
+        id: 'evt_old_invoice',
+        provider: 'stripe',
+        type: PaymentEventType.INVOICE_PAID,
+        subscriptionId: 'sub_past_due_1',
+        invoice: {
+          id: 'in_old',
+          billingReason: 'OTHER',
+          periodStart: new Date('2026-09-01T00:00:00Z'),
+          periodEnd: currentPeriodStart,
+        },
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_past_due_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.ACTIVE,
+        currentPeriodStart: new Date('2026-11-01T00:00:00Z'),
+        currentPeriodEnd: new Date('2026-12-01T00:00:00Z'),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue(localSub);
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        interval: 'month',
+      } as any);
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.PRO_MONTHLY,
+        name: 'Pro Monthly',
+        interval: 'month',
+        paymentPriceId: 'price_pro',
+      } as any);
+
+      await service.handlePaymentWebhook(event);
+
+      expect(localSub).toEqual(
+        expect.objectContaining({
+          planId: PlanId.PRO_MONTHLY,
+          scheduledPlanId: PlanId.STARTER_MONTHLY,
+          status: SubscriptionStatus.PAST_DUE,
+          currentPeriodStart,
+          currentPeriodEnd,
+        }),
+      );
+      expect(eventEmitter.emit).not.toHaveBeenCalledWith(
+        'subscription.reconcile',
+        expect.anything(),
+      );
+    });
+
+    it('applies a scheduled plan only when invoice confirms that renewal period', async () => {
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
+      const currentPeriodStart = new Date('2026-10-01T00:00:00Z');
+      const currentPeriodEnd = new Date('2026-11-01T00:00:00Z');
+      const nextPeriodEnd = new Date('2026-12-01T00:00:00Z');
+      const localSub = {
+        id: 'sub_local_1',
+        companyId: 'comp_1',
+        providerSubId: 'sub_past_due_1',
+        planId: PlanId.PRO_MONTHLY,
+        scheduledPlanId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart,
+        currentPeriodEnd,
+        cancelAtPeriodEnd: false,
+        amount: 3000,
+        currency: 'EGP',
+        billingInterval: 'month',
+      };
+      const event = {
+        id: 'evt_cycle_paid',
+        provider: 'stripe',
+        type: PaymentEventType.INVOICE_PAID,
+        subscriptionId: 'sub_past_due_1',
+        invoice: {
+          id: 'in_cycle',
+          billingReason: 'SUBSCRIPTION_CYCLE',
+          periodStart: currentPeriodEnd,
+          periodEnd: nextPeriodEnd,
+        },
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_past_due_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.ACTIVE,
+        currentPeriodStart: currentPeriodEnd,
+        currentPeriodEnd: nextPeriodEnd,
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue(localSub);
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+        isFree: false,
+        paymentPriceId: 'price_starter_123',
+      } as any);
+      plansService.getPlanById.mockImplementation((id: PlanId) =>
+        id === PlanId.PRO_MONTHLY
+          ? ({
+              id: PlanId.PRO_MONTHLY,
+              name: 'Pro Monthly',
+              tierLevel: 2,
+              interval: 'month',
+            } as any)
+          : ({
+              id: PlanId.STARTER_MONTHLY,
+              name: 'Starter Monthly',
+              tierLevel: 1,
+              interval: 'month',
+              isFree: false,
+              paymentPriceId: 'price_starter_123',
+            } as any),
+      );
+
+      await service.handlePaymentWebhook(event);
+
+      expect(localSub).toEqual(
+        expect.objectContaining({
+          planId: PlanId.STARTER_MONTHLY,
+          scheduledPlanId: null,
+          status: SubscriptionStatus.ACTIVE,
+          currentPeriodStart: currentPeriodEnd,
+          currentPeriodEnd: nextPeriodEnd,
+        }),
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
+        companyId: 'comp_1',
+      });
     });
 
     it('sets status to PAST_DUE on payment failure without triggering resource downgrade', async () => {
@@ -618,13 +797,15 @@ describe('SubscriptionsService', () => {
         type: PaymentEventType.INVOICE_PAYMENT_FAILED,
         subscriptionId: 'sub_past_due_1',
       } as any;
+      const currentPeriodStart = new Date('2026-10-01T00:00:00Z');
+      const currentPeriodEnd = new Date('2026-11-01T00:00:00Z');
 
       paymentProvider.retrieveSubscription.mockResolvedValue({
         id: 'sub_past_due_1',
         customerId: 'cus_acme',
         status: PaymentSubscriptionStatus.PAST_DUE,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(),
+        currentPeriodStart: new Date('2026-11-01T00:00:00Z'),
+        currentPeriodEnd: new Date('2026-12-01T00:00:00Z'),
         cancelAtPeriodEnd: false,
         priceId: 'price_starter_123',
       });
@@ -633,6 +814,9 @@ describe('SubscriptionsService', () => {
         id: 'sub_past_due_1',
         companyId: 'comp_1',
         planId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart,
+        currentPeriodEnd,
       });
 
       plansService.getPlanByPaymentPriceId.mockReturnValue({
@@ -654,6 +838,9 @@ describe('SubscriptionsService', () => {
       expect(subscriptionRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           status: SubscriptionStatus.PAST_DUE,
+          planId: PlanId.STARTER_MONTHLY,
+          currentPeriodStart,
+          currentPeriodEnd,
         }),
         expect.anything(),
       );
@@ -688,6 +875,7 @@ describe('SubscriptionsService', () => {
         id: 'sub_unpaid_1',
         companyId: 'comp_1',
         planId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
       });
 
       plansService.getPlanByPaymentPriceId.mockReturnValue({
@@ -715,6 +903,55 @@ describe('SubscriptionsService', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
         companyId: 'comp_1',
       });
+    });
+
+    it('does not repeat reconciliation for an already-terminal subscription', async () => {
+      processedWebhookRepo.tryRecordEvent.mockResolvedValue(true);
+
+      const event = {
+        id: 'evt_unpaid_repeat',
+        provider: 'stripe',
+        type: PaymentEventType.SUBSCRIPTION_UPDATED,
+        subscriptionId: 'sub_unpaid_1',
+      } as any;
+
+      paymentProvider.retrieveSubscription.mockResolvedValue({
+        id: 'sub_unpaid_1',
+        customerId: 'cus_acme',
+        status: PaymentSubscriptionStatus.UNPAID,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(),
+        cancelAtPeriodEnd: false,
+        priceId: 'price_starter_123',
+      });
+
+      subscriptionRepo.findOneByProviderSubId.mockResolvedValue({
+        id: 'sub_unpaid_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.UNPAID,
+      });
+
+      plansService.getPlanByPaymentPriceId.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      plansService.getPlanById.mockReturnValue({
+        id: PlanId.STARTER_MONTHLY,
+        name: 'Starter Monthly',
+        tierLevel: 1,
+        interval: 'month',
+      } as any);
+
+      await service.handlePaymentWebhook(event);
+
+      expect(eventEmitter.emit).not.toHaveBeenCalledWith(
+        'subscription.reconcile',
+        { companyId: 'comp_1' },
+      );
     });
   });
 
@@ -745,6 +982,7 @@ describe('SubscriptionsService', () => {
         id: 'sub_local_1',
         companyId: 'comp_1',
         planId: PlanId.STARTER_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
       });
 
       plansService.getPlanByPaymentPriceId.mockReturnValue({
@@ -773,6 +1011,132 @@ describe('SubscriptionsService', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('subscription.reconcile', {
         companyId: 'comp_1',
       });
+    });
+  });
+
+  describe('getCompanyPlan and getSubscriptionForCompany', () => {
+    it('returns the free plan when no active paid subscription exists', async () => {
+      const freePlan = { id: PlanId.FREE_MONTHLY } as any;
+      plansService.getPlanById.mockReturnValue(freePlan);
+      const calculateUsage = jest.spyOn(service, 'calculateCompanyUsage');
+
+      await expect(service.getCompanyPlan('comp_1')).resolves.toBe(freePlan);
+
+      expect(plansService.getPlanById).toHaveBeenCalledWith(
+        PlanId.FREE_MONTHLY,
+      );
+      expect(companiesService.getCompanyById).not.toHaveBeenCalled();
+      expect(calculateUsage).not.toHaveBeenCalled();
+    });
+
+    it('returns the effective paid plan without calculating usage', async () => {
+      const tx = {} as any;
+      const paidPlan = { id: PlanId.PRO_MONTHLY } as any;
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue({
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodEnd: new Date(Date.now() + 86400000),
+      });
+      plansService.getPlanById.mockReturnValue(paidPlan);
+      const calculateUsage = jest.spyOn(service, 'calculateCompanyUsage');
+
+      await expect(service.getCompanyPlan('comp_1', tx)).resolves.toBe(
+        paidPlan,
+      );
+
+      expect(
+        subscriptionRepo.findActiveOrPastDueByCompanyId,
+      ).toHaveBeenCalledWith('comp_1', tx);
+      expect(calculateUsage).not.toHaveBeenCalled();
+    });
+
+    it('keeps provider-backed scheduled plans unchanged until provider confirmation', async () => {
+      const tx = {} as any;
+      const periodEnd = new Date(Date.now() - 86400000);
+      const activeSub = {
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.STARTER_MONTHLY,
+        scheduledPlanId: PlanId.PRO_MONTHLY,
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodEnd: periodEnd,
+        currentPeriodStart: new Date(periodEnd.getTime() - 30 * 86400000),
+        cancelAtPeriodEnd: false,
+        providerSubId: 'provider_sub_1',
+      };
+      const currentPlan = {
+        id: PlanId.STARTER_MONTHLY,
+        interval: 'month',
+      } as any;
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
+      subscriptionRepo.save.mockImplementation(async (subscription: any) => {
+        return subscription;
+      });
+      plansService.getPlanById.mockReturnValue(currentPlan);
+      const calculateUsage = jest.spyOn(service, 'calculateCompanyUsage');
+
+      await expect(service.getCompanyPlan('comp_1', tx)).resolves.toBe(
+        currentPlan,
+      );
+
+      expect(activeSub.planId).toBe(PlanId.STARTER_MONTHLY);
+      expect(activeSub.scheduledPlanId).toBe(PlanId.PRO_MONTHLY);
+      expect(subscriptionRepo.save).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(calculateUsage).not.toHaveBeenCalled();
+    });
+
+    it('preserves the full subscription response and usage calculation', async () => {
+      const tx = {} as any;
+      const currentPeriodStart = new Date('2026-10-01T00:00:00Z');
+      const currentPeriodEnd = new Date(Date.now() + 86400000);
+      const activeSub = {
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart,
+        currentPeriodEnd,
+        cancelAtPeriodEnd: false,
+        scheduledPlanId: null,
+      };
+      const plan = { id: PlanId.PRO_MONTHLY } as any;
+      const usage = {
+        activeJobs: 1,
+        jobPostingsUsed: 2,
+        teamMembersCount: 3,
+      };
+      subscriptionRepo.findActiveOrPastDueByCompanyId.mockResolvedValue(
+        activeSub,
+      );
+      plansService.getPlanById.mockReturnValue(plan);
+      jest.spyOn(service, 'calculateCompanyUsage').mockResolvedValue(usage);
+
+      await expect(
+        service.getSubscriptionForCompany('comp_1', tx),
+      ).resolves.toEqual({
+        id: 'sub_1',
+        companyId: 'comp_1',
+        planId: PlanId.PRO_MONTHLY,
+        plan,
+        status: SubscriptionStatus.PAST_DUE,
+        currentPeriodStart,
+        currentPeriodEnd,
+        cancelAtPeriodEnd: false,
+        scheduledPlanId: null,
+        scheduledPlan: null,
+        usage,
+      });
+      expect(service.calculateCompanyUsage).toHaveBeenCalledWith(
+        'comp_1',
+        currentPeriodStart,
+        currentPeriodEnd,
+        tx,
+      );
     });
   });
 

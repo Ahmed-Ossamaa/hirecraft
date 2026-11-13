@@ -60,10 +60,12 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
   async findOneByProviderSubId(
     providerSubId: string,
     tx?: EntityManager,
+    lockForUpdate = false,
   ): Promise<Subscription | null> {
     const manager = tx || this.repository.manager;
     const ormEntity = await manager.findOne(SubscriptionOrmEntity, {
       where: { providerSubId },
+      ...(tx && lockForUpdate ? { lock: { mode: 'pessimistic_write' } } : {}),
     });
     return ormEntity ? this.mapToDomain(ormEntity) : null;
   }
@@ -136,7 +138,7 @@ export class SubscriptionTypeormRepository implements ISubscriptionRepository {
       .where('sub.status = :status', { status: SubscriptionStatus.ACTIVE })
       .andWhere('sub.currentPeriodEnd IS NOT NULL')
       .andWhere('sub.currentPeriodEnd <= :now', { now })
-      .andWhere('(sub.cancelAtPeriodEnd = true OR sub.providerSubId IS NULL)')
+      .andWhere('sub.providerSubId IS NULL')
       .getMany();
     return ormEntities.map((e) => this.mapToDomain(e));
   }

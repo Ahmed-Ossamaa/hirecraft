@@ -26,6 +26,7 @@ export interface ISubscriptionRepository {
   findOneByProviderSubId(
     providerSubId: string,
     tx?: EntityManager,
+    lockForUpdate?: boolean,
   ): Promise<Subscription | null>;
 
   findSubscriptions(
