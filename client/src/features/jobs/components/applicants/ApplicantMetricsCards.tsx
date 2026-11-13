@@ -113,7 +113,7 @@ export const ApplicantMetricsCards: React.FC<ApplicantMetricsCardsProps> = ({
           const percentageTooltip =
             stage.id === "accepted"
               ? `${percentage}% of offers (${count} of ${denominator})`
-              : `${percentage}% of all applications (${count} of ${denominator}, including archived)`;
+              : `${percentage}% of all applications (${count} of ${denominator})`;
 
           return (
             <div

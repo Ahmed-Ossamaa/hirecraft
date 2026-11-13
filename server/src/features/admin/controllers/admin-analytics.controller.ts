@@ -1,8 +1,15 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
@@ -106,6 +113,12 @@ export class AdminAnalyticsController {
     summary:
       'Get top industrial machinery job demand vs skilled worker supply (Admin only)',
   })
+  @ApiQuery({
+    name: 'machineId',
+    required: false,
+    type: String,
+    format: 'uuid',
+  })
   @ApiStandardResponse(AdminMachineryAnalyticsResponseDto)
   @ApiResponse({
     status: 200,
@@ -115,7 +128,10 @@ export class AdminAnalyticsController {
     status: 403,
     description: 'Forbidden. Requires PLATFORM_ADMIN role.',
   })
-  async getMachineryMetrics() {
-    return this.analyticsService.getMachineryMetrics();
+  async getMachineryMetrics(
+    @Query('machineId', new ParseUUIDPipe({ optional: true }))
+    machineId?: string,
+  ) {
+    return this.analyticsService.getMachineryMetrics(10, machineId);
   }
 }

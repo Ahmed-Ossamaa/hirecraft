@@ -53,8 +53,9 @@ export interface IAnalyticsReadRepository {
    * Retrieves top industrial machines sorted by active job demand, comparing
    * demand (published, non-expired jobs) against supply (distinct workers holding the skill).
    */
-  getPlatformMachinerySupplyAndDemand(
+  getMachinerySupplyAndDemand(
     limit?: number,
+    machineId?: string,
   ): Promise<MachineryDemandSupplyPoint[]>;
 
   /**
