@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { MdBarChart } from "react-icons/md";
 import { GetOverviewStatsRange } from "@/shared/api/generated/model";
+import { useMachineryCatalog } from "@/shared/api/use-machinery-catalog";
+import { MachineryAnalyticsFilters } from "@/shared/components/analytics/MachineryAnalyticsFilters";
 import {
   useGetOverviewStats,
   useGetUserGrowthMetrics,
@@ -15,12 +17,15 @@ import { AnalyticsKpiGrid } from "@/features/admin/components/analytics/Analytic
 import { UserGrowthChart } from "@/features/admin/components/analytics/UserGrowthChart";
 import { RevenueAnalyticsCard } from "@/features/admin/components/analytics/RevenueAnalyticsCard";
 import { RecruitmentStatusChart } from "@/features/admin/components/analytics/RecruitmentStatusChart";
-import { MachineryDemandChart } from "@/features/admin/components/analytics/MachineryDemandChart";
+import { MachineryDemandChart } from "@/shared/components/analytics/MachineryDemandChart";
 
 export default function AdminAnalyticsPage() {
   const [selectedRange, setSelectedRange] = useState<GetOverviewStatsRange>(
     GetOverviewStatsRange["30d"],
   );
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedMachineId, setSelectedMachineId] = useState("");
+  const machineryCatalogQuery = useMachineryCatalog();
 
   const overviewQuery = useGetOverviewStats({
     range: selectedRange,
@@ -36,14 +41,17 @@ export default function AdminAnalyticsPage() {
     range: selectedRange,
   });
 
-  const machineryQuery = useGetMachineryMetrics();
+  const machineryQuery = useGetMachineryMetrics({
+    machineId: selectedMachineId || undefined,
+  });
 
   const isRefreshing =
     overviewQuery.isRefetching ||
     userGrowthQuery.isRefetching ||
     revenueQuery.isRefetching ||
     recruitmentQuery.isRefetching ||
-    machineryQuery.isRefetching;
+    machineryQuery.isRefetching ||
+    machineryCatalogQuery.isRefetching;
 
   const handleRefresh = () => {
     overviewQuery.refetch();
@@ -51,6 +59,7 @@ export default function AdminAnalyticsPage() {
     revenueQuery.refetch();
     recruitmentQuery.refetch();
     machineryQuery.refetch();
+    machineryCatalogQuery.refetch();
   };
 
   const hasError =
@@ -58,7 +67,8 @@ export default function AdminAnalyticsPage() {
     userGrowthQuery.isError ||
     revenueQuery.isError ||
     recruitmentQuery.isError ||
-    machineryQuery.isError;
+    machineryQuery.isError ||
+    machineryCatalogQuery.isError;
 
   return (
     <div className="space-y-8 max-w-7xl">
@@ -126,10 +136,24 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Right Column: Machinery Demand vs Worker Supply */}
-        <MachineryDemandChart
-          data={machineryQuery.data?.data}
-          isLoading={machineryQuery.isLoading}
-        />
+        <div className="space-y-4">
+          <MachineryAnalyticsFilters
+            categories={machineryCatalogQuery.data?.categories ?? []}
+            machines={machineryCatalogQuery.data?.machines ?? []}
+            isLoading={machineryCatalogQuery.isLoading}
+            selectedCategoryId={selectedCategoryId}
+            selectedMachineId={selectedMachineId}
+            onCategoryChange={(categoryId) => {
+              setSelectedCategoryId(categoryId);
+              setSelectedMachineId("");
+            }}
+            onMachineChange={setSelectedMachineId}
+          />
+          <MachineryDemandChart
+            data={machineryQuery.data?.data}
+            isLoading={machineryQuery.isLoading}
+          />
+        </div>
       </div>
     </div>
   );

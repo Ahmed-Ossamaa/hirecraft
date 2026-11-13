@@ -131,6 +131,10 @@ export const getRecruitmentMetricsResponse = zod.object({
 /**
  * @summary Get top industrial machinery job demand vs skilled worker supply (Admin only)
  */
+export const getMachineryMetricsQueryParams = zod.object({
+  "machineId": zod.string().uuid().optional()
+})
+
 export const getMachineryMetricsResponse = zod.object({
   "message": zod.string(),
   "data": zod.object({

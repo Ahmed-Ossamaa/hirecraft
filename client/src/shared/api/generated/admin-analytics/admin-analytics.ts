@@ -22,6 +22,7 @@ import type {
 
 import type {
   GetMachineryMetrics200,
+  GetMachineryMetricsParams,
   GetOverviewStats200,
   GetOverviewStatsParams,
   GetRecruitmentMetrics200,
@@ -413,13 +414,14 @@ export function useGetRecruitmentMetrics<TData = Awaited<ReturnType<typeof getRe
  * @summary Get top industrial machinery job demand vs skilled worker supply (Admin only)
  */
 export const getMachineryMetrics = (
-    
+    params?: GetMachineryMetricsParams,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
       
       
       return customAxiosInstance<GetMachineryMetrics200>(
-      {url: `/api/v1/admin/analytics/machinery`, method: 'GET', signal
+      {url: `/api/v1/admin/analytics/machinery`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -427,23 +429,23 @@ export const getMachineryMetrics = (
 
 
 
-export const getGetMachineryMetricsQueryKey = () => {
+export const getGetMachineryMetricsQueryKey = (params?: GetMachineryMetricsParams,) => {
     return [
-    `/api/v1/admin/analytics/machinery`
+    `/api/v1/admin/analytics/machinery`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getGetMachineryMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+export const getGetMachineryMetricsQueryOptions = <TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(params?: GetMachineryMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMachineryMetricsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetMachineryMetricsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMachineryMetrics>>> = ({ signal }) => getMachineryMetrics(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMachineryMetrics>>> = ({ signal }) => getMachineryMetrics(params, requestOptions, signal);
 
       
 
@@ -457,7 +459,7 @@ export type GetMachineryMetricsQueryError = void
 
 
 export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
+ params: undefined |  GetMachineryMetricsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMachineryMetrics>>,
           TError,
@@ -467,7 +469,7 @@ export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMach
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
+ params?: GetMachineryMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMachineryMetrics>>,
           TError,
@@ -477,7 +479,7 @@ export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMach
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetMachineryMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -485,11 +487,11 @@ export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMach
  */
 
 export function useGetMachineryMetrics<TData = Awaited<ReturnType<typeof getMachineryMetrics>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ params?: GetMachineryMetricsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMachineryMetrics>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMachineryMetricsQueryOptions(options)
+  const queryOptions = getGetMachineryMetricsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

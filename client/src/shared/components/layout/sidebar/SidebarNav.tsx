@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   MdWorkOutline,
   MdBookmarkBorder,
@@ -13,9 +13,9 @@ import {
   MdWorkspacePremium,
   MdBarChart,
   MdPrecisionManufacturing,
-} from "react-icons/md";
-import { useAuthStore } from "@/shared/stores/auth-store";
-import { UserUserType } from "@/shared/api/generated/model";
+} from 'react-icons/md';
+import { useAuthStore } from '@/shared/stores/auth-store';
+import { UserUserType } from '@/shared/api/generated/model';
 
 export interface NavItem {
   label: string;
@@ -25,84 +25,90 @@ export interface NavItem {
 
 export const adminNav: NavItem[] = [
   {
-    label: "Overview",
-    href: "/dashboard/admin",
+    label: 'Overview',
+    href: '/dashboard/admin',
     icon: <MdDashboard className="text-lg" />,
   },
   {
-    label: "Analytics",
-    href: "/dashboard/admin/analytics",
+    label: 'Analytics',
+    href: '/dashboard/admin/analytics',
     icon: <MdBarChart className="text-lg" />,
   },
   {
-    label: "Users",
-    href: "/dashboard/admin/users",
+    label: 'Users',
+    href: '/dashboard/admin/users',
     icon: <MdGroup className="text-lg" />,
   },
   {
-    label: "Companies",
-    href: "/dashboard/admin/companies",
+    label: 'Companies',
+    href: '/dashboard/admin/companies',
     icon: <MdBusiness className="text-lg" />,
   },
   {
-    label: "Job Moderation",
-    href: "/dashboard/admin/jobs",
+    label: 'Job Moderation',
+    href: '/dashboard/admin/jobs',
     icon: <MdWorkOutline className="text-lg" />,
   },
   {
-    label: "Machines",
-    href: "/dashboard/admin/machines",
+    label: 'Machines',
+    href: '/dashboard/admin/machines',
     icon: <MdPrecisionManufacturing className="text-lg" />,
   },
   {
-    label: "Subscriptions",
-    href: "/dashboard/admin/billing",
+    label: 'Subscriptions',
+    href: '/dashboard/admin/billing',
     icon: <MdWorkspacePremium className="text-lg" />,
   },
 ];
 
 export const candidateNav: NavItem[] = [
   {
-    label: "Applications",
-    href: "/dashboard/applications",
+    label: 'Applications',
+    href: '/dashboard/applications',
     icon: <MdWorkOutline className="text-lg" />,
   },
   {
-    label: "Saved Jobs",
-    href: "/dashboard/saved-jobs",
+    label: 'Saved Jobs',
+    href: '/dashboard/saved-jobs',
     icon: <MdBookmarkBorder className="text-lg" />,
   },
   {
-    label: "Browse Jobs",
-    href: "/jobs",
+    label: 'Browse Jobs',
+    href: '/jobs',
     icon: <MdDashboard className="text-lg" />,
   },
 ];
 
 export const employerNav: NavItem[] = [
   {
-    label: "Company",
-    href: "/dashboard/company",
+    label: 'Company',
+    href: '/dashboard/company',
     icon: <MdBusiness className="text-lg" />,
   },
+
   {
-    label: "Job Postings",
-    href: "/dashboard/company/jobs",
+    label: 'Job Postings',
+    href: '/dashboard/company/jobs',
     icon: <MdPostAdd className="text-lg" />,
   },
   {
-    label: "Team",
-    href: "/dashboard/company/members",
+    label: 'Team',
+    href: '/dashboard/company/members',
     icon: <MdGroup className="text-lg" />,
   },
   {
-    label: "Plans & Billing",
-    href: "/dashboard/company/billing",
+    label: 'Plans & Billing',
+    href: '/dashboard/company/billing',
     icon: <MdWorkspacePremium className="text-lg" />,
   },
   {
-    label: "Browse Jobs",
-    href: "/jobs",
+    label: 'Machine Analytics',
+    href: '/dashboard/company/analytics',
+    icon: <MdPrecisionManufacturing className="text-lg" />,
+  },
+  {
+    label: 'Browse Jobs',
+    href: '/jobs',
     icon: <MdDashboard className="text-lg" />,
   },
 ];
@@ -123,10 +129,10 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
         : candidateNav;
 
   const isActive = (href: string) => {
-    if (href === "/jobs") return pathname === "/jobs";
-    if (href === "/dashboard/company") return pathname === href;
-    if (href === "/dashboard/admin") return pathname === href;
-    return pathname === href || pathname.startsWith(href + "/");
+    if (href === '/jobs') return pathname === '/jobs';
+    if (href === '/dashboard/company') return pathname === href;
+    if (href === '/dashboard/admin') return pathname === href;
+    return pathname === href || pathname.startsWith(href + '/');
   };
 
   return (
@@ -142,10 +148,10 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
               transition-colors duration-150
               ${
                 active
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-card-hover border border-transparent"
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-card-hover border border-transparent'
               }
-              ${collapsed ? "justify-center px-0" : ""}
+              ${collapsed ? 'justify-center px-0' : ''}
             `}
             title={collapsed ? item.label : undefined}
           >
