@@ -17,7 +17,7 @@ describe('AdminAnalyticsService', () => {
     getPlatformJobPostingsCount: jest.fn(),
     getPlatformActiveSubscriptions: jest.fn(),
     getPlatformApplicationStatusDistribution: jest.fn(),
-    getPlatformMachinerySupplyAndDemand: jest.fn(),
+    getMachinerySupplyAndDemand: jest.fn(),
     getPlatformEarliestRecordDate: jest.fn(),
   };
 
@@ -219,7 +219,7 @@ describe('AdminAnalyticsService', () => {
 
   describe('getMachineryMetrics', () => {
     it('should identify market shortages and surpluses correctly', async () => {
-      mockAnalyticsRepo.getPlatformMachinerySupplyAndDemand.mockResolvedValue([
+      mockAnalyticsRepo.getMachinerySupplyAndDemand.mockResolvedValue([
         {
           machineId: 'm1',
           nameEn: 'CNC Lathe',

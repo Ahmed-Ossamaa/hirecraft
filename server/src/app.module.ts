@@ -26,6 +26,7 @@ import { PlansModule } from './features/plans/plans.module';
 import { SubscriptionLimitsModule } from './features/billing/subscription-limits/subscription-limits.module';
 import { AdminModule } from './features/admin/admin.module';
 import { SavedJobsModule } from './features/saved-jobs/saved-jobs.module';
+import { CompanyAnalyticsModule } from './features/companies/company-analytics.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { SavedJobsModule } from './features/saved-jobs/saved-jobs.module';
     UsersModule,
     AuthModule,
     CompaniesModule,
+    CompanyAnalyticsModule,
     JobsModule,
     ApplicationsModule,
     CompanyMembersModule,

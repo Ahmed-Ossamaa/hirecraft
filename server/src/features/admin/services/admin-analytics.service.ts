@@ -17,6 +17,7 @@ import {
 } from '../dto/admin-analytics.dto';
 import { ApplicationStatus } from '@/features/applications/domain/application-status.enum';
 import { SubscriptionStatus } from '@/features/billing/domain/subscription-status.enum';
+import { classifyMachineryMarketStatus } from '@/features/analytics/domain/utils/classify-machinery-market-status';
 
 interface ResolvedDateRange {
   currentStart: Date;
@@ -359,33 +360,24 @@ export class AdminAnalyticsService {
   /**
    * Retrieves top industrial machinery in-demand vs skilled worker supply.
    */
-  async getMachineryMetrics(): Promise<AdminMachineryAnalyticsResponseDto> {
-    const rawMachines =
-      await this.analyticsRepo.getPlatformMachinerySupplyAndDemand(10);
+  async getMachineryMetrics(
+    limit = 10,
+    machineId?: string,
+  ): Promise<AdminMachineryAnalyticsResponseDto> {
+    const rawMachines = await this.analyticsRepo.getMachinerySupplyAndDemand(
+      limit,
+      machineId,
+    );
 
-    const machines: AdminMachineSupplyDemandItemDto[] = rawMachines.map((m) => {
-      let marketStatus: 'SHORTAGE' | 'BALANCED' | 'SURPLUS' = 'BALANCED';
-
-      if (m.supplyToDemandRatio === null) {
-        marketStatus = m.distinctWorkersSupply > 0 ? 'SURPLUS' : 'BALANCED';
-      } else if (m.supplyToDemandRatio < 1.0) {
-        marketStatus = 'SHORTAGE';
-      } else if (m.supplyToDemandRatio > 3.0) {
-        marketStatus = 'SURPLUS';
-      }
-
-      return {
-        machineId: m.machineId,
-        nameEn: m.nameEn,
-        nameAr: m.nameAr,
-        categoryEn: m.categoryEn,
-        categoryAr: m.categoryAr,
-        activeJobsDemand: m.activeJobsDemand,
-        distinctWorkersSupply: m.distinctWorkersSupply,
-        supplyToDemandRatio: m.supplyToDemandRatio,
-        marketStatus,
-      };
-    });
+    const machines: AdminMachineSupplyDemandItemDto[] = rawMachines.map(
+      (m) => ({
+        ...m,
+        marketStatus: classifyMachineryMarketStatus(
+          m.supplyToDemandRatio,
+          m.distinctWorkersSupply,
+        ),
+      }),
+    );
 
     return { machines };
   }

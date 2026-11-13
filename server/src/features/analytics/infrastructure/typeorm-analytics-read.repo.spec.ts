@@ -109,7 +109,7 @@ describe('TypeOrmAnalyticsReadRepository', () => {
       },
     ]);
 
-    const result = await repo.getPlatformMachinerySupplyAndDemand(5);
+    const result = await repo.getMachinerySupplyAndDemand(5);
 
     expect(result).toHaveLength(2);
     expect(result[0].supplyToDemandRatio).toBe(2.0); // 8 / 4

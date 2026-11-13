@@ -224,8 +224,23 @@ export class TypeOrmAnalyticsReadRepository implements IAnalyticsReadRepository 
     }));
   }
 
-  async getPlatformMachinerySupplyAndDemand(
+  /**
+   * @description Retrieves machinery demand and supply statistics.
+   *
+   * - Includes each machine and its category.
+   * - Counts published, unexpired jobs per machine.
+   * - Counts distinct workers registered with skills for each machine.
+   * - Returns zero when no matching jobs or workers exist.
+   * - Optionally filters by machine ID.
+   * - Sorts by demand, then supply, in descending order.
+   *
+   * @param limit Maximum number of machines to return (default: 10).
+   * @param machineId Optional machine ID filter.
+   * @returns Machinery demand and supply statistics.
+   */
+  async getMachinerySupplyAndDemand(
     limit = 10,
+    machineId?: string,
   ): Promise<MachineryDemandSupplyPoint[]> {
     const sql = `
       SELECT
@@ -249,13 +264,14 @@ export class TypeOrmAnalyticsReadRepository implements IAnalyticsReadRepository 
         FROM worker_machine_skills
         GROUP BY "machineId"
       ) w ON m.id = w."machineId"
+      WHERE ($2::uuid IS NULL OR m.id = $2::uuid)
       ORDER BY "activeJobsDemand" DESC, "distinctWorkersSupply" DESC
       LIMIT $1;
     `;
 
     const rawRows = await this.machineRepo.query<RawMachinerySupplyDemandRow[]>(
       sql,
-      [limit],
+      [limit, machineId ?? null],
     );
 
     return rawRows.map((r) => {
