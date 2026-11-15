@@ -7,11 +7,19 @@ import {
   UpdateWorkerProfileParams,
   AddMachineSkillParams,
   UpdateMachineSkillParams,
+  WorkerProfileSearchResult,
+  WorkerProfileSearchCriteria,
 } from '../domain/worker-profile.repo.interface';
+import type {
+  PageResultWithHasNext,
+  PaginationOptions,
+} from '@/common/pagination/pagination.types';
 import { WorkerProfile } from '../domain/worker-profile.entity';
 import { WorkerProfileOrmEntity } from './worker-profile.orm-entity';
 import { WorkerMachineSkill } from '../domain/worker-machine-skill.entity';
 import { WorkerMachineSkillOrmEntity } from './worker-machine-skill.orm-entity';
+import { EXPERIENCE_LEVEL_RANK } from '@/features/jobs/domain/exp-level.enum';
+import { MAX_WORKER_PROFILE_SEARCH_PAGE } from '../worker-profile-search.constants';
 
 @Injectable()
 export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryInterface {
@@ -163,7 +171,132 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     await this.skillRepository.delete(skillId);
   }
 
-  //-------------------------
+  async findByCriteria(
+    criteria: WorkerProfileSearchCriteria,
+    pagination: PaginationOptions,
+  ): Promise<PageResultWithHasNext<WorkerProfileSearchResult>> {
+    const experienceRankSql = `
+    CASE matchingSkill.experienceLevel
+      WHEN 'ENTRY_LEVEL' THEN 1
+      WHEN 'SKILLED' THEN 2
+      WHEN 'SENIOR' THEN 3
+      WHEN 'EXPERT' THEN 4
+      ELSE 0
+    END
+  `;
+
+    const skillConditions: string[] = [];
+    const skillParams: Record<string, string | number> = {};
+
+    if (criteria.machineId) {
+      skillConditions.push('matchingSkill.machineId = :machineId');
+      skillParams.machineId = criteria.machineId;
+    }
+
+    if (criteria.experienceLevel) {
+      skillConditions.push(`${experienceRankSql} >= :experienceLevelRank`);
+
+      skillParams.experienceLevelRank =
+        EXPERIENCE_LEVEL_RANK[criteria.experienceLevel];
+    }
+
+    const matchingProfilesQuery = this.repository
+      .createQueryBuilder('profile')
+      .innerJoin('profile.user', 'user')
+      .innerJoin(
+        'profile.skills',
+        'matchingSkill',
+        skillConditions.join(' AND '),
+        skillParams,
+      )
+      .select([
+        'profile.id AS "id"',
+        'profile.title AS "title"',
+        'profile.country AS "country"',
+        'profile.city AS "city"',
+        'profile.createdAt AS "createdAt"',
+        'user.firstName AS "firstName"',
+        'user.lastName AS "lastName"',
+        'user.avatarURL AS "avatarURL"',
+      ])
+      .addSelect(experienceRankSql, 'experienceRank')
+      .addSelect('matchingSkill.yearsOfExperience', 'yearsOfExperience');
+
+    if (!criteria.machineId) {
+      matchingProfilesQuery.addSelect(
+        `
+        ROW_NUMBER() OVER (
+          PARTITION BY profile.id
+          ORDER BY
+            ${experienceRankSql} DESC,
+            matchingSkill.yearsOfExperience DESC,
+            matchingSkill.id ASC
+        )
+      `,
+        'skillRowNumber',
+      );
+    }
+
+    if (criteria.machineCategoryId) {
+      matchingProfilesQuery.innerJoin(
+        'matchingSkill.machine',
+        'machine',
+        'machine.categoryId = :machineCategoryId',
+        { machineCategoryId: criteria.machineCategoryId },
+      );
+    }
+
+    if (criteria.country) {
+      matchingProfilesQuery.andWhere('profile.country = :country', {
+        country: criteria.country,
+      });
+    }
+
+    if (criteria.city) {
+      matchingProfilesQuery.andWhere('profile.city = :city', {
+        city: criteria.city,
+      });
+    }
+
+    const baseQuery = this.repository.manager
+      .createQueryBuilder()
+      .from(`(${matchingProfilesQuery.getQuery()})`, 'ranked')
+      .setParameters(matchingProfilesQuery.getParameters());
+
+    if (!criteria.machineId) {
+      baseQuery.where('ranked."skillRowNumber" = 1');
+    }
+
+    const { page, limit } = pagination;
+    const matchingProfiles = await baseQuery
+      .select([
+        'ranked."id" AS "id"',
+        'ranked."title" AS "title"',
+        'ranked."country" AS "country"',
+        'ranked."city" AS "city"',
+        'ranked."firstName" AS "firstName"',
+        'ranked."lastName" AS "lastName"',
+        'ranked."avatarURL" AS "avatarURL"',
+      ])
+      .orderBy('ranked."experienceRank"', 'DESC')
+      .addOrderBy('ranked."yearsOfExperience"', 'DESC')
+      .addOrderBy('ranked."createdAt"', 'DESC')
+      .addOrderBy('ranked."id"', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit + 1)
+      .getRawMany<WorkerProfileSearchResult>();
+
+    const hasNext =
+      page < MAX_WORKER_PROFILE_SEARCH_PAGE && matchingProfiles.length > limit;
+
+    return {
+      data: matchingProfiles.slice(0, limit),
+      page,
+      limit,
+      hasNext,
+    };
+  }
+
   private mapToDomain(orm: WorkerProfileOrmEntity): WorkerProfile {
     const profile = new WorkerProfile();
 

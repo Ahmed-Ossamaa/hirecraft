@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('machines')
@@ -19,6 +20,7 @@ export class MachineOrmEntity {
   @Column({ type: 'varchar', length: 100 })
   nameAr!: string;
 
+  @Index('machine_category_id_idx')
   @Column({ type: 'uuid' })
   categoryId!: string;
 

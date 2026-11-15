@@ -1,6 +1,10 @@
 import { ExperienceLevel } from '@/features/jobs/domain/exp-level.enum';
 import { WorkerProfile } from './worker-profile.entity';
 import { WorkerMachineSkill } from './worker-machine-skill.entity';
+import type {
+  PageResultWithHasNext,
+  PaginationOptions,
+} from '@/common/pagination/pagination.types';
 
 export const WORKER_PROFILE_REPOSITORY = Symbol('WORKER_PROFILE_REPOSITORY');
 
@@ -11,6 +15,24 @@ export interface CreateWorkerProfileParams {
   bio?: string;
   country: string;
   city: string;
+}
+
+export interface WorkerProfileSearchCriteria {
+  machineCategoryId?: string;
+  machineId?: string;
+  experienceLevel?: ExperienceLevel;
+  country?: string;
+  city?: string;
+}
+
+export interface WorkerProfileSearchResult {
+  id: string;
+  title: string;
+  country: string;
+  city: string;
+  firstName: string;
+  lastName: string;
+  avatarURL: string | null;
 }
 
 export type UpdateWorkerProfileParams = Partial<
@@ -52,4 +74,12 @@ export interface WorkerProfileRepositoryInterface {
 
   getProfileId(userId: string): Promise<string | null>;
   findProfileIdsByUserIds(userIds: string[]): Promise<Map<string, string>>;
+
+  /**
+   * @description Find worker profiles based on the provided search criteria and pagination options.
+   */
+  findByCriteria(
+    criteria: WorkerProfileSearchCriteria,
+    pagination: PaginationOptions,
+  ): Promise<PageResultWithHasNext<WorkerProfileSearchResult>>;
 }

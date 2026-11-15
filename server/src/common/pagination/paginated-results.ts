@@ -16,3 +16,17 @@ export class PaginatedResult<T> {
   @ApiProperty()
   totalPages: number;
 }
+
+export class PaginatedResultWithHasNext<T> {
+  @ApiProperty({ isArray: true, type: () => Object })
+  data!: T[];
+
+  @ApiProperty()
+  page!: number;
+
+  @ApiProperty()
+  limit!: number;
+
+  @ApiProperty()
+  hasNext!: boolean;
+}

@@ -14,7 +14,10 @@ import { CreateWorkerProfileDto } from './dto/create-worker-profile.dto';
 import { AddMachineSkillDto } from './dto/add-machine-skills.dto';
 import { WorkerMachineSkill } from './domain/worker-machine-skill.entity';
 import { UpdateWorkerProfileDto } from './dto/update-worker-profile.dto';
+import { PaginatedResultWithHasNext } from '@/common/pagination/paginated-results';
 import { UpdateMachineSkillDto } from './dto/update-machine-skill.dto';
+import { SearchWorkerProfilesDto } from './dto/search-worker-profiles.dto';
+import { WorkerProfileSearchResultDto } from './dto/wProfile-search-results.dto';
 
 @Injectable()
 export class WorkerProfilesService {
@@ -170,5 +173,17 @@ export class WorkerProfilesService {
       return new Map();
     }
     return this.profileRepository.findProfileIdsByUserIds(userIds);
+  }
+
+  searchByMachineId(
+    query: SearchWorkerProfilesDto,
+  ): Promise<PaginatedResultWithHasNext<WorkerProfileSearchResultDto>> {
+    const { machineCategoryId, machineId, experienceLevel, country, city } =
+      query;
+
+    return this.profileRepository.findByCriteria(
+      { machineCategoryId, machineId, experienceLevel, country, city },
+      { page: query.page, limit: query.limit },
+    );
   }
 }
