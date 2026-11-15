@@ -6,9 +6,12 @@ import { WorkerProfileOrmEntity } from './infrastructure/worker-profile.orm-enti
 import { WorkerMachineSkillOrmEntity } from './infrastructure/worker-machine-skill.orm-entity';
 import { WORKER_PROFILE_REPOSITORY } from './domain/worker-profile.repo.interface';
 import { WorkerProfileTypeormRepository } from './infrastructure/worker-profile.typeorm.repo';
+import { BillingModule } from '../billing/billing.module';
+import { SubscriptionPlanGuard } from '@/common/guards/subscription-plan.guard';
 
 @Module({
   imports: [
+    BillingModule,
     TypeOrmModule.forFeature([
       WorkerProfileOrmEntity,
       WorkerMachineSkillOrmEntity,
@@ -17,6 +20,7 @@ import { WorkerProfileTypeormRepository } from './infrastructure/worker-profile.
   controllers: [WorkerProfilesController],
   providers: [
     WorkerProfilesService,
+    SubscriptionPlanGuard,
     {
       provide: WORKER_PROFILE_REPOSITORY,
       useClass: WorkerProfileTypeormRepository,

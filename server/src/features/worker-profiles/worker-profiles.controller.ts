@@ -8,6 +8,7 @@ import {
   Delete,
   Patch,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { WorkerProfilesService } from './worker-profiles.service';
 import { CreateWorkerProfileDto } from './dto/create-worker-profile.dto';
@@ -28,6 +29,13 @@ import { AddMachineSkillDto } from './dto/add-machine-skills.dto';
 import { WorkerMachineSkill } from './domain/worker-machine-skill.entity';
 import { UpdateMachineSkillDto } from './dto/update-machine-skill.dto';
 import { UpdateWorkerProfileDto } from './dto/update-worker-profile.dto';
+import { SearchWorkerProfilesDto } from './dto/search-worker-profiles.dto';
+import { ApiPaginatedResponse } from '@/common/swagger/api-paginated-response.decorator';
+import { WorkerProfileSearchResultDto } from './dto/wProfile-search-results.dto';
+import { PlanId } from '../plans/domain/plan-id.enum';
+import { RequireSubscriptionPlan } from '@/common/decorators/subscription-plan.decorator';
+import { SubscriptionPlanGuard } from '@/common/guards/subscription-plan.guard';
+import { PaginatedResultWithHasNext } from '@/common/pagination/paginated-results';
 
 @ApiTags('Worker Profiles')
 @ApiBearerAuth()
@@ -89,6 +97,32 @@ export class WorkerProfilesController {
   @ApiResponse({ status: 404, description: 'Worker profile not found.' })
   async getMyProfile(@CurrentUser('id') userId: string) {
     return this.profilesService.getMyProfile(userId);
+  }
+
+  @Get('search')
+  @Roles(UserType.EMPLOYER)
+  @ApiOperation({
+    summary: 'Search worker profiles by machine (for paid plans only)',
+  })
+  @ApiPaginatedResponse(
+    WorkerProfileSearchResultDto,
+    PaginatedResultWithHasNext,
+  )
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated worker search results.',
+  })
+  @RequireSubscriptionPlan(
+    PlanId.STARTER_MONTHLY,
+    PlanId.STARTER_YEARLY,
+    PlanId.PRO_MONTHLY,
+    PlanId.PRO_YEARLY,
+    PlanId.ENTERPRISE_MONTHLY,
+    PlanId.ENTERPRISE_YEARLY,
+  )
+  @UseGuards(SubscriptionPlanGuard)
+  searchByMachineId(@Query() query: SearchWorkerProfilesDto) {
+    return this.profilesService.searchByMachineId(query);
   }
 
   @Get(':id')

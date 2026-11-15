@@ -5,9 +5,10 @@ import { PaginatedResult } from '../pagination/paginated-results';
 
 export const ApiPaginatedResponse = <DataDto extends Type<unknown>>(
   dataDto: DataDto,
+  paginationDto: Type<unknown> = PaginatedResult,
 ) =>
   applyDecorators(
-    ApiExtraModels(StandardResponse, PaginatedResult, dataDto),
+    ApiExtraModels(StandardResponse, paginationDto, dataDto),
     ApiOkResponse({
       schema: {
         allOf: [
@@ -16,7 +17,7 @@ export const ApiPaginatedResponse = <DataDto extends Type<unknown>>(
             properties: {
               data: {
                 allOf: [
-                  { $ref: getSchemaPath(PaginatedResult) },
+                  { $ref: getSchemaPath(paginationDto) },
                   {
                     properties: {
                       data: {
