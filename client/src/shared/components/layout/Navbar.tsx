@@ -32,7 +32,7 @@ export const Navbar: React.FC = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const input = form.elements.namedItem("search") as HTMLInputElement;
