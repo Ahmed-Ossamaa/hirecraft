@@ -5,7 +5,7 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import * as zod from "zod";
+import * as zod from 'zod';
 
 /**
  * @summary Get top machinery demand and supply, optionally filtered to one machine
@@ -33,16 +33,16 @@ export const getCompanyMachineryMetricsResponse = zod
               activeJobsDemand: zod
                 .number()
                 .describe(
-                  "Active published, non-expired jobs requiring this machine",
+                  'Active published, non-expired jobs requiring this machine',
                 ),
               distinctWorkersSupply: zod
                 .number()
-                .describe("Distinct worker profiles skilled on this machine"),
+                .describe('Distinct worker profiles skilled on this machine'),
               supplyToDemandRatio: zod
                 .number()
                 .nullable()
-                .describe("Supply divided by demand; null when demand is zero"),
-              marketStatus: zod.enum(["SHORTAGE", "BALANCED", "SURPLUS"]),
+                .describe('Supply divided by demand; null when demand is zero'),
+              marketStatus: zod.enum(['SHORTAGE', 'BALANCED', 'SURPLUS']),
             }),
           ),
         })

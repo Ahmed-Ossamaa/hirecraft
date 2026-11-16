@@ -5,7 +5,7 @@
  * API for SaaS Hiring Platform
  * OpenAPI spec version: 1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,14 +16,14 @@ import type {
   UndefinedInitialDataOptions,
   UseQueryOptions,
   UseQueryResult,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query';
 
 import type {
   GetCompanyMachineryMetrics200,
   GetCompanyMachineryMetricsParams,
-} from ".././model";
+} from '.././model';
 
-import { customAxiosInstance } from "../../axios-instance";
+import { customAxiosInstance } from '../../axios-instance';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -38,7 +38,7 @@ export const getCompanyMachineryMetrics = (
   return customAxiosInstance<GetCompanyMachineryMetrics200>(
     {
       url: `/api/v1/companies/me/analytics/machinery`,
-      method: "GET",
+      method: 'GET',
       params,
       signal,
     },
@@ -112,7 +112,7 @@ export function useGetCompanyMachineryMetrics<
           TError,
           Awaited<ReturnType<typeof getCompanyMachineryMetrics>>
         >,
-        "initialData"
+        'initialData'
       >;
     request?: SecondParameter<typeof customAxiosInstance>;
   },
@@ -139,7 +139,7 @@ export function useGetCompanyMachineryMetrics<
           TError,
           Awaited<ReturnType<typeof getCompanyMachineryMetrics>>
         >,
-        "initialData"
+        'initialData'
       >;
     request?: SecondParameter<typeof customAxiosInstance>;
   },
