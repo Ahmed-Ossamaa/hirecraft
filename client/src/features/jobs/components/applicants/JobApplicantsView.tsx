@@ -30,7 +30,7 @@ import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
 import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { Pagination } from "@/shared/components/ui/Pagination";
 import { useDebouncedCallback } from "use-debounce";
-import { WorkerProfileSlideOver } from "./WorkerProfileSlideOver";
+import { WorkerProfileSlideOver } from "@/features/worker-profiles/components/WorkerProfileSlideOver";
 import { ApplicantMetricsCards } from "./ApplicantMetricsCards";
 import { ApplicantTableRow } from "./ApplicantTableRow";
 import { CoverLetterModal } from "./CoverLetterModal";

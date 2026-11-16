@@ -16,7 +16,7 @@ import { Tabs } from "@/shared/components/ui/Tabs";
 import { AdminUserFilters } from "./AdminUserFilters";
 import { AdminBanUserModal } from "./AdminBanUserModal";
 import { AdminUserDetailsModal } from "./AdminUserDetailsModal";
-import { WorkerProfileSlideOver } from "@/features/jobs/components/applicants/WorkerProfileSlideOver";
+import { WorkerProfileSlideOver } from "@/features/worker-profiles/components/WorkerProfileSlideOver";
 import { useAdminMutations } from "../../hooks/useAdminMutations";
 import {
   MdLock,

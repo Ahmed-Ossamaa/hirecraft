@@ -13,6 +13,7 @@ import {
   MdWorkspacePremium,
   MdBarChart,
   MdPrecisionManufacturing,
+  MdPersonSearch,
 } from 'react-icons/md';
 import { useAuthStore } from '@/shared/stores/auth-store';
 import { UserUserType } from '@/shared/api/generated/model';
@@ -90,6 +91,11 @@ export const employerNav: NavItem[] = [
     label: 'Job Postings',
     href: '/dashboard/company/jobs',
     icon: <MdPostAdd className="text-lg" />,
+  },
+  {
+    label: 'Find Candidates',
+    href: '/dashboard/company/candidates',
+    icon: <MdPersonSearch className="text-lg" />,
   },
   {
     label: 'Team',

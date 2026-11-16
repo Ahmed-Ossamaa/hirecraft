@@ -203,6 +203,53 @@ export const getMyProfileResponse = zod.object({
 }))
 
 /**
+ * @summary Search worker profiles by machine (for paid plans only)
+ */
+export const searchByMachineIdQueryPageDefault = 1;
+export const searchByMachineIdQueryPageMax = 10;
+
+export const searchByMachineIdQueryLimitDefault = 10;
+export const searchByMachineIdQueryLimitMax = 10;
+
+
+
+export const searchByMachineIdQueryParams = zod.object({
+  "page": zod.number().min(1).max(searchByMachineIdQueryPageMax).default(searchByMachineIdQueryPageDefault),
+  "limit": zod.number().min(1).max(searchByMachineIdQueryLimitMax).default(searchByMachineIdQueryLimitDefault),
+  "machineCategoryId": zod.string().uuid().optional(),
+  "machineId": zod.string().uuid().optional(),
+  "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']).optional(),
+  "country": zod.string().optional(),
+  "city": zod.string().optional()
+})
+
+export const searchByMachineIdResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "data": zod.array(zod.object({
+
+})),
+  "page": zod.number(),
+  "limit": zod.number(),
+  "hasNext": zod.boolean()
+}).and(zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "country": zod.string(),
+  "city": zod.string(),
+  "firstName": zod.string(),
+  "lastName": zod.string(),
+  "avatarURL": zod.string().nullable()
+})).optional()
+})).optional()
+}))
+
+/**
  * @summary Get a specific worker profile by its ID (For employers and the worker)
  */
 export const getProfileByIdParams = zod.object({

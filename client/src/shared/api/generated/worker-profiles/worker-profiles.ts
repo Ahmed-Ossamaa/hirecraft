@@ -32,6 +32,8 @@ import type {
   DeleteSkill200,
   GetMyProfile200,
   GetProfileById200,
+  SearchByMachineId200,
+  SearchByMachineIdParams,
   UpdateMachineSkillDto,
   UpdateSkill200,
   UpdateWorkerProfile200,
@@ -326,6 +328,97 @@ export function useGetMyProfile<TData = Awaited<ReturnType<typeof getMyProfile>>
 }
 
 
+
+
+/**
+ * @summary Search worker profiles by machine (for paid plans only)
+ */
+export const searchByMachineId = (
+    params?: SearchByMachineIdParams,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+
+
+      return customAxiosInstance<SearchByMachineId200>(
+      {url: `/api/v1/worker-profiles/search`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSearchByMachineIdQueryKey = (params?: SearchByMachineIdParams,) => {
+    return [
+    `/api/v1/worker-profiles/search`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+
+export const getSearchByMachineIdQueryOptions = <TData = Awaited<ReturnType<typeof searchByMachineId>>, TError = unknown>(params?: SearchByMachineIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchByMachineIdQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchByMachineId>>> = ({ signal }) => searchByMachineId(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SearchByMachineIdQueryResult = NonNullable<Awaited<ReturnType<typeof searchByMachineId>>>
+export type SearchByMachineIdQueryError = unknown
+
+
+export function useSearchByMachineId<TData = Awaited<ReturnType<typeof searchByMachineId>>, TError = unknown>(
+ params: undefined |  SearchByMachineIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchByMachineId>>,
+          TError,
+          Awaited<ReturnType<typeof searchByMachineId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchByMachineId<TData = Awaited<ReturnType<typeof searchByMachineId>>, TError = unknown>(
+ params?: SearchByMachineIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchByMachineId>>,
+          TError,
+          Awaited<ReturnType<typeof searchByMachineId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchByMachineId<TData = Awaited<ReturnType<typeof searchByMachineId>>, TError = unknown>(
+ params?: SearchByMachineIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Search worker profiles by machine (for paid plans only)
+ */
+
+export function useSearchByMachineId<TData = Awaited<ReturnType<typeof searchByMachineId>>, TError = unknown>(
+ params?: SearchByMachineIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchByMachineId>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSearchByMachineIdQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
 
 
 /**

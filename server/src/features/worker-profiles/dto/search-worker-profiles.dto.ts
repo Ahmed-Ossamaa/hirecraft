@@ -15,6 +15,7 @@ export class SearchWorkerProfilesDto extends OmitType(PageOptionsDto, [
   'order',
 ]) {
   @ApiPropertyOptional({
+    type: Number,
     minimum: 1,
     maximum: MAX_WORKER_PROFILE_SEARCH_PAGE,
     default: 1,
@@ -23,6 +24,7 @@ export class SearchWorkerProfilesDto extends OmitType(PageOptionsDto, [
   page = 1;
 
   @ApiPropertyOptional({
+    type: Number,
     minimum: 1,
     maximum: MAX_WORKER_PROFILE_SEARCH_LIMIT,
     default: MAX_WORKER_PROFILE_SEARCH_LIMIT,
