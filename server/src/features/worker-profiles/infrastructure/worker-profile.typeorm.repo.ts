@@ -176,7 +176,7 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     pagination: PaginationOptions,
   ): Promise<PageResultWithHasNext<WorkerProfileSearchResult>> {
     const experienceRankSql = `
-    CASE matchingSkill.experienceLevel
+    CASE "matchingSkill"."experienceLevel"
       WHEN 'ENTRY_LEVEL' THEN 1
       WHEN 'SKILLED' THEN 2
       WHEN 'SENIOR' THEN 3
@@ -189,7 +189,7 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
     const skillParams: Record<string, string | number> = {};
 
     if (criteria.machineId) {
-      skillConditions.push('matchingSkill.machineId = :machineId');
+      skillConditions.push('"matchingSkill"."machineId" = :machineId');
       skillParams.machineId = criteria.machineId;
     }
 
@@ -220,7 +220,7 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
         'user.avatarURL AS "avatarURL"',
       ])
       .addSelect(experienceRankSql, 'experienceRank')
-      .addSelect('matchingSkill.yearsOfExperience', 'yearsOfExperience');
+      .addSelect('"matchingSkill"."yearsOfExperience"', 'yearsOfExperience');
 
     if (!criteria.machineId) {
       matchingProfilesQuery.addSelect(
@@ -229,8 +229,8 @@ export class WorkerProfileTypeormRepository implements WorkerProfileRepositoryIn
           PARTITION BY profile.id
           ORDER BY
             ${experienceRankSql} DESC,
-            matchingSkill.yearsOfExperience DESC,
-            matchingSkill.id ASC
+            "matchingSkill"."yearsOfExperience" DESC,
+            "matchingSkill"."id" ASC
         )
       `,
         'skillRowNumber',
