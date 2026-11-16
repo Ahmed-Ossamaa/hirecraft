@@ -12,7 +12,11 @@ import { ApplicationsService } from '../applications/applications.service';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
 import { DataSource } from 'typeorm';
 import { JobStatus } from './domain/job-status.enum';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ExperienceLevel } from './domain/exp-level.enum';
 import { JOB_REPOSITORY } from './domain/job.repo.interface';
 
@@ -109,10 +113,54 @@ describe('JobsService', () => {
       );
       expect(result.status).toBe(JobStatus.DRAFT);
     });
+
+    it('normalizes numeric salary bounds and currency for persistence', async () => {
+      await service.createJob({
+        companyId: 'company-1',
+        authorId: 'user-1',
+        title: 'Technician',
+        description: 'Details',
+        machineCategoryId: 'cat-1',
+        machineId: 'mach-1',
+        country: 'Egypt',
+        city: 'Cairo',
+        experienceLevel: ExperienceLevel.SENIOR,
+        minimumSalary: 18000,
+        maximumSalary: 25000,
+        currency: 'EGP',
+      });
+
+      expect(jobRepoMock.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          salaryRange: '18000- 25000',
+          salaryCurrency: 'EGP',
+        }),
+      );
+    });
+
+    it('rejects salary amounts unless both bounds are supplied and ordered', async () => {
+      await expect(
+        service.createJob({
+          companyId: 'company-1',
+          authorId: 'user-1',
+          title: 'Technician',
+          description: 'Details',
+          machineCategoryId: 'cat-1',
+          machineId: 'mach-1',
+          country: 'Egypt',
+          city: 'Cairo',
+          experienceLevel: ExperienceLevel.SENIOR,
+          minimumSalary: 25000,
+          maximumSalary: 18000,
+        }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(jobRepoMock.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateJob (content only)', () => {
-    it('should update content fields and strip any status parameters', async () => {
+    it('should update content fields', async () => {
       jobRepoMock.updateReturning.mockResolvedValue({
         id: 'job-1',
         title: 'Updated Title',
@@ -120,7 +168,6 @@ describe('JobsService', () => {
 
       const result = await service.updateJob('job-1', 'company-1', {
         title: 'Updated Title',
-        status: JobStatus.PUBLISHED, // Should be stripped
       });
 
       expect(jobRepoMock.updateReturning).toHaveBeenCalledWith(
@@ -138,6 +185,33 @@ describe('JobsService', () => {
       await expect(
         service.updateJob('job-1', 'company-1', { title: 'New' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('normalizes salary updates and preserves omitted salary fields', async () => {
+      jobRepoMock.updateReturning.mockResolvedValue({ id: 'job-1' });
+
+      await service.updateJob('job-1', 'company-1', {
+        minimumSalary: 18000,
+        maximumSalary: 25000,
+        currency: 'EGP',
+      });
+
+      expect(jobRepoMock.updateReturning).toHaveBeenCalledWith(
+        'job-1',
+        {
+          salaryRange: '18000- 25000',
+          salaryCurrency: 'EGP',
+        },
+        'company-1',
+      );
+    });
+
+    it('rejects a partial salary range update', async () => {
+      await expect(
+        service.updateJob('job-1', 'company-1', { minimumSalary: 18000 }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(jobRepoMock.updateReturning).not.toHaveBeenCalled();
     });
   });
 

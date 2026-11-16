@@ -23,6 +23,10 @@ export interface UpdateJobDto {
   country?: string;
   /** @maxLength 100 */
   city?: string;
-  /** @maxLength 20 */
-  salaryRange?: string;
+  /** @minimum 0 */
+  minimumSalary?: number;
+  /** @minimum 0 */
+  maximumSalary?: number;
+  /** @maxLength 5 */
+  currency?: string;
 }

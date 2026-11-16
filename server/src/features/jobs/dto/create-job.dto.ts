@@ -8,6 +8,9 @@ import {
   MaxLength,
   IsUUID,
   IsArray,
+  IsNumber,
+  IsDefined,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JobType } from '../domain/job-type.enum';
@@ -74,9 +77,30 @@ export class CreateJobDto {
   @MaxLength(100)
   city!: string;
 
-  @ApiPropertyOptional({ example: '15k - 20k' })
+  @ApiPropertyOptional({ type: Number, minimum: 0, example: 18000 })
+  @ValidateIf(
+    (dto: CreateJobDto) =>
+      dto.minimumSalary !== undefined || dto.maximumSalary !== undefined,
+  )
+  @IsDefined()
+  @IsNumber()
+  @Min(0)
+  minimumSalary?: number;
+
+  @ApiPropertyOptional({ type: Number, minimum: 0, example: 25000 })
+  @ValidateIf(
+    (dto: CreateJobDto) =>
+      dto.minimumSalary !== undefined || dto.maximumSalary !== undefined,
+  )
+  @IsDefined()
+  @IsNumber()
+  @Min(0)
+  maximumSalary?: number;
+
+  @ApiPropertyOptional({ example: 'EGP' })
   @IsString()
-  @MaxLength(20)
+  @IsNotEmpty()
+  @MaxLength(5)
   @IsOptional()
-  salaryRange?: string;
+  currency?: string;
 }

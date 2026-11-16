@@ -31,6 +31,7 @@ export interface JobWithStatsDto {
   status: JobWithStatsDtoStatus;
   jobType?: JobWithStatsDtoJobType;
   salaryRange?: string;
+  salaryCurrency?: string;
   /** @nullable */
   publishedAt?: string | null;
   /** @nullable */

@@ -49,7 +49,7 @@ export function JobCard({ job }: JobCardProps) {
             Salary Range
           </p>
           {job.salaryRange ? (
-            <p className="font-headline-sm text-headline-sm text-foreground font-medium truncate">
+            <p className="font-headline-sm text-sm text-foreground font-medium truncate">
               {job.salaryRange}
             </p>
           ) : (

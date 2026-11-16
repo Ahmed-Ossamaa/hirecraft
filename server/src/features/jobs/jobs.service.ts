@@ -1,6 +1,7 @@
 import {
   Injectable,
   Inject,
+  BadRequestException,
   NotFoundException,
   ForbiddenException,
   Logger,
@@ -19,9 +20,9 @@ import { JobStatus } from './domain/job-status.enum';
 import { FindJobsQueryDto } from './dto/find-jobs-query.dto';
 import { DataSource, EntityManager } from 'typeorm';
 import { SubscriptionLimitsService } from '../billing/subscription-limits/subscription-limits.service';
-
 import { ApplicationsService } from '../applications/applications.service';
 import { JobWithStatsDto } from './dto/job-with-stats.dto';
+import { CreateJobInput, UpdateJobInput } from './types/job-mutation.types';
 
 @Injectable()
 export class JobsService {
@@ -56,9 +57,11 @@ export class JobsService {
     return { ...result, data: dataWithStats };
   }
 
-  async createJob(params: CreateJobParams): Promise<Job> {
+  async createJob(params: CreateJobInput): Promise<Job> {
+    const { minimumSalary, maximumSalary, currency, ...jobFields } = params;
     const jobParams: CreateJobParams = {
-      ...params,
+      ...jobFields,
+      ...this.toSalaryFields(minimumSalary, maximumSalary, currency),
       status: JobStatus.DRAFT,
       publishedAt: null,
       expiresAt: null,
@@ -132,15 +135,16 @@ export class JobsService {
   async updateJob(
     id: string,
     companyId: string,
-    params: Partial<CreateJobParams>,
+    params: UpdateJobInput,
   ): Promise<Job> {
-    // Content update only: strip status and publication timestamp parameters
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { status, publishedAt, expiresAt, ...contentParams } = params;
+    const { minimumSalary, maximumSalary, currency, ...contentParams } = params;
 
     const updated = await this.jobRepository.updateReturning(
       id,
-      contentParams,
+      {
+        ...contentParams,
+        ...this.toSalaryFields(minimumSalary, maximumSalary, currency),
+      },
       companyId,
     );
 
@@ -278,5 +282,41 @@ export class JobsService {
       jobStatus,
       tx,
     );
+  }
+
+  private toSalaryFields(
+    minimumSalary?: number,
+    maximumSalary?: number,
+    currency?: string,
+  ): Pick<CreateJobParams, 'salaryRange' | 'salaryCurrency'> {
+    let salaryRange: string | undefined;
+
+    if ((minimumSalary === undefined) !== (maximumSalary === undefined)) {
+      throw new BadRequestException(
+        'minimumSalary and maximumSalary must be provided together',
+      );
+    }
+
+    if (minimumSalary !== undefined && maximumSalary !== undefined) {
+      if (
+        !Number.isFinite(minimumSalary) ||
+        !Number.isFinite(maximumSalary) ||
+        minimumSalary < 0
+      ) {
+        throw new BadRequestException('Salary amounts must be non-negative');
+      }
+      if (maximumSalary < minimumSalary) {
+        throw new BadRequestException(
+          'maximumSalary must not be less than minimumSalary',
+        );
+      }
+
+      salaryRange = `${minimumSalary}- ${maximumSalary}`;
+    }
+
+    return {
+      ...(salaryRange !== undefined ? { salaryRange } : {}),
+      ...(currency !== undefined ? { salaryCurrency: currency } : {}),
+    };
   }
 }

@@ -19,7 +19,11 @@ export const createJobBodyJobTypeDefault = "FULL_TIME";export const createJobBod
 
 export const createJobBodyCityMax = 100;
 
-export const createJobBodySalaryRangeMax = 20;
+export const createJobBodyMinimumSalaryMin = 0;
+
+export const createJobBodyMaximumSalaryMin = 0;
+
+export const createJobBodyCurrencyMax = 5;
 
 
 
@@ -34,7 +38,9 @@ export const createJobBody = zod.object({
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).default(createJobBodyJobTypeDefault),
   "country": zod.string().max(createJobBodyCountryMax),
   "city": zod.string().max(createJobBodyCityMax),
-  "salaryRange": zod.string().max(createJobBodySalaryRangeMax).optional()
+  "minimumSalary": zod.number().min(createJobBodyMinimumSalaryMin).optional(),
+  "maximumSalary": zod.number().min(createJobBodyMaximumSalaryMin).optional(),
+  "currency": zod.string().max(createJobBodyCurrencyMax).optional()
 })
 
 export const createJobResponse = zod.object({
@@ -63,6 +69,7 @@ export const createJobResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
@@ -133,6 +140,7 @@ export const findAllResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
@@ -205,6 +213,7 @@ export const getCompanyJobsResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
@@ -246,6 +255,7 @@ export const getJobByIdResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
@@ -268,7 +278,11 @@ export const updateJobBodyJobTypeDefault = "FULL_TIME";export const updateJobBod
 
 export const updateJobBodyCityMax = 100;
 
-export const updateJobBodySalaryRangeMax = 20;
+export const updateJobBodyMinimumSalaryMin = 0;
+
+export const updateJobBodyMaximumSalaryMin = 0;
+
+export const updateJobBodyCurrencyMax = 5;
 
 
 
@@ -283,7 +297,9 @@ export const updateJobBody = zod.object({
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).default(updateJobBodyJobTypeDefault),
   "country": zod.string().max(updateJobBodyCountryMax).optional(),
   "city": zod.string().max(updateJobBodyCityMax).optional(),
-  "salaryRange": zod.string().max(updateJobBodySalaryRangeMax).optional()
+  "minimumSalary": zod.number().min(updateJobBodyMinimumSalaryMin).optional(),
+  "maximumSalary": zod.number().min(updateJobBodyMaximumSalaryMin).optional(),
+  "currency": zod.string().max(updateJobBodyCurrencyMax).optional()
 })
 
 export const updateJobResponse = zod.object({
@@ -312,6 +328,7 @@ export const updateJobResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),
@@ -356,6 +373,7 @@ export const updateJobStatusResponse = zod.object({
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'CLOSED']),
   "jobType": zod.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']).optional(),
   "salaryRange": zod.string().optional(),
+  "salaryCurrency": zod.string().optional(),
   "publishedAt": zod.string().datetime({}).nullish(),
   "expiresAt": zod.string().datetime({}).nullish(),
   "createdAt": zod.string().datetime({}),

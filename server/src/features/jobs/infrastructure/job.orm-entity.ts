@@ -70,6 +70,9 @@ export class JobOrmEntity {
   @Column({ type: 'varchar', nullable: true })
   salaryRange?: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  salaryCurrency?: string;
+
   @Column({ type: 'timestamptz', nullable: true })
   publishedAt?: Date | null;
 

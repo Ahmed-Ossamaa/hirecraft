@@ -29,6 +29,7 @@ export interface Job {
   status: JobStatus;
   jobType?: JobJobType;
   salaryRange?: string;
+  salaryCurrency?: string;
   /** @nullable */
   publishedAt?: string | null;
   /** @nullable */

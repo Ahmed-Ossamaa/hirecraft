@@ -1,43 +1,99 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Input } from "@/shared/components/ui/Input";
-import { Button } from "@/shared/components/ui/Button";
-import { Textarea } from "@/shared/components/ui/Textarea";
-import { Select } from "@/shared/components/ui/Select";
-import { useCreateJob, useUpdateJob } from "@/features/jobs/api/useJobMutations";
-import { useGetMachines } from "@/shared/api/generated/machines/machines";
-import { useGetMachineCategories } from "@/shared/api/generated/machine-categories/machine-categories";
-import { Machine, MachineCategory, Job } from "@/shared/api/generated/model";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { MdAdd, MdDeleteOutline } from "react-icons/md";
-import { FormError } from "@/shared/components/ui/FormError";
-import { getApiError } from "@/shared/utils/error";
-import { CountryCitySelect } from "@/shared/components/ui/CountryCitySelect";
+import React, { useEffect, useRef } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Input } from '@/shared/components/ui/Input';
+import { Button } from '@/shared/components/ui/Button';
+import { Textarea } from '@/shared/components/ui/Textarea';
+import { Select } from '@/shared/components/ui/Select';
+import {
+  useCreateJob,
+  useUpdateJob,
+} from '@/features/jobs/api/useJobMutations';
+import { useGetMachines } from '@/shared/api/generated/machines/machines';
+import { useGetMachineCategories } from '@/shared/api/generated/machine-categories/machine-categories';
+import { Machine, MachineCategory, Job } from '@/shared/api/generated/model';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { MdAdd, MdDeleteOutline } from 'react-icons/md';
+import { FormError } from '@/shared/components/ui/FormError';
+import { getApiError } from '@/shared/utils/error';
+import { CountryCitySelect } from '@/shared/components/ui/CountryCitySelect';
 
-const jobSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters").max(255),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  categoryId: z.string().min(1, "Machine category is required"),
-  machineId: z.string().min(1, "Machine selection is required"),
-  experienceLevel: z.enum(["ENTRY_LEVEL", "SKILLED", "SENIOR", "EXPERT"]),
-  jobType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT"]),
-  country: z.string().min(1, "Country is required").max(100),
-  city: z.string().min(1, "City is required").max(100),
-  yearsOfExperience: z.coerce.number().min(0).max(50).optional(),
-  salaryRange: z.string().max(20).optional().or(z.literal("")),
-  requirements: z
-    .array(
-      z.object({ value: z.string().min(1, "Requirement cannot be empty") }),
-    )
-    .optional(),
-});
+const jobSchema = z
+  .object({
+    title: z.string().min(3, 'Title must be at least 3 characters').max(255),
+    description: z
+      .string()
+      .min(10, 'Description must be at least 10 characters'),
+    categoryId: z.string().min(1, 'Machine category is required'),
+    machineId: z.string().min(1, 'Machine selection is required'),
+    experienceLevel: z.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
+    jobType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT']),
+    country: z.string().min(1, 'Country is required').max(100),
+    city: z.string().min(1, 'City is required').max(100),
+    yearsOfExperience: z.coerce.number().min(0).max(50).optional(),
+    minimumSalary: z.preprocess(
+      (value) =>
+        value === '' || value === undefined ? undefined : Number(value),
+      z.number().finite().min(0).optional(),
+    ),
+    maximumSalary: z.preprocess(
+      (value) =>
+        value === '' || value === undefined ? undefined : Number(value),
+      z.number().finite().min(0).optional(),
+    ),
+    currency: z.string().trim().max(5).optional().or(z.literal('')),
+    requirements: z
+      .array(
+        z.object({ value: z.string().min(1, 'Requirement cannot be empty') }),
+      )
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      (data.minimumSalary === undefined) !==
+      (data.maximumSalary === undefined)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path:
+          data.minimumSalary === undefined
+            ? ['minimumSalary']
+            : ['maximumSalary'],
+        message: 'Enter both minimum and maximum salary.',
+      });
+    }
+
+    if (
+      data.minimumSalary !== undefined &&
+      data.maximumSalary !== undefined &&
+      data.maximumSalary < data.minimumSalary
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maximumSalary'],
+        message: 'Maximum salary must be at least the minimum salary.',
+      });
+    }
+  });
 
 type JobFormData = z.infer<typeof jobSchema>;
+
+const parseSalaryRange = (salaryRange?: string) => {
+  const match = salaryRange?.match(
+    /^\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*$/,
+  );
+
+  return match
+    ? {
+        minimumSalary: Number(match[1]),
+        maximumSalary: Number(match[2]),
+      }
+    : { minimumSalary: undefined, maximumSalary: undefined };
+};
 
 export interface JobFormProps {
   initialJob?: Job;
@@ -48,9 +104,12 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
   const router = useRouter();
   const createMutation = useCreateJob();
   const updateMutation = useUpdateJob();
+  const initialSalary = parseSalaryRange(initialJob?.salaryRange);
 
-  const { data: categoriesRes, isLoading: isLoadingCategories } = useGetMachineCategories({ limit: 100 });
-  const categories: MachineCategory[] = (categoriesRes?.data?.data as any) || [];
+  const { data: categoriesRes, isLoading: isLoadingCategories } =
+    useGetMachineCategories({ limit: 100 });
+  const categories: MachineCategory[] =
+    (categoriesRes?.data?.data as any) || [];
 
   const { data: machinesRes, isLoading: isLoadingMachines } = useGetMachines({
     limit: 100,
@@ -68,30 +127,32 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: {
-      title: initialJob?.title || "",
-      description: initialJob?.description || "",
-      categoryId: initialJob?.machineCategoryId || "",
-      machineId: initialJob?.machineId || "",
-      experienceLevel: (initialJob?.experienceLevel as any) || "SKILLED",
-      jobType: (initialJob?.jobType as any) || "FULL_TIME",
-      country: initialJob?.country || "",
-      city: initialJob?.city || "",
-      salaryRange: initialJob?.salaryRange || "",
+      title: initialJob?.title || '',
+      description: initialJob?.description || '',
+      categoryId: initialJob?.machineCategoryId || '',
+      machineId: initialJob?.machineId || '',
+      experienceLevel: (initialJob?.experienceLevel as any) || 'SKILLED',
+      jobType: (initialJob?.jobType as any) || 'FULL_TIME',
+      country: initialJob?.country || '',
+      city: initialJob?.city || '',
+      minimumSalary: initialSalary.minimumSalary,
+      maximumSalary: initialSalary.maximumSalary,
+      currency: initialJob?.salaryCurrency || '',
       yearsOfExperience: initialJob?.yearsOfExperience ?? 0,
       requirements:
         initialJob?.requirements && initialJob.requirements.length > 0
           ? initialJob.requirements.map((r) => ({ value: r }))
-          : [{ value: "" }],
+          : [{ value: '' }],
     },
   });
 
-  const selectedCategoryId = watch("categoryId");
+  const selectedCategoryId = watch('categoryId');
   const filteredMachines = selectedCategoryId
     ? machines.filter((m) => m.categoryId === selectedCategoryId)
     : machines;
 
   const isFirstRender = useRef(true);
-  const prevCategoryIdRef = useRef(initialJob?.machineCategoryId || "");
+  const prevCategoryIdRef = useRef(initialJob?.machineCategoryId || '');
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -101,13 +162,14 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
     if (prevCategoryIdRef.current !== selectedCategoryId) {
       prevCategoryIdRef.current = selectedCategoryId;
-      const currentMachineId = watch("machineId");
+      const currentMachineId = watch('machineId');
       if (currentMachineId) {
         const isStillValid = machines.some(
-          (m) => m.id === currentMachineId && m.categoryId === selectedCategoryId
+          (m) =>
+            m.id === currentMachineId && m.categoryId === selectedCategoryId,
         );
         if (!isStillValid) {
-          setValue("machineId", "");
+          setValue('machineId', '');
         }
       }
     }
@@ -115,7 +177,7 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "requirements",
+    name: 'requirements',
   });
 
   const onSubmit = async (data: JobFormData) => {
@@ -123,7 +185,7 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
       // Find category ID based on selected machine
       const selectedMachine = machines.find((m) => m.id === data.machineId);
       if (!selectedMachine) {
-        toast.error("Invalid machine selected");
+        toast.error('Invalid machine selected');
         return;
       }
 
@@ -139,7 +201,13 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
         ...(data.yearsOfExperience !== undefined
           ? { yearsOfExperience: data.yearsOfExperience }
           : {}),
-        ...(data.salaryRange ? { salaryRange: data.salaryRange } : {}),
+        ...(data.minimumSalary !== undefined && data.maximumSalary !== undefined
+          ? {
+              minimumSalary: data.minimumSalary,
+              maximumSalary: data.maximumSalary,
+            }
+          : {}),
+        ...(data.currency ? { currency: data.currency } : {}),
         requirements:
           data.requirements?.map((r) => r.value).filter(Boolean) || [],
       };
@@ -149,17 +217,20 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
           id: initialJob.id,
           data: payload,
         });
-        toast.success("Job updated successfully!");
+        toast.success('Job updated successfully!');
       } else {
         await createMutation.mutateAsync({ data: payload });
-        toast.success("Job posted successfully!");
+        toast.success('Job posted successfully!');
       }
 
-      router.push("/dashboard/company/jobs");
+      router.push('/dashboard/company/jobs');
     } catch (error) {
-      setError("root", {
-        type: "manual",
-        message: getApiError(error, isEdit ? "Failed to update job." : "Failed to post job."),
+      setError('root', {
+        type: 'manual',
+        message: getApiError(
+          error,
+          isEdit ? 'Failed to update job.' : 'Failed to post job.',
+        ),
       });
     }
   };
@@ -171,17 +242,21 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
         <div className="space-y-4 border-b border-border/60 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 className="font-headline text-lg font-semibold">Basic Details</h3>
+            <h3 className="font-headline text-lg font-semibold">
+              Basic Details
+            </h3>
             {isEdit && initialJob && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground font-medium">Status:</span>
+                <span className="text-xs text-muted-foreground font-medium">
+                  Status:
+                </span>
                 <span
                   className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-md border tracking-wide ${
-                    initialJob.status === "PUBLISHED"
-                      ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                      : initialJob.status === "DRAFT"
-                        ? "bg-muted text-muted-foreground border-border/60"
-                        : "bg-slate-500/10 text-slate-500 border-slate-500/20"
+                    initialJob.status === 'PUBLISHED'
+                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                      : initialJob.status === 'DRAFT'
+                        ? 'bg-muted text-muted-foreground border-border/60'
+                        : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
                   }`}
                 >
                   {initialJob.status}
@@ -192,7 +267,8 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
           {isEdit && (
             <p className="text-xs text-muted-foreground bg-muted/30 border border-border/40 rounded-xl p-3">
-              Job status transitions (Publish, Close, Archive) are handled through the Actions menu on the Jobs list.
+              Job status transitions (Publish, Close, Archive) are handled
+              through the Actions menu on the Jobs list.
             </p>
           )}
 
@@ -201,9 +277,9 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
               Job Title *
             </label>
             <Input
-              {...register("title")}
+              {...register('title')}
               placeholder="e.g. Senior CNC Operator"
-              className={errors.title ? "border-red-500" : ""}
+              className={errors.title ? 'border-red-500' : ''}
             />
             {errors.title && (
               <p className="text-xs text-red-500 mt-1">
@@ -217,10 +293,10 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
               Job Description *
             </label>
             <Textarea
-              {...register("description")}
+              {...register('description')}
               placeholder="Describe the role and responsibilities..."
               rows={4}
-              className={errors.description ? "border-red-500" : ""}
+              className={errors.description ? 'border-red-500' : ''}
             />
             {errors.description && (
               <p className="text-xs text-red-500 mt-1">
@@ -238,13 +314,13 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Machine Category *"
-              {...register("categoryId")}
+              {...register('categoryId')}
               error={errors.categoryId?.message}
               options={
                 isLoadingCategories
-                  ? [{ value: "", label: "Loading..." }]
+                  ? [{ value: '', label: 'Loading...' }]
                   : [
-                      { value: "", label: "Select category..." },
+                      { value: '', label: 'Select category...' },
                       ...categories.map((c) => ({
                         value: c.id,
                         label: c.nameEn,
@@ -255,14 +331,14 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
             <Select
               label="Primary Machine *"
-              {...register("machineId")}
+              {...register('machineId')}
               error={errors.machineId?.message}
               disabled={!selectedCategoryId}
               options={
                 isLoadingMachines
-                  ? [{ value: "", label: "Loading..." }]
+                  ? [{ value: '', label: 'Loading...' }]
                   : [
-                      { value: "", label: "Select machine..." },
+                      { value: '', label: 'Select machine...' },
                       ...filteredMachines.map((m) => ({
                         value: m.id,
                         label: m.nameEn,
@@ -275,24 +351,24 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Experience Level *"
-              {...register("experienceLevel")}
+              {...register('experienceLevel')}
               error={errors.experienceLevel?.message}
               options={[
-                { value: "ENTRY_LEVEL", label: "Entry Level (0-2 years)" },
-                { value: "SKILLED", label: "Skilled (3-5 years)" },
-                { value: "SENIOR", label: "Senior (6+ years)" },
-                { value: "EXPERT", label: "Expert (10+ years)" },
+                { value: 'ENTRY_LEVEL', label: 'Entry Level (0-2 years)' },
+                { value: 'SKILLED', label: 'Skilled (3-5 years)' },
+                { value: 'SENIOR', label: 'Senior (6+ years)' },
+                { value: 'EXPERT', label: 'Expert (10+ years)' },
               ]}
             />
 
             <Select
               label="Job Type *"
-              {...register("jobType")}
+              {...register('jobType')}
               error={errors.jobType?.message}
               options={[
-                { value: "FULL_TIME", label: "Full Time" },
-                { value: "PART_TIME", label: "Part Time" },
-                { value: "CONTRACT", label: "Contract" },
+                { value: 'FULL_TIME', label: 'Full Time' },
+                { value: 'PART_TIME', label: 'Part Time' },
+                { value: 'CONTRACT', label: 'Contract' },
               ]}
             />
           </div>
@@ -302,10 +378,10 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
               Minimum Years of Experience
             </label>
             <Input
-              {...register("yearsOfExperience")}
+              {...register('yearsOfExperience')}
               type="number"
               min="0"
-              className={errors.yearsOfExperience ? "border-red-500" : ""}
+              className={errors.yearsOfExperience ? 'border-red-500' : ''}
             />
             {errors.yearsOfExperience && (
               <p className="text-xs text-red-500 mt-1">
@@ -322,14 +398,14 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <CountryCitySelect
-              country={watch("country")}
-              city={watch("city")}
+              country={watch('country')}
+              city={watch('city')}
               onCountryChange={(val) => {
-                setValue("country", val, { shouldValidate: true });
-                setValue("city", "", { shouldValidate: true });
+                setValue('country', val, { shouldValidate: true });
+                setValue('city', '', { shouldValidate: true });
               }}
               onCityChange={(val) =>
-                setValue("city", val, { shouldValidate: true })
+                setValue('city', val, { shouldValidate: true })
               }
               countryLabel="Country *"
               cityLabel="City *"
@@ -340,16 +416,69 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">
-              Salary Range (Optional)
-            </label>
-            <Input
-              {...register("salaryRange")}
-              placeholder="e.g. $50k - $70k"
-              className={errors.salaryRange ? "border-red-500" : ""}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Minimum Salary (Optional)
+              </label>
+              <Input
+                {...register('minimumSalary')}
+                type="number"
+                min="0"
+                step="any"
+                placeholder="e.g. 18000"
+                className={errors.minimumSalary ? 'border-red-500' : ''}
+              />
+              {errors.minimumSalary && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.minimumSalary.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Maximum Salary (Optional)
+              </label>
+              <Input
+                {...register('maximumSalary')}
+                type="number"
+                min="0"
+                step="any"
+                placeholder="e.g. 25000"
+                className={errors.maximumSalary ? 'border-red-500' : ''}
+              />
+              {errors.maximumSalary && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.maximumSalary.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Currency
+              </label>
+              <Input
+                {...register('currency')}
+                maxLength={5}
+                placeholder="e.g. EGP"
+                className={errors.currency ? 'border-red-500' : ''}
+              />
+              {errors.currency && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.currency.message}
+                </p>
+              )}
+            </div>
           </div>
+          {initialJob?.salaryRange &&
+            initialSalary.minimumSalary === undefined && (
+              <p className="text-xs text-muted-foreground">
+                The existing salary range could not be split into numeric
+                values. Enter both bounds to replace it.
+              </p>
+            )}
         </div>
 
         <div className="space-y-4 pb-4">
@@ -361,7 +490,7 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ value: "" })}
+              onClick={() => append({ value: '' })}
               className="gap-1.5"
               leftIcon={<MdAdd />}
             >
@@ -378,8 +507,8 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
                     placeholder="e.g. Must know G-Code..."
                     className={
                       errors.requirements?.[index]?.value
-                        ? "border-red-500"
-                        : ""
+                        ? 'border-red-500'
+                        : ''
                     }
                   />
                   {errors.requirements?.[index]?.value && (
@@ -408,11 +537,11 @@ export const JobForm: React.FC<JobFormProps> = ({ initialJob }) => {
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting
               ? isEdit
-                ? "Saving..."
-                : "Posting..."
+                ? 'Saving...'
+                : 'Posting...'
               : isEdit
-                ? "Save Changes"
-                : "Post Job"}
+                ? 'Save Changes'
+                : 'Post Job'}
           </Button>
         </div>
       </form>

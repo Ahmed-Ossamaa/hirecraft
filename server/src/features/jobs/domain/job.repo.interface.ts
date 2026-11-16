@@ -24,6 +24,7 @@ export type CreateJobParams = {
   status?: JobStatus;
   jobType?: JobType;
   salaryRange?: string;
+  salaryCurrency?: string;
   publishedAt?: Date | null;
   expiresAt?: Date | null;
 };
