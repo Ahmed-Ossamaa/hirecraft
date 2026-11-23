@@ -223,6 +223,28 @@ export const getCompanyJobsResponse = zod.object({
 }))
 
 /**
+ * @summary Get job matching criteria
+ */
+export const getMatchingCriteriaParams = zod.object({
+  "id": zod.string()
+})
+
+export const getMatchingCriteriaResponse = zod.object({
+  "message": zod.string(),
+  "data": zod.object({
+
+})
+}).and(zod.object({
+  "data": zod.object({
+  "machineCategoryId": zod.string().uuid(),
+  "machineId": zod.string().uuid(),
+  "experienceLevel": zod.enum(['ENTRY_LEVEL', 'SKILLED', 'SENIOR', 'EXPERT']),
+  "country": zod.string(),
+  "city": zod.string()
+}).optional()
+}))
+
+/**
  * @summary Get details of a specific job
  */
 export const getJobByIdParams = zod.object({
@@ -380,4 +402,3 @@ export const updateJobStatusResponse = zod.object({
   "updatedAt": zod.string().datetime({})
 }).optional()
 }))
-

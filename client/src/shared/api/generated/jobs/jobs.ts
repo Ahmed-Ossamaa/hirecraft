@@ -32,6 +32,7 @@ import type {
   GetCompanyJobs200,
   GetCompanyJobsParams,
   GetJobById200,
+  GetMatchingCriteria200,
   UpdateJob200,
   UpdateJobDto,
   UpdateJobStatus200,
@@ -52,8 +53,8 @@ export const createJob = (
     createJobDto: CreateJobDto,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customAxiosInstance<CreateJob200 | void>(
       {url: `/api/v1/jobs`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
@@ -61,7 +62,7 @@ export const createJob = (
     },
       options);
     }
-  
+
 
 
 export const getCreateJobMutationOptions = <TError = void,
@@ -75,7 +76,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof createJob>>, {data: CreateJobDto}> = (props) => {
@@ -84,7 +85,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  createJob(data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -116,15 +117,15 @@ export const findAll = (
     params?: FindAllParams,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customAxiosInstance<FindAll200>(
       {url: `/api/v1/jobs`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -134,7 +135,7 @@ export const getFindAllQueryKey = (params?: FindAllParams,) => {
     ] as const;
     }
 
-    
+
 export const getFindAllQueryOptions = <TData = Awaited<ReturnType<typeof findAll>>, TError = unknown>(params?: FindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAll>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
@@ -142,13 +143,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getFindAllQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof findAll>>> = ({ signal }) => findAll(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof findAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -187,7 +188,7 @@ export function useFindAll<TData = Awaited<ReturnType<typeof findAll>>, TError =
 
 export function useFindAll<TData = Awaited<ReturnType<typeof findAll>>, TError = unknown>(
  params?: FindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof findAll>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getFindAllQueryOptions(params,options)
@@ -209,15 +210,15 @@ export const getCompanyJobs = (
     params?: GetCompanyJobsParams,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customAxiosInstance<GetCompanyJobs200>(
       {url: `/api/v1/jobs/company`, method: 'GET',
         params, signal
     },
       options);
     }
-  
+
 
 
 
@@ -227,7 +228,7 @@ export const getGetCompanyJobsQueryKey = (params?: GetCompanyJobsParams,) => {
     ] as const;
     }
 
-    
+
 export const getGetCompanyJobsQueryOptions = <TData = Awaited<ReturnType<typeof getCompanyJobs>>, TError = unknown>(params?: GetCompanyJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyJobs>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
@@ -235,13 +236,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetCompanyJobsQueryKey(params);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompanyJobs>>> = ({ signal }) => getCompanyJobs(params, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompanyJobs>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -280,10 +281,102 @@ export function useGetCompanyJobs<TData = Awaited<ReturnType<typeof getCompanyJo
 
 export function useGetCompanyJobs<TData = Awaited<ReturnType<typeof getCompanyJobs>>, TError = unknown>(
  params?: GetCompanyJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompanyJobs>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetCompanyJobsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Get job matching criteria
+ */
+export const getMatchingCriteria = (
+    id: string,
+ options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
+) => {
+
+
+      return customAxiosInstance<GetMatchingCriteria200>(
+      {url: `/api/v1/jobs/${id}/matching-criteria`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMatchingCriteriaQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/jobs/${id}/matching-criteria`
+    ] as const;
+    }
+
+
+export const getGetMatchingCriteriaQueryOptions = <TData = Awaited<ReturnType<typeof getMatchingCriteria>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMatchingCriteriaQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMatchingCriteria>>> = ({ signal }) => getMatchingCriteria(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMatchingCriteriaQueryResult = NonNullable<Awaited<ReturnType<typeof getMatchingCriteria>>>
+export type GetMatchingCriteriaQueryError = void
+
+
+export function useGetMatchingCriteria<TData = Awaited<ReturnType<typeof getMatchingCriteria>>, TError = void>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMatchingCriteria>>,
+          TError,
+          Awaited<ReturnType<typeof getMatchingCriteria>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMatchingCriteria<TData = Awaited<ReturnType<typeof getMatchingCriteria>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMatchingCriteria>>,
+          TError,
+          Awaited<ReturnType<typeof getMatchingCriteria>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMatchingCriteria<TData = Awaited<ReturnType<typeof getMatchingCriteria>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get job matching criteria
+ */
+
+export function useGetMatchingCriteria<TData = Awaited<ReturnType<typeof getMatchingCriteria>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMatchingCriteria>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMatchingCriteriaQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -302,14 +395,14 @@ export const getJobById = (
     id: string,
  options?: SecondParameter<typeof customAxiosInstance>,signal?: AbortSignal
 ) => {
-      
-      
+
+
       return customAxiosInstance<GetJobById200>(
       {url: `/api/v1/jobs/${id}`, method: 'GET', signal
     },
       options);
     }
-  
+
 
 
 
@@ -319,7 +412,7 @@ export const getGetJobByIdQueryKey = (id?: string,) => {
     ] as const;
     }
 
-    
+
 export const getGetJobByIdQueryOptions = <TData = Awaited<ReturnType<typeof getJobById>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
 ) => {
 
@@ -327,13 +420,13 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetJobByIdQueryKey(id);
 
-  
+
 
     const queryFn: QueryFunction<Awaited<ReturnType<typeof getJobById>>> = ({ signal }) => getJobById(id, requestOptions, signal);
 
-      
 
-      
+
+
 
    return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getJobById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
@@ -372,7 +465,7 @@ export function useGetJobById<TData = Awaited<ReturnType<typeof getJobById>>, TE
 
 export function useGetJobById<TData = Awaited<ReturnType<typeof getJobById>>, TError = unknown>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getJobById>>, TError, TData>>, request?: SecondParameter<typeof customAxiosInstance>}
- , queryClient?: QueryClient 
+ , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetJobByIdQueryOptions(id,options)
@@ -394,8 +487,8 @@ export const updateJob = (
     id: string,
     updateJobDto: UpdateJobDto,
  options?: SecondParameter<typeof customAxiosInstance>,) => {
-      
-      
+
+
       return customAxiosInstance<UpdateJob200>(
       {url: `/api/v1/jobs/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -403,7 +496,7 @@ export const updateJob = (
     },
       options);
     }
-  
+
 
 
 export const getUpdateJobMutationOptions = <TError = unknown,
@@ -417,7 +510,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJob>>, {id: string;data: UpdateJobDto}> = (props) => {
@@ -426,7 +519,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  updateJob(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -458,8 +551,8 @@ export const updateJobStatus = (
     id: string,
     updateJobStatusDto: UpdateJobStatusDto,
  options?: SecondParameter<typeof customAxiosInstance>,) => {
-      
-      
+
+
       return customAxiosInstance<UpdateJobStatus200>(
       {url: `/api/v1/jobs/${id}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -467,7 +560,7 @@ export const updateJobStatus = (
     },
       options);
     }
-  
+
 
 
 export const getUpdateJobStatusMutationOptions = <TError = void,
@@ -481,7 +574,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       : {...options, mutation: {...options.mutation, mutationKey}}
       : {mutation: { mutationKey, }, request: undefined};
 
-      
+
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateJobStatus>>, {id: string;data: UpdateJobStatusDto}> = (props) => {
@@ -490,7 +583,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
           return  updateJobStatus(id,data,requestOptions)
         }
 
-        
+
 
 
   return  { mutationFn, ...mutationOptions }}
@@ -515,4 +608,3 @@ export const useUpdateJobStatus = <TError = void,
 
       return useMutation(mutationOptions, queryClient);
     }
-    

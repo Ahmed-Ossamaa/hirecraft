@@ -103,14 +103,14 @@ export const employerNav: NavItem[] = [
     icon: <MdGroup className="text-lg" />,
   },
   {
-    label: 'Plans & Billing',
-    href: '/dashboard/company/billing',
-    icon: <MdWorkspacePremium className="text-lg" />,
-  },
-  {
     label: 'Machine Analytics',
     href: '/dashboard/company/analytics',
     icon: <MdPrecisionManufacturing className="text-lg" />,
+  },
+  {
+    label: 'Plans & Billing',
+    href: '/dashboard/company/billing',
+    icon: <MdWorkspacePremium className="text-lg" />,
   },
   {
     label: 'Browse Jobs',
