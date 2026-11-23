@@ -113,8 +113,6 @@ export class WorkerProfilesController {
     description: 'Returns paginated worker search results.',
   })
   @RequireSubscriptionPlan(
-    PlanId.STARTER_MONTHLY,
-    PlanId.STARTER_YEARLY,
     PlanId.PRO_MONTHLY,
     PlanId.PRO_YEARLY,
     PlanId.ENTERPRISE_MONTHLY,
@@ -122,7 +120,7 @@ export class WorkerProfilesController {
   )
   @UseGuards(SubscriptionPlanGuard)
   searchByMachineId(@Query() query: SearchWorkerProfilesDto) {
-    return this.profilesService.searchByMachineId(query);
+    return this.profilesService.searchWorkers(query);
   }
 
   @Get(':id')

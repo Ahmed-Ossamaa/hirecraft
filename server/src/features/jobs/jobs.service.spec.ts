@@ -89,6 +89,48 @@ describe('JobsService', () => {
     expect(service).toBeDefined();
   });
 
+  describe('getMatchingCriteria', () => {
+    const job = {
+      id: 'job-1',
+      companyId: 'company-1',
+      machineCategoryId: 'category-1',
+      machineId: 'machine-1',
+      experienceLevel: ExperienceLevel.SENIOR,
+      country: 'Egypt',
+      city: 'Cairo',
+    };
+
+    it('returns the job criteria to its owning company', async () => {
+      jobRepoMock.findById.mockResolvedValue(job);
+
+      await expect(
+        service.getMatchingCriteria('job-1', 'company-1'),
+      ).resolves.toEqual({
+        machineCategoryId: 'category-1',
+        machineId: 'machine-1',
+        experienceLevel: ExperienceLevel.SENIOR,
+        country: 'Egypt',
+        city: 'Cairo',
+      });
+    });
+
+    it('throws NotFoundException when the job does not exist', async () => {
+      jobRepoMock.findById.mockResolvedValue(null);
+
+      await expect(
+        service.getMatchingCriteria('job-1', 'company-1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when another company requests criteria', async () => {
+      jobRepoMock.findById.mockResolvedValue(job);
+
+      await expect(
+        service.getMatchingCriteria('job-1', 'company-2'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
   describe('createJob (Option A: strictly creates DRAFT)', () => {
     it('should always create job with DRAFT status and null timestamps even if status is passed', async () => {
       const result = await service.createJob({

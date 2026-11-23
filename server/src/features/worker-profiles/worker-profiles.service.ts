@@ -175,7 +175,7 @@ export class WorkerProfilesService {
     return this.profileRepository.findProfileIdsByUserIds(userIds);
   }
 
-  searchByMachineId(
+  searchWorkers(
     query: SearchWorkerProfilesDto,
   ): Promise<PaginatedResultWithHasNext<WorkerProfileSearchResultDto>> {
     const { machineCategoryId, machineId, experienceLevel, country, city } =

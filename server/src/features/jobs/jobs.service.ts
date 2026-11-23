@@ -23,6 +23,7 @@ import { SubscriptionLimitsService } from '../billing/subscription-limits/subscr
 import { ApplicationsService } from '../applications/applications.service';
 import { JobWithStatsDto } from './dto/job-with-stats.dto';
 import { CreateJobInput, UpdateJobInput } from './types/job-mutation.types';
+import type { JobMatchingCriteriaDto } from './dto/job-matching.dto';
 
 @Injectable()
 export class JobsService {
@@ -317,6 +318,29 @@ export class JobsService {
     return {
       ...(salaryRange !== undefined ? { salaryRange } : {}),
       ...(currency !== undefined ? { salaryCurrency: currency } : {}),
+    };
+  }
+
+  async getMatchingCriteria(
+    jobId: string,
+    companyId: string,
+  ): Promise<JobMatchingCriteriaDto> {
+    const job = await this.jobRepository.findById(jobId);
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.companyId !== companyId) {
+      throw new ForbiddenException('You cannot access this job');
+    }
+
+    return {
+      machineCategoryId: job.machineCategoryId,
+      machineId: job.machineId,
+      experienceLevel: job.experienceLevel,
+      country: job.country,
+      city: job.city,
     };
   }
 }

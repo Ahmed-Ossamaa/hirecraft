@@ -32,6 +32,10 @@ import { Job } from './domain/job.entity';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
 import { JobWithStatsDto } from './dto/job-with-stats.dto';
+import { SubscriptionPlanGuard } from '@/common/guards/subscription-plan.guard';
+import { RequireSubscriptionPlan } from '@/common/decorators/subscription-plan.decorator';
+import { PlanId } from '../plans/domain/plan-id.enum';
+import { JobMatchingCriteriaDto } from './dto/job-matching.dto';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -100,6 +104,35 @@ export class JobsController {
   ) {
     // Returns ALL jobs (Drafts, Published, etc.) for this specific company
     return this.jobsService.getJobsByCompany(companyId, query);
+  }
+
+  @Get(':id/matching-criteria')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, CompanyRoleGuard, SubscriptionPlanGuard)
+  @RequireCompanyRole(
+    CompanyRole.ADMIN,
+    CompanyRole.HIRING_MANAGER,
+    CompanyRole.STAFF,
+  )
+  @RequireSubscriptionPlan(
+    PlanId.PRO_MONTHLY,
+    PlanId.PRO_YEARLY,
+    PlanId.ENTERPRISE_MONTHLY,
+    PlanId.ENTERPRISE_YEARLY,
+  )
+  @ApiOperation({ summary: 'Get job matching criteria' })
+  @ApiStandardResponse(JobMatchingCriteriaDto)
+  @ApiResponse({ status: 404, description: 'Job not found' })
+  @ApiResponse({ status: 403, description: 'You cannot access this job' })
+  @ApiResponse({
+    status: 403,
+    description: 'Subscription plan doesnt include this feature',
+  })
+  getMatchingCriteria(
+    @Param('id', ParseUUIDPipe) jobId: string,
+    @CurrentUser('companyId') companyId: string,
+  ): Promise<JobMatchingCriteriaDto> {
+    return this.jobsService.getMatchingCriteria(jobId, companyId);
   }
 
   @Get(':id')

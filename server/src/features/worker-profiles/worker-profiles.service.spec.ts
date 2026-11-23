@@ -49,7 +49,7 @@ describe('WorkerProfilesService', () => {
       hasNext: false,
     });
 
-    await service.searchByMachineId(query);
+    await service.searchWorkers(query);
 
     expect(profileRepository.findByCriteria).toHaveBeenCalledWith(
       expect.objectContaining({

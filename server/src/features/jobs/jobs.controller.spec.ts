@@ -1,25 +1,35 @@
-import { Test, TestingModule } from '@nestjs/testing';
+jest.mock('@/common/decorators/company-role.decorator', () => ({
+  RequireCompanyRole: () => () => undefined,
+}));
+
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
+import { SUBSCRIPTION_PLANS_KEY } from '@/common/decorators/subscription-plan.decorator';
+import { PlanId } from '../plans/domain/plan-id.enum';
 
 describe('JobsController', () => {
-  let controller: JobsController;
+  it('passes the company ID to the matching criteria service', async () => {
+    const getMatchingCriteria = jest.fn().mockResolvedValue({});
+    const controller = new JobsController({
+      getMatchingCriteria,
+    } as unknown as JobsService);
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [JobsController],
-      providers: [
-        {
-          provide: JobsService,
-          useValue: {},
-        },
-      ],
-    }).compile();
+    await controller.getMatchingCriteria('job-1', 'company-1');
 
-    controller = module.get<JobsController>(JobsController);
+    expect(getMatchingCriteria).toHaveBeenCalledWith('job-1', 'company-1');
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('restricts matching criteria to Pro and Enterprise plans', () => {
+    expect(
+      Reflect.getMetadata(
+        SUBSCRIPTION_PLANS_KEY,
+        JobsController.prototype.getMatchingCriteria,
+      ),
+    ).toEqual([
+      PlanId.PRO_MONTHLY,
+      PlanId.PRO_YEARLY,
+      PlanId.ENTERPRISE_MONTHLY,
+      PlanId.ENTERPRISE_YEARLY,
+    ]);
   });
 });
