@@ -1,31 +1,27 @@
-'use client';
+"use client";
 
-import { type SubmitEvent, useState } from 'react';
-import { isAxiosError } from 'axios';
-import {
-  MdPerson,
-  MdPersonSearch,
-  MdRefresh,
-  MdSearch,
-} from 'react-icons/md';
+import { type SubmitEvent, useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
+import { MdPerson, MdPersonSearch, MdRefresh, MdSearch } from "react-icons/md";
 import type {
   Machine,
   MachineCategory,
   SearchByMachineIdParams,
   SearchByMachineIdExperienceLevel,
   WorkerProfileSearchResultDto,
-} from '@/shared/api/generated/model';
-import { CandidateCard } from './CandidateCard';
-import { useGetMachineCategories } from '@/shared/api/generated/machine-categories/machine-categories';
-import { useGetMachines } from '@/shared/api/generated/machines/machines';
-import { useSearchByMachineId } from '@/shared/api/generated/worker-profiles/worker-profiles';
-import { CountryCitySelect } from '@/shared/components/ui/CountryCitySelect';
-import { Button } from '@/shared/components/ui/Button';
-import { EmptyState } from '@/shared/components/ui/EmptyState';
-import { Pagination } from '@/shared/components/ui/Pagination';
-import { Select } from '@/shared/components/ui/Select';
-import { WorkerProfileSlideOver } from '@/features/worker-profiles/components/WorkerProfileSlideOver';
-import { getApiError } from '@/shared/utils/error';
+} from "@/shared/api/generated/model";
+import { useGetMatchingCriteria } from "@/shared/api/generated/jobs/jobs";
+import { CandidateCard } from "./CandidateCard";
+import { useGetMachineCategories } from "@/shared/api/generated/machine-categories/machine-categories";
+import { useGetMachines } from "@/shared/api/generated/machines/machines";
+import { useSearchByMachineId } from "@/shared/api/generated/worker-profiles/worker-profiles";
+import { CountryCitySelect } from "@/shared/components/ui/CountryCitySelect";
+import { Button } from "@/shared/components/ui/Button";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
+import { Pagination } from "@/shared/components/ui/Pagination";
+import { Select } from "@/shared/components/ui/Select";
+import { WorkerProfileSlideOver } from "@/features/worker-profiles/components/WorkerProfileSlideOver";
+import { getApiError } from "@/shared/utils/error";
 
 const PAGE_SIZE = 10;
 
@@ -33,29 +29,79 @@ const EXPERIENCE_LEVEL_OPTIONS: {
   label: string;
   value: SearchByMachineIdExperienceLevel;
 }[] = [
-  { value: 'ENTRY_LEVEL', label: 'Entry level' },
-  { value: 'SKILLED', label: 'Skilled' },
-  { value: 'SENIOR', label: 'Senior' },
-  { value: 'EXPERT', label: 'Expert' },
+  { value: "ENTRY_LEVEL", label: "Entry level" },
+  { value: "SKILLED", label: "Skilled" },
+  { value: "SENIOR", label: "Senior" },
+  { value: "EXPERT", label: "Expert" },
 ];
 
-type SearchFilters = Omit<SearchByMachineIdParams, 'page' | 'limit'>;
+type SearchFilters = Omit<SearchByMachineIdParams, "page" | "limit">;
 
-export function CandidateSearchView() {
-  const [machineCategoryId, setMachineCategoryId] = useState('');
-  const [machineId, setMachineId] = useState('');
+interface CandidateSearchViewProps {
+  jobId?: string;
+}
+
+export function CandidateSearchView({ jobId }: CandidateSearchViewProps) {
+  const [machineCategoryId, setMachineCategoryId] = useState("");
+  const [machineId, setMachineId] = useState("");
   const [experienceLevel, setExperienceLevel] = useState<
-    SearchByMachineIdExperienceLevel | ''
-  >('');
-  const [country, setCountry] = useState('');
-  const [city, setCity] = useState('');
+    SearchByMachineIdExperienceLevel | ""
+  >("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
   const [appliedFilters, setAppliedFilters] = useState<SearchFilters | null>(
     null,
   );
+  const [appliedJobId, setAppliedJobId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null,
   );
+  const initializedJobId = useRef<string | null>(null);
+
+  const {
+    data: matchingCriteriaResponse,
+    isLoading: isLoadingMatchingCriteria,
+    isFetching: isFetchingMatchingCriteria,
+    isError: isMatchingCriteriaError,
+    error: matchingCriteriaError,
+    refetch: refetchMatchingCriteria,
+  } = useGetMatchingCriteria(jobId ?? "", {
+    query: { enabled: Boolean(jobId) },
+  });
+  const matchingCriteria = matchingCriteriaResponse?.data;
+
+  useEffect(() => {
+    if (!jobId) {
+      initializedJobId.current = null;
+      setAppliedJobId(null);
+      return;
+    }
+
+    if (
+      isFetchingMatchingCriteria ||
+      !matchingCriteria ||
+      initializedJobId.current === jobId
+    ) {
+      return;
+    }
+
+    setMachineCategoryId(matchingCriteria.machineCategoryId);
+    setMachineId(matchingCriteria.machineId);
+    setExperienceLevel(matchingCriteria.experienceLevel);
+    setCountry(matchingCriteria.country);
+    setCity(matchingCriteria.city);
+    setPage(1);
+    setAppliedFilters({
+      machineCategoryId: matchingCriteria.machineCategoryId,
+      machineId: matchingCriteria.machineId,
+      experienceLevel: matchingCriteria.experienceLevel,
+      country: matchingCriteria.country,
+      city: matchingCriteria.city,
+    });
+    initializedJobId.current = jobId;
+    setAppliedJobId(jobId);
+  }, [jobId, matchingCriteria, isFetchingMatchingCriteria]);
 
   const {
     data: categoriesResponse,
@@ -78,9 +124,18 @@ export function CandidateSearchView() {
     ? machines.filter((machine) => machine.categoryId === machineCategoryId)
     : machines;
 
-  const queryParams: SearchByMachineIdParams | undefined = appliedFilters
-    ? { ...appliedFilters, page, limit: PAGE_SIZE }
-    : undefined;
+  const canSearchAppliedFilters =
+    appliedFilters !== null && (!jobId || appliedJobId === jobId);
+  const isApplyingJobCriteria =
+    Boolean(jobId) &&
+    !isMatchingCriteriaError &&
+    (isLoadingMatchingCriteria ||
+      isFetchingMatchingCriteria ||
+      (matchingCriteria !== undefined && appliedJobId !== jobId));
+  const queryParams: SearchByMachineIdParams | undefined =
+    canSearchAppliedFilters
+      ? { ...appliedFilters, page, limit: PAGE_SIZE }
+      : undefined;
   const {
     data: searchResponse,
     isFetching: isSearching,
@@ -88,7 +143,7 @@ export function CandidateSearchView() {
     error: searchError,
     refetch: refetchSearch,
   } = useSearchByMachineId(queryParams, {
-    query: { enabled: appliedFilters !== null },
+    query: { enabled: canSearchAppliedFilters },
   });
 
   const searchPage = searchResponse?.data;
@@ -98,6 +153,9 @@ export function CandidateSearchView() {
   const totalPages = currentPage + (searchPage?.hasNext ? 1 : 0);
   const accessDenied =
     isAxiosError(searchError) && searchError.response?.status === 403;
+  const matchingCriteriaAccessDenied =
+    isAxiosError(matchingCriteriaError) &&
+    matchingCriteriaError.response?.status === 403;
 
   const handleSearch = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -112,20 +170,21 @@ export function CandidateSearchView() {
     if (city) filters.city = city;
 
     setPage(1);
+    setAppliedJobId(jobId ?? null);
     setAppliedFilters(filters);
   };
 
   const handleCountryChange = (nextCountry: string) => {
     setCountry(nextCountry);
-    setCity('');
+    setCity("");
   };
 
   const clearFilters = () => {
-    setMachineCategoryId('');
-    setMachineId('');
-    setExperienceLevel('');
-    setCountry('');
-    setCity('');
+    setMachineCategoryId("");
+    setMachineId("");
+    setExperienceLevel("");
+    setCountry("");
+    setCity("");
     setAppliedFilters(null);
     setPage(1);
   };
@@ -154,13 +213,13 @@ export function CandidateSearchView() {
           <Select
             label="Machine category"
             value={machineCategoryId}
-            disabled={isLoadingCategories}
+            disabled={isLoadingCategories || isApplyingJobCriteria}
             onChange={(event) => {
               setMachineCategoryId(event.target.value);
-              setMachineId('');
+              setMachineId("");
             }}
             options={[
-              { label: 'All categories', value: '' },
+              { label: "All categories", value: "" },
               ...categories.map((category) => ({
                 label: category.nameEn,
                 value: category.id,
@@ -170,14 +229,14 @@ export function CandidateSearchView() {
           <Select
             label="Machine"
             value={machineId}
-            disabled={isLoadingMachines}
+            disabled={isLoadingMachines || isApplyingJobCriteria}
             onChange={(event) => setMachineId(event.target.value)}
             options={[
               {
                 label: machineCategoryId
-                  ? 'Any machine in this category'
-                  : 'Select a machine',
-                value: '',
+                  ? "Any machine in this category"
+                  : "Select a machine",
+                value: "",
               },
               ...filteredMachines.map((machine) => ({
                 label: machine.nameEn,
@@ -188,13 +247,14 @@ export function CandidateSearchView() {
           <Select
             label="Minimum experience"
             value={experienceLevel}
+            disabled={isApplyingJobCriteria}
             onChange={(event) =>
               setExperienceLevel(
-                event.target.value as SearchByMachineIdExperienceLevel | '',
+                event.target.value as SearchByMachineIdExperienceLevel | "",
               )
             }
             options={[
-              { label: 'Any experience level', value: '' },
+              { label: "Any experience level", value: "" },
               ...EXPERIENCE_LEVEL_OPTIONS,
             ]}
           />
@@ -206,6 +266,7 @@ export function CandidateSearchView() {
               city={city}
               onCountryChange={handleCountryChange}
               onCityChange={setCity}
+              disabled={isApplyingJobCriteria}
             />
           </div>
         </div>
@@ -240,12 +301,13 @@ export function CandidateSearchView() {
               variant="ghost"
               onClick={clearFilters}
               disabled={
-                !machineCategoryId &&
-                !machineId &&
-                !experienceLevel &&
-                !country &&
-                !city &&
-                !appliedFilters
+                isApplyingJobCriteria ||
+                (!machineCategoryId &&
+                  !machineId &&
+                  !experienceLevel &&
+                  !country &&
+                  !city &&
+                  !appliedFilters)
               }
             >
               Clear
@@ -255,18 +317,70 @@ export function CandidateSearchView() {
               leftIcon={<MdSearch />}
               disabled={
                 isSearching ||
+                isApplyingJobCriteria ||
                 (!machineCategoryId && !machineId) ||
                 isLoadingCategories ||
                 isLoadingMachines
               }
             >
-              {isSearching ? 'Searching...' : 'Search candidates'}
+              {isSearching ? "Searching..." : "Search candidates"}
             </Button>
           </div>
         </div>
       </form>
 
-      {appliedFilters === null ? (
+      {jobId && isLoadingMatchingCriteria ? (
+        <div
+          className="space-y-3"
+          aria-label="Loading job matching criteria"
+          aria-busy
+        >
+          <div className="h-20 animate-pulse rounded-xl border border-border/60 bg-card" />
+          <div className="h-36 animate-pulse rounded-xl border border-border/60 bg-card" />
+        </div>
+      ) : jobId && isMatchingCriteriaError && !canSearchAppliedFilters ? (
+        matchingCriteriaAccessDenied ? (
+          <EmptyState
+            icon={<MdPerson className="text-3xl" />}
+            title="Job matching requires a Pro or Enterprise plan"
+            description={getApiError(
+              matchingCriteriaError,
+              "Your company's plan does not include job matching.",
+            )}
+            actionText="View plans"
+            actionHref="/dashboard/company/billing"
+          />
+        ) : (
+          <div
+            role="alert"
+            className="rounded-2xl border border-destructive/20 bg-card p-8 text-center shadow-sm"
+          >
+            <p className="mb-3 font-medium text-destructive">
+              {getApiError(
+                matchingCriteriaError,
+                "Failed to load job matching criteria.",
+              )}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              leftIcon={<MdRefresh />}
+              onClick={() => void refetchMatchingCriteria()}
+            >
+              Try again
+            </Button>
+          </div>
+        )
+      ) : jobId && matchingCriteria && appliedJobId !== jobId ? (
+        <div
+          className="space-y-3"
+          aria-label="Applying job matching criteria"
+          aria-busy
+        >
+          <div className="h-20 animate-pulse rounded-xl border border-border/60 bg-card" />
+          <div className="h-36 animate-pulse rounded-xl border border-border/60 bg-card" />
+        </div>
+      ) : appliedFilters === null ? (
         <EmptyState
           icon={<MdPersonSearch className="text-3xl" />}
           title="Search for candidates"
@@ -292,7 +406,7 @@ export function CandidateSearchView() {
         accessDenied ? (
           <EmptyState
             icon={<MdPerson className="text-3xl" />}
-            title="Candidate search requires an eligible plan"
+            title="Candidate search requires a Pro or Enterprise plan"
             description={getApiError(
               searchError,
               "Your company's plan does not include candidate search.",
@@ -306,7 +420,7 @@ export function CandidateSearchView() {
             className="rounded-2xl border border-destructive/20 bg-card p-8 text-center shadow-sm"
           >
             <p className="mb-3 font-medium text-destructive">
-              {getApiError(searchError, 'Failed to search candidates.')}
+              {getApiError(searchError, "Failed to search candidates.")}
             </p>
             <Button
               type="button"

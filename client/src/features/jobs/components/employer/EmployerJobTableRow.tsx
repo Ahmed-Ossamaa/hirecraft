@@ -3,7 +3,7 @@ import Link from "next/link";
 import { JobWithStatsDto } from "@/shared/api/generated/model";
 import { Button } from "@/shared/components/ui/Button";
 import { JobStatusBadge } from "@/shared/components/ui/JobStatusBadge";
-import { MdOpenInNew, MdPeopleOutline } from "react-icons/md";
+import { MdOpenInNew, MdPeopleOutline, MdPersonSearch } from "react-icons/md";
 import {
   formatTimeAgo,
   formatDateTimeTooltip,
@@ -14,11 +14,13 @@ import { JobActionMenu } from "./JobActionMenu";
 interface EmployerJobTableRowProps {
   job: JobWithStatsDto;
   onSelect: (job: JobWithStatsDto) => void;
+  hasCandidateSearchAccess: boolean;
 }
 
 export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
   job,
   onSelect,
+  hasCandidateSearchAccess,
 }) => {
   return (
     <tr className="hover:bg-row-hover transition-colors group">
@@ -61,6 +63,7 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
         <Link
           href={`/dashboard/company/jobs/${job.id}/applicants`}
           className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline hover:text-primary/80 transition-colors"
+          title="View Applicants"
         >
           <span className="text-base">{job.applicationCount || 0}</span>
         </Link>
@@ -81,14 +84,24 @@ export const EmployerJobTableRow: React.FC<EmployerJobTableRowProps> = ({
       {/* Actions */}
       <td className="px-5 py-3.5 align-middle text-right">
         <div className="flex items-center justify-end gap-2">
-          <Link href={`/dashboard/company/jobs/${job.id}/applicants`}>
-            <Button
-              size="sm"
-              leftIcon={<MdPeopleOutline className="text-xs" />}
-            >
-              Applicants
+          <Link
+            href={`/dashboard/company/jobs/${job.id}/applicants`}
+            title="View Applicants"
+          >
+            <Button size="sm" className="p-1.5">
+              <MdPeopleOutline />
             </Button>
           </Link>
+          {hasCandidateSearchAccess && (
+            <Link
+              href={`/dashboard/company/candidates?jobId=${encodeURIComponent(job.id)}`}
+              title="View matching candidates"
+            >
+              <Button size="sm" variant="outline" className="p-1.5">
+                <MdPersonSearch />
+              </Button>
+            </Link>
+          )}
           <JobActionMenu job={job} />
         </div>
       </td>

@@ -23,10 +23,20 @@ import { EmptyState } from "@/shared/components/ui/EmptyState";
 import { Pagination } from "@/shared/components/ui/Pagination";
 import { Tabs } from "@/shared/components/ui/Tabs";
 import { TableSkeleton } from "@/shared/components/ui/TableSkeleton";
+import { useCompanySubscription } from "@/features/billing/api/useBilling";
+import { CurrentSubscriptionDtoPlanId } from "@/shared/api/generated/model";
+
+const candidateSearchPlanIds = new Set<string>([
+  CurrentSubscriptionDtoPlanId["professional-monthly"],
+  CurrentSubscriptionDtoPlanId["professional-yearly"],
+  CurrentSubscriptionDtoPlanId["enterprise-monthly"],
+  CurrentSubscriptionDtoPlanId["enterprise-yearly"],
+]);
 
 export const EmployerJobsList: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { subscription } = useCompanySubscription();
 
   const currentStatus = searchParams.get("status") || "ALL";
   const currentSearch = searchParams.get("search") || "";
@@ -45,6 +55,9 @@ export const EmployerJobsList: React.FC = () => {
   });
 
   const jobs = (jobsRes?.data?.data || []) as JobWithStatsDto[];
+  const hasCandidateSearchAccess = candidateSearchPlanIds.has(
+    subscription?.planId ?? "",
+  );
   const meta = {
     totalPages: jobsRes?.data?.totalPages || 1,
     total: jobsRes?.data?.total || 0,
@@ -296,6 +309,7 @@ export const EmployerJobsList: React.FC = () => {
                     key={job.id}
                     job={job}
                     onSelect={setSelectedJob}
+                    hasCandidateSearchAccess={hasCandidateSearchAccess}
                   />
                 ))}
               </tbody>
