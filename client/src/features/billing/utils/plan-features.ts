@@ -57,7 +57,7 @@ export const getPlanFeatures = (
       `${limits.maxActiveJobs} simultaneous active jobs`,
       `${limits.maxJobPostings} posting credits ${intervalLabel}`,
       `${limits.maxUsers} team member seats`,
-      'Machines Supply and demand statistics',
+      'Advanced technician search and matching',
     ];
   }
 
@@ -66,8 +66,8 @@ export const getPlanFeatures = (
       `${limits.maxActiveJobs} simultaneous active jobs`,
       `${limits.maxJobPostings} posting credits ${intervalLabel}`,
       `${limits.maxUsers} team member seats`,
-      'Machines Supply and demand statistics',
       'Advanced technician search and matching',
+      'Machines Supply and demand statistics',
     ];
   }
 
@@ -75,8 +75,8 @@ export const getPlanFeatures = (
     'Unlimited simultaneous active jobs',
     'Unlimited job posting credits',
     'Unlimited team member seats',
-    'Machines Supply and demand statistics',
     'Advanced technician search and matching',
+    'Machines Supply and demand statistics',
     'Dedicated account manager',
   ];
 };
